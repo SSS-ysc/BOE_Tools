@@ -40,7 +40,6 @@
             this.button7 = new System.Windows.Forms.Button();
             this.textBox3 = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
-
             // 
             // openFileDialog1
             // 
@@ -48,7 +47,7 @@
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(1211, 37);
+            this.button5.Location = new System.Drawing.Point(510, 70);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(115, 25);
             this.button5.TabIndex = 9;
@@ -58,7 +57,7 @@
             // 
             // textBox2
             // 
-            this.textBox2.Location = new System.Drawing.Point(747, 37);
+            this.textBox2.Location = new System.Drawing.Point(26, 70);
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(436, 25);
             this.textBox2.TabIndex = 10;
@@ -66,7 +65,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(744, 80);
+            this.label5.Location = new System.Drawing.Point(23, 125);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(37, 15);
             this.label5.TabIndex = 11;
@@ -74,7 +73,7 @@
             // 
             // button6
             // 
-            this.button6.Location = new System.Drawing.Point(1349, 38);
+            this.button6.Location = new System.Drawing.Point(510, 116);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(115, 24);
             this.button6.TabIndex = 12;
@@ -97,7 +96,7 @@
             // 
             // button7
             // 
-            this.button7.Location = new System.Drawing.Point(1489, 39);
+            this.button7.Location = new System.Drawing.Point(659, 72);
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(132, 23);
             this.button7.TabIndex = 14;
@@ -118,7 +117,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(1652, 787);
+            this.ClientSize = new System.Drawing.Size(1652, 1033);
             this.Controls.Add(this.textBox3);
             this.Controls.Add(this.button7);
             this.Controls.Add(this.label6);

@@ -92,7 +92,7 @@ namespace WindowsFormsApp_BOE_Tool
             openFileDialog1.FilterIndex = 1;
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                string filePath = openFileDialog1.FileName;
+                String filePath = openFileDialog1.FileName;
                 textBox2.Text = filePath;
                 using (FileStream fsRead = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 {
@@ -125,8 +125,8 @@ namespace WindowsFormsApp_BOE_Tool
 
         private void button7_Click(object sender, EventArgs e)
         {
-            string UnicodeText = "";
-            string filePath = textBox2.Text;
+            String UnicodeText = "";
+            String filePath = textBox2.Text;
 
             using (FileStream fsRead = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
