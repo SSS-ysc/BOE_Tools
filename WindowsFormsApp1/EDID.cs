@@ -7,17 +7,17 @@ using System.Text.RegularExpressions;
 using System.IO;
 
 enum Support
-{ 
+{
     unsupported,
     supported,
 };
 enum EDIDversion
-{ 
+{
     V13,
     V14,
 };
 enum EDIDColorBitDepth
-{ 
+{
     color_undefined,
     color_6bit,
     color_8bit,
@@ -47,7 +47,7 @@ enum ScreenSizeType
     ScreenSize_Ratio,
 };
 enum ColorType
-{ 
+{
     Grayscale,
     RGB,
     NonRGB,
@@ -59,6 +59,21 @@ enum ColorEncoding
     RGB444YCrCb444,
     RGB444YCrCb422,
     RGB444YCrCb444YCrCb422,
+};
+enum StandardTimingRatio
+{
+    Ratio1x1,//(EDID1.3)
+    Ratio4x3,//(EDID1.3)(EDID1.4)
+    Ratio5x4,//(EDID1.3)(EDID1.4)
+    Ratio16x9,//(EDID1.3)(EDID1.4)
+    Ratio16x10,//(EDID1.4)
+};
+struct EDIDStandardTiming
+{
+    public Support TimingSupport;
+    public StandardTimingRatio TimingRatio;
+    public uint TimingWidth;
+    public byte TimingRate;
 };
 struct EDIDFeatureSupport
 {
@@ -109,50 +124,57 @@ struct EDIDColorCharacteristics
 };
 struct EDIDEstablishedTimings
 {
-    public Support EsTiming720x400_70;
-    public Support EsTiming720x400_88;
-    public Support EsTiming640x480_60;
-    public Support EsTiming640x480_67;
-    public Support EsTiming640x480_72;
-    public Support EsTiming640x480_75;
-    public Support EsTiming800x600_56;
-    public Support EsTiming800x600_60;
+    public Support Es720x400_70;
+    public Support Es720x400_88;
+    public Support Es640x480_60;
+    public Support Es640x480_67;
+    public Support Es640x480_72;
+    public Support Es640x480_75;
+    public Support Es800x600_56;
+    public Support Es800x600_60;
 
-    public Support EsTiming800x600_72;
-    public Support EsTiming800x600_75;
-    public Support EsTiming832x624_75;
-    public Support EsTiming1024x768_87;
-    public Support EsTiming1024x768_60;
-    public Support EsTiming1024x768_70;
-    public Support EsTiming1024x768_75;
-    public Support EsTiming1280x1024_75;
+    public Support Es800x600_72;
+    public Support Es800x600_75;
+    public Support Es832x624_75;
+    public Support Es1024x768_87;
+    public Support Es1024x768_60;
+    public Support Es1024x768_70;
+    public Support Es1024x768_75;
+    public Support Es1280x1024_75;
 
-    public Support EsTiming1152x870_75;
+    public Support Es1152x870_75;
 };
-struct EDIDStandardTimings
+struct EDIDStandardTimingsTable
+{
+    public EDIDStandardTiming Timing1;
+    public EDIDStandardTiming Timing2;
+    public EDIDStandardTiming Timing3;
+    public EDIDStandardTiming Timing4;
+    public EDIDStandardTiming Timing5;
+    public EDIDStandardTiming Timing6;
+    public EDIDStandardTiming Timing7;
+    public EDIDStandardTiming Timing8;
+};
+struct EDIDDetailTimingTable
 {
 
 };
-struct EDIDDetailTimingTable
-{ 
-
-};
 struct EDIDDisplayRangeLimits
-{ 
+{
 };
 struct EDIDTable
-{ 
+{
     public String EDID_IDManufacturerName;
     public uint EDID_IDProductCode;
     public string EDID_IDSerialNumber;
-    public Byte EDID_Week;
+    public uint EDID_Week;
     public uint EDID_Year;
     public uint EDID_Model_Year;
     public EDIDversion EDID_Version;
     public EDIDBasicDisplayParameters EDID_Basic;
     public EDIDColorCharacteristics EDID_Panel_Color;
     public EDIDEstablishedTimings EDID_Established_Timing;
-    public EDIDStandardTimings EDID_Standard_Timing;
+    public EDIDStandardTimingsTable EDID_Standard_Timing;
     public EDIDDetailTimingTable EDID_Main_Timing;
     public EDIDDetailTimingTable EDID_Second_Main_Timing;
     public String EDID_Display_Product_Serial_Number;
@@ -163,12 +185,12 @@ struct EDIDTable
 };
 struct EDIDTable_CEA
 {
-    public EDIDDetailTimingTable EDID_Ex_Timing1;
-    public EDIDDetailTimingTable EDID_Ex_Timing2;
-    public EDIDDetailTimingTable EDID_Ex_Timing3;
-    public EDIDDetailTimingTable EDID_Ex_Timing4;
-    public EDIDDetailTimingTable EDID_Ex_Timing5;
-    public EDIDDetailTimingTable EDID_Ex_Timing6;
+    public EDIDDetailTimingTable Timing1;
+    public EDIDDetailTimingTable Timing2;
+    public EDIDDetailTimingTable Timing3;
+    public EDIDDetailTimingTable Timing4;
+    public EDIDDetailTimingTable Timing5;
+    public EDIDDetailTimingTable Timing6;
 };
 
 struct EDIDTable_DisplayID
@@ -216,11 +238,11 @@ namespace EDID_Form
                     break;
             }
         }
-        private static Support GetByteBitSupport(byte a,byte X)
+        private static Support GetByteBitSupport(byte a, byte X)
         {
-           if(((a & (0x01 << X)) >> X) == 0x01)
+            if (((a & (0x01 << X)) >> X) == 0x01)
                 return Support.supported;
-           else
+            else
                 return Support.unsupported;
         }
         private static double GetEDIDColorxy(int xy)
@@ -238,7 +260,7 @@ namespace EDID_Form
             xyValue += (double)GetByteBit((byte)xy, 1) * Math.Pow(2, -9);
             xyValue += (double)GetByteBit((byte)xy, 0) * Math.Pow(2, -10);
 
-            return Math.Round(xyValue,3);
+            return Math.Round(xyValue, 3);
         }
         public static int MatchOriginalTextEDID(string Text)//standard format
         {
@@ -261,7 +283,7 @@ namespace EDID_Form
             if (Length != 0)
             {
                 Console.WriteLine(EDIDText);
-                Console.WriteLine("EDID Length: {0}",Length.ToString());
+                Console.WriteLine("EDID Length: {0}", Length.ToString());
             }
             return Length;
         }
@@ -270,7 +292,7 @@ namespace EDID_Form
             int Length = 0;
 
             MatchCollection mcText = Regex.Matches(Text, @"([0-9]|[A-Z])([0-9]|[A-Z])");
-            
+
             foreach (Match m in mcText)
             {
                 EDIDText += m.ToString();
@@ -281,9 +303,9 @@ namespace EDID_Form
             Console.WriteLine("EDID Length: {0}", Length.ToString());
             return Length;
         }
-        private static void FormatStringToByte(string EDIDText,byte[] EDIDByte)
+        private static void FormatStringToByte(string EDIDText, byte[] EDIDByte)
         {
-            byte i=0;
+            byte i = 0;
             MatchCollection mcText = Regex.Matches(EDIDText, @"([0-9]|[A-Z])([0-9]|[A-Z])");
 
             foreach (Match m in mcText)
@@ -301,7 +323,7 @@ namespace EDID_Form
         private static bool FormatBaseBlock(byte[] EDIDData)
         {
             //00-07
-            if ((EDIDData[0]!=0x00)|| (EDIDData[1] != 0xFF) || (EDIDData[2] != 0xFF) || (EDIDData[3] != 0xFF) || (EDIDData[4] != 0xFF) || (EDIDData[5] != 0xFF) || (EDIDData[6] != 0xFF)||(EDIDData[7]!=0x00))
+            if ((EDIDData[0] != 0x00) || (EDIDData[1] != 0xFF) || (EDIDData[2] != 0xFF) || (EDIDData[3] != 0xFF) || (EDIDData[4] != 0xFF) || (EDIDData[5] != 0xFF) || (EDIDData[6] != 0xFF) || (EDIDData[7] != 0x00))
                 return false;
 
             //18-19 EDID_Version
@@ -319,7 +341,7 @@ namespace EDID_Form
 
             //08-09 EDID_IDManufacturerName
             //0001="A",11010="Z",A-Z
-            byte[] ID_Data= new byte[3];
+            byte[] ID_Data = new byte[3];
             ID_Data[0] = (byte)((EDIDData[8] >> 2) + 0x40);
             ID_Data[1] = (byte)(((EDIDData[8] & 0x03) << 3) + (EDIDData[9] >> 5) + 0x40);
             ID_Data[2] = (byte)((EDIDData[9] & 0x1F) + 0x40);
@@ -328,7 +350,7 @@ namespace EDID_Form
 
             //10-11 EDID_IDProductCode
             EDIDFormData.EDID_IDProductCode = (uint)(EDIDData[10] + (EDIDData[11] << 8));
-            Console.WriteLine("ID Product: {0}", Convert.ToString( EDIDFormData.EDID_IDProductCode,16));
+            Console.WriteLine("ID Product: {0}", Convert.ToString(EDIDFormData.EDID_IDProductCode, 16));
 
             //12-15 EDID_IDSerialNumber
             if (((EDIDFormData.EDID_Version == EDIDversion.V13) && (EDIDData[12] == 0x01) && (EDIDData[13] == 0x01) && (EDIDData[14] == 0x01) && (EDIDData[15] == 0x01))
@@ -352,7 +374,7 @@ namespace EDID_Form
             {
                 EDIDFormData.EDID_Week = EDIDData[16];
                 Console.WriteLine("Week: {0}", EDIDFormData.EDID_Week);
-                EDIDFormData.EDID_Year = (uint)(EDIDData[17]+1990);
+                EDIDFormData.EDID_Year = (uint)(EDIDData[17] + 1990);
                 Console.WriteLine("Year: {0}", EDIDFormData.EDID_Year);
             }
             else if ((EDIDFormData.EDID_Version == EDIDversion.V14) && (EDIDData[16] == 0xFF))
@@ -414,21 +436,21 @@ namespace EDID_Form
                 EDIDFormData.EDID_Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_undefined;
             }
             //23
-            EDIDFormData.EDID_Basic.Gamma = (float)EDIDData[23]/100+1;
+            EDIDFormData.EDID_Basic.Gamma = (float)EDIDData[23] / 100 + 1;
             Console.WriteLine("Gamma: {0} ", EDIDFormData.EDID_Basic.Gamma);
             //24
-            EDIDFormData.EDID_Basic.FeatureSupport.StandbyMode = GetByteBitSupport(EDIDData[24],7);
+            EDIDFormData.EDID_Basic.FeatureSupport.StandbyMode = GetByteBitSupport(EDIDData[24], 7);
             EDIDFormData.EDID_Basic.FeatureSupport.SuspendMode = GetByteBitSupport(EDIDData[24], 6);
             EDIDFormData.EDID_Basic.FeatureSupport.VeryLowPowerMode = GetByteBitSupport(EDIDData[24], 5);
             EDIDFormData.EDID_Basic.FeatureSupport.sRGBStandard = GetByteBitSupport(EDIDData[24], 2);
             EDIDFormData.EDID_Basic.FeatureSupport.PreferredTimingMode = GetByteBitSupport(EDIDData[24], 1);
             if (EDIDFormData.EDID_Version == EDIDversion.V13)
             {
-                EDIDFormData.EDID_Basic.FeatureSupport.DisplayColorType = (ColorType)((EDIDData[24]&0x18)>>3);
+                EDIDFormData.EDID_Basic.FeatureSupport.DisplayColorType = (ColorType)((EDIDData[24] & 0x18) >> 3);
                 EDIDFormData.EDID_Basic.FeatureSupport.GTFstandard = GetByteBitSupport(EDIDData[24], 0);
                 Console.WriteLine("StandbyMode: {0}, SuspendMode: {1}, LowPowerMode: {2}, DisplayColorType: {3}, sRGBStandard: {4}, PreferredTimingMode: {5}, GTFstandard: {6}",
-                    EDIDFormData.EDID_Basic.FeatureSupport.StandbyMode, 
-                    EDIDFormData.EDID_Basic.FeatureSupport.SuspendMode, 
+                    EDIDFormData.EDID_Basic.FeatureSupport.StandbyMode,
+                    EDIDFormData.EDID_Basic.FeatureSupport.SuspendMode,
                     EDIDFormData.EDID_Basic.FeatureSupport.VeryLowPowerMode,
                     EDIDFormData.EDID_Basic.FeatureSupport.DisplayColorType,
                     EDIDFormData.EDID_Basic.FeatureSupport.sRGBStandard,
@@ -470,10 +492,26 @@ namespace EDID_Form
                 );
 
             //35-37 EDID_Established_Timing
-            EDIDFormData.EDID_Established_Timing.EsTiming720x400_70 = GetByteBitSupport(EDIDData[35], 7);
-            EDIDFormData.EDID_Established_Timing.EsTiming720x400_88 = GetByteBitSupport(EDIDData[35], 6);
-            EDIDFormData.EDID_Established_Timing.EsTiming640x480_60 = GetByteBitSupport(EDIDData[35], 5);
-            //..
+            EDIDFormData.EDID_Established_Timing.Es720x400_70 = GetByteBitSupport(EDIDData[35], 7);
+            EDIDFormData.EDID_Established_Timing.Es720x400_88 = GetByteBitSupport(EDIDData[35], 6);
+            EDIDFormData.EDID_Established_Timing.Es640x480_60 = GetByteBitSupport(EDIDData[35], 5);
+            EDIDFormData.EDID_Established_Timing.Es640x480_67 = GetByteBitSupport(EDIDData[35], 4);
+            EDIDFormData.EDID_Established_Timing.Es640x480_72 = GetByteBitSupport(EDIDData[35], 3);
+            EDIDFormData.EDID_Established_Timing.Es640x480_75 = GetByteBitSupport(EDIDData[35], 2);
+            EDIDFormData.EDID_Established_Timing.Es800x600_56 = GetByteBitSupport(EDIDData[35], 1);
+            EDIDFormData.EDID_Established_Timing.Es800x600_60 = GetByteBitSupport(EDIDData[35], 0);
+
+            EDIDFormData.EDID_Established_Timing.Es800x600_72 = GetByteBitSupport(EDIDData[36], 7);
+            EDIDFormData.EDID_Established_Timing.Es800x600_75 = GetByteBitSupport(EDIDData[36], 6);
+            EDIDFormData.EDID_Established_Timing.Es832x624_75 = GetByteBitSupport(EDIDData[36], 5);
+            EDIDFormData.EDID_Established_Timing.Es1024x768_87 = GetByteBitSupport(EDIDData[36], 4);
+            EDIDFormData.EDID_Established_Timing.Es1024x768_60 = GetByteBitSupport(EDIDData[36], 3);
+            EDIDFormData.EDID_Established_Timing.Es1024x768_70 = GetByteBitSupport(EDIDData[36], 2);
+            EDIDFormData.EDID_Established_Timing.Es1024x768_75 = GetByteBitSupport(EDIDData[36], 1);
+            EDIDFormData.EDID_Established_Timing.Es1280x1024_75 = GetByteBitSupport(EDIDData[36], 0);
+
+            EDIDFormData.EDID_Established_Timing.Es1152x870_75 = GetByteBitSupport(EDIDData[37], 7);
+
             //38-53 EDID_Standard_Timing
 
             //54-71 EDID_Main_Timing

@@ -34,12 +34,12 @@ namespace WindowsFormsApp_BOE_Tool
 
         private void button1_Click(object sender, EventArgs e)
         {
-            button1.ForeColor = Color.Blue;
+            //button1.ForeColor = Color.Blue;
             if (CA.ca210Connect(0) == true)
             {
                 CA.ca210SetSyncMode(0);
                 CA.ca210SetSpeed(1);
-                button1.Text = "Success";
+                //button1.Text = "Success";
 
                 CA.ca210ZeroCal();
                 //btnConnect->Caption = "Connect CA410";
@@ -52,20 +52,20 @@ namespace WindowsFormsApp_BOE_Tool
 
             BOECA210 = CA.ca210Measure();
 
-            label1.Text = BOECA210.CA210fX.ToString();
-            label2.Text = BOECA210.CA210fY.ToString();
-            label3.Text = BOECA210.CA210fZ.ToString();
+            //label1.Text = BOECA210.CA210fX.ToString();
+            //label2.Text = BOECA210.CA210fY.ToString();
+            //label3.Text = BOECA210.CA210fZ.ToString();
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
-            int a;
+            //int a;
 
-            if (int.TryParse(textBox1.Text, out a) == true)//字符转int
+            //if (int.TryParse(textBox1.Text, out a) == true)//字符转int
             {
-                byte[] byte_buffer = new byte[] { 0x85, 0x03, 0xFB, 0x10, 0x00, (byte)a };
+             //   byte[] byte_buffer = new byte[] { 0x85, 0x03, 0xFB, 0x10, 0x00, (byte)a };
  
-                DDCCI.BOEDCCCI_Write(byte_buffer);
+             //   DDCCI.BOEDCCCI_Write(byte_buffer);
             }
         }
 
@@ -77,10 +77,10 @@ namespace WindowsFormsApp_BOE_Tool
 
             DDCCI.BOEDCCCI_Read(byte_buffer, return_buffer);
 
-            label4.Text = "Read:";
+            //label4.Text = "Read:";
             for (i=0; i < 10; i++)
             {
-                label4.Text += Convert.ToString(return_buffer[i], 16) + " ";
+            //    label4.Text += Convert.ToString(return_buffer[i], 16) + " ";
             }
         }
 
@@ -142,6 +142,8 @@ namespace WindowsFormsApp_BOE_Tool
             }
 
             EDID.Format(UnicodeText);
+
+            MessageBox.Show("success","EDID解析");
         }
     }
 }
