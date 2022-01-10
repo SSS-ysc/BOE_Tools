@@ -62,17 +62,17 @@ enum ColorEncoding
 };
 enum StandardTimingRatio
 {
-    Ratio1x1,//(EDID1.3)
-    Ratio4x3,//(EDID1.3)(EDID1.4)
-    Ratio5x4,//(EDID1.3)(EDID1.4)
-    Ratio16x9,//(EDID1.3)(EDID1.4)
-    Ratio16x10,//(EDID1.4)
+    Ratio16x10,
+    Ratio4x3,
+    Ratio5x4,
+    Ratio16x9,
 };
 struct EDIDStandardTiming
 {
     public Support TimingSupport;
     public StandardTimingRatio TimingRatio;
-    public uint TimingWidth;
+    public ushort TimingWidth;
+    public ushort TimingHeight;
     public byte TimingRate;
 };
 struct EDIDFeatureSupport
@@ -90,9 +90,9 @@ struct EDIDFeatureSupport
 struct EDIDBasicScreenSize
 {
     public ScreenSizeType Type;
-    public Byte Hsize;
-    public Byte Vsize;
-    public Byte Ratio;
+    public byte Hsize;
+    public byte Vsize;
+    public byte Ratio;
 };
 struct EDIDBasicDisplayParameters
 {
@@ -144,60 +144,57 @@ struct EDIDEstablishedTimings
 
     public Support Es1152x870_75;
 };
-struct EDIDStandardTimingsTable
-{
-    public EDIDStandardTiming Timing1;
-    public EDIDStandardTiming Timing2;
-    public EDIDStandardTiming Timing3;
-    public EDIDStandardTiming Timing4;
-    public EDIDStandardTiming Timing5;
-    public EDIDStandardTiming Timing6;
-    public EDIDStandardTiming Timing7;
-    public EDIDStandardTiming Timing8;
-};
 struct EDIDDetailTimingTable
 {
+    public ushort PixelClk;
 
+    public ushort HAdressable;
+    public ushort HBlanking;
+    public ushort HSyncFront;
+    public ushort HSyncWidth;
+    public byte HBorder;
+
+    public ushort VAdressable;
+    public ushort VBlanking;
+    public ushort VSyncFront;
+    public ushort VSyncWidth;
+    public byte VBorder;
+
+    public ushort VideoSizeH;
+    public ushort VideoSizeV;
 };
 struct EDIDDisplayRangeLimits
 {
 };
 struct EDIDTable
 {
-    public String EDID_IDManufacturerName;
+    public string EDID_IDManufacturerName;
     public uint EDID_IDProductCode;
     public string EDID_IDSerialNumber;
-    public uint EDID_Week;
-    public uint EDID_Year;
+    public ushort EDID_Week;
+    public ushort EDID_Year;
     public uint EDID_Model_Year;
     public EDIDversion EDID_Version;
     public EDIDBasicDisplayParameters EDID_Basic;
     public EDIDColorCharacteristics EDID_Panel_Color;
     public EDIDEstablishedTimings EDID_Established_Timing;
-    public EDIDStandardTimingsTable EDID_Standard_Timing;
+    public EDIDStandardTiming[] EDID_Standard_Timing;
     public EDIDDetailTimingTable EDID_Main_Timing;
     public EDIDDetailTimingTable EDID_Second_Main_Timing;
-    public String EDID_Display_Product_Serial_Number;
+    public string EDID_Display_Product_Serial_Number;
     public EDIDDisplayRangeLimits EDID_Display_Range_Limits;
-    public String EDID_Display_Product_Name;
-    public Byte EDID_Ex_Block_Count;
-    public Byte Checksum;
+    public string EDID_Display_Product_Name;
+    public byte EDID_Ex_Block_Count;
+    public byte Checksum;
 };
 struct EDIDTable_CEA
 {
-    public EDIDDetailTimingTable Timing1;
-    public EDIDDetailTimingTable Timing2;
-    public EDIDDetailTimingTable Timing3;
-    public EDIDDetailTimingTable Timing4;
-    public EDIDDetailTimingTable Timing5;
-    public EDIDDetailTimingTable Timing6;
+    public EDIDDetailTimingTable[] CEA_Timing;
 };
-
 struct EDIDTable_DisplayID
 {
 
 };
-
 namespace EDID_Form
 {
     internal static class EDID
@@ -211,31 +208,22 @@ namespace EDID_Form
             {
                 case 7:
                     return (byte)((a & 0x80) >> 7);
-                    break;
                 case 6:
                     return (byte)((a & 0x40) >> 6);
-                    break;
                 case 5:
                     return (byte)((a & 0x20) >> 5);
-                    break;
                 case 4:
                     return (byte)((a & 0x10) >> 4);
-                    break;
                 case 3:
                     return (byte)((a & 0x08) >> 3);
-                    break;
                 case 2:
                     return (byte)((a & 0x04) >> 2);
-                    break;
                 case 1:
                     return (byte)((a & 0x02) >> 1);
-                    break;
                 case 0:
                     return (byte)((a & 0x01) >> 0);
-                    break;
                 default:
                     return a;
-                    break;
             }
         }
         private static Support GetByteBitSupport(byte a, byte X)
@@ -314,9 +302,44 @@ namespace EDID_Form
                 i++;
             }
         }
+        private static EDIDStandardTiming FormatStandardTimingData(byte Data0, byte Data1)
+        {
+            EDIDStandardTiming StandardTimingTable = new EDIDStandardTiming();
+
+            if (Data0 == 0x01)
+                StandardTimingTable.TimingSupport = Support.unsupported;
+            else
+            {
+                StandardTimingTable.TimingSupport = Support.supported;
+                StandardTimingTable.TimingWidth = (ushort)((Data0 + 31) * 8);
+                StandardTimingTable.TimingRatio = (StandardTimingRatio)(Data1 >> 6);
+                StandardTimingTable.TimingRate = (byte)((byte)(Data1 & 0x3F) + 60);
+            }
+
+            switch (StandardTimingTable.TimingRatio)
+            {                 
+                case StandardTimingRatio.Ratio16x10:
+                    StandardTimingTable.TimingHeight = (ushort)(StandardTimingTable.TimingWidth / 16 * 10);
+                    break;
+
+                case StandardTimingRatio.Ratio4x3:
+                    StandardTimingTable.TimingHeight = (ushort)(StandardTimingTable.TimingWidth / 4 * 3);
+                    break;
+
+                case StandardTimingRatio.Ratio5x4:
+                    StandardTimingTable.TimingHeight = (ushort)(StandardTimingTable.TimingWidth / 5 * 4);
+                    break;
+
+                case StandardTimingRatio.Ratio16x9:
+                    StandardTimingTable.TimingHeight = (ushort)(StandardTimingTable.TimingWidth / 16 * 9);
+                    break;
+            }
+
+            return StandardTimingTable;
+        }
         private static EDIDDetailTimingTable FormatDetailTimingData(byte[] EDIDDetailTimingData)
         {
-            EDIDDetailTimingTable TimingTable;
+            EDIDDetailTimingTable TimingTable = new EDIDDetailTimingTable(); 
 
             return TimingTable;
         }
@@ -374,7 +397,7 @@ namespace EDID_Form
             {
                 EDIDFormData.EDID_Week = EDIDData[16];
                 Console.WriteLine("Week: {0}", EDIDFormData.EDID_Week);
-                EDIDFormData.EDID_Year = (uint)(EDIDData[17] + 1990);
+                EDIDFormData.EDID_Year = (ushort)(EDIDData[17] + 1990);
                 Console.WriteLine("Year: {0}", EDIDFormData.EDID_Year);
             }
             else if ((EDIDFormData.EDID_Version == EDIDversion.V14) && (EDIDData[16] == 0xFF))
@@ -513,6 +536,13 @@ namespace EDID_Form
             EDIDFormData.EDID_Established_Timing.Es1152x870_75 = GetByteBitSupport(EDIDData[37], 7);
 
             //38-53 EDID_Standard_Timing
+            EDIDFormData.EDID_Standard_Timing = new EDIDStandardTiming[8];
+            for (int i = 0; i< 8; i++)
+            {
+                EDIDFormData.EDID_Standard_Timing[i] = FormatStandardTimingData(EDIDData[38 + i * 2], EDIDData[39 + i * 2]);
+                if (EDIDFormData.EDID_Standard_Timing[i].TimingSupport == Support.supported)
+                    Console.WriteLine("Standard Timing : {0}x{1} Rate:{2}", EDIDFormData.EDID_Standard_Timing[i].TimingWidth, EDIDFormData.EDID_Standard_Timing[i].TimingHeight, EDIDFormData.EDID_Standard_Timing[i].TimingRate);
+             }
 
             //54-71 EDID_Main_Timing
 
