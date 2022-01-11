@@ -34,12 +34,12 @@ namespace WindowsFormsApp_BOE_Tool
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //button1.ForeColor = Color.Blue;
+            button1.ForeColor = Color.Blue;
             if (CA.ca210Connect(0) == true)
             {
                 CA.ca210SetSyncMode(0);
                 CA.ca210SetSpeed(1);
-                //button1.Text = "Success";
+                button1.Text = "Success";
 
                 CA.ca210ZeroCal();
                 //btnConnect->Caption = "Connect CA410";
@@ -92,7 +92,7 @@ namespace WindowsFormsApp_BOE_Tool
             openFileDialog1.FilterIndex = 1;
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                String filePath = openFileDialog1.FileName;
+                string filePath = openFileDialog1.FileName;
                 textBox2.Text = filePath;
                 using (FileStream fsRead = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 {
@@ -125,8 +125,8 @@ namespace WindowsFormsApp_BOE_Tool
 
         private void button7_Click(object sender, EventArgs e)
         {
-            String UnicodeText = "";
-            String filePath = textBox2.Text;
+            string UnicodeText = "";
+            string filePath = textBox2.Text;
 
             using (FileStream fsRead = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {

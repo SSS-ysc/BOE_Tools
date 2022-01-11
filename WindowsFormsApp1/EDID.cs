@@ -67,6 +67,16 @@ enum StandardTimingRatio
     Ratio5x4,
     Ratio16x9,
 };
+enum InterfaceType
+{ 
+    i_Timing,
+    p_Timing,
+};
+enum StereoViewing
+{
+    Normal,
+    
+};
 struct EDIDStandardTiming
 {
     public Support TimingSupport;
@@ -162,6 +172,11 @@ struct EDIDDetailTimingTable
 
     public ushort VideoSizeH;
     public ushort VideoSizeV;
+
+    public InterfaceType Interface;
+
+    public StereoViewing StereoFormat;
+
 };
 struct EDIDDisplayRangeLimits
 {
@@ -233,7 +248,7 @@ namespace EDID_Form
             else
                 return Support.unsupported;
         }
-        private static double GetEDIDColorxy(int xy)
+        private static double GetEDIDColorxy(uint xy)
         {
             double xyValue = 0;
 
@@ -495,14 +510,14 @@ namespace EDID_Form
             }
 
             //25-34 EDID_Color
-            EDIDFormData.EDID_Panel_Color.RedX = GetEDIDColorxy((int)(GetByteBit(EDIDData[25], 7)) * 2 + (int)(GetByteBit(EDIDData[25], 6)) + ((int)EDIDData[27] << 2));
-            EDIDFormData.EDID_Panel_Color.RedY = GetEDIDColorxy((int)(GetByteBit(EDIDData[25], 5)) * 2 + (int)(GetByteBit(EDIDData[25], 4)) + ((int)EDIDData[28] << 2));
-            EDIDFormData.EDID_Panel_Color.GreenX = GetEDIDColorxy((int)(GetByteBit(EDIDData[25], 3)) * 2 + (int)(GetByteBit(EDIDData[25], 2)) + ((int)EDIDData[29] << 2));
-            EDIDFormData.EDID_Panel_Color.GreenY = GetEDIDColorxy((int)(GetByteBit(EDIDData[25], 1)) * 2 + (int)(GetByteBit(EDIDData[25], 0)) + ((int)EDIDData[30] << 2));
-            EDIDFormData.EDID_Panel_Color.BlueX = GetEDIDColorxy((int)(GetByteBit(EDIDData[26], 7)) * 2 + (int)(GetByteBit(EDIDData[26], 6)) + ((int)EDIDData[31] << 2));
-            EDIDFormData.EDID_Panel_Color.BlueY = GetEDIDColorxy((int)(GetByteBit(EDIDData[26], 5)) * 2 + (int)(GetByteBit(EDIDData[26], 4)) + ((int)EDIDData[32] << 2));
-            EDIDFormData.EDID_Panel_Color.WhiteX = GetEDIDColorxy((int)(GetByteBit(EDIDData[26], 3)) * 2 + (int)(GetByteBit(EDIDData[26], 2)) + ((int)EDIDData[33] << 2));
-            EDIDFormData.EDID_Panel_Color.WhiteY = GetEDIDColorxy((int)(GetByteBit(EDIDData[26], 1)) * 2 + (int)(GetByteBit(EDIDData[26], 0)) + ((int)EDIDData[34] << 2));
+            EDIDFormData.EDID_Panel_Color.RedX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 7)) * 2 + (uint)(GetByteBit(EDIDData[25], 6)) + ((uint)EDIDData[27] << 2));
+            EDIDFormData.EDID_Panel_Color.RedY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 5)) * 2 + (uint)(GetByteBit(EDIDData[25], 4)) + ((uint)EDIDData[28] << 2));
+            EDIDFormData.EDID_Panel_Color.GreenX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 3)) * 2 + (uint)(GetByteBit(EDIDData[25], 2)) + ((uint)EDIDData[29] << 2));
+            EDIDFormData.EDID_Panel_Color.GreenY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 1)) * 2 + (uint)(GetByteBit(EDIDData[25], 0)) + ((uint)EDIDData[30] << 2));
+            EDIDFormData.EDID_Panel_Color.BlueX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 7)) * 2 + (uint)(GetByteBit(EDIDData[26], 6)) + ((uint)EDIDData[31] << 2));
+            EDIDFormData.EDID_Panel_Color.BlueY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 5)) * 2 + (uint)(GetByteBit(EDIDData[26], 4)) + ((uint)EDIDData[32] << 2));
+            EDIDFormData.EDID_Panel_Color.WhiteX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 3)) * 2 + (uint)(GetByteBit(EDIDData[26], 2)) + ((uint)EDIDData[33] << 2));
+            EDIDFormData.EDID_Panel_Color.WhiteY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 1)) * 2 + (uint)(GetByteBit(EDIDData[26], 0)) + ((uint)EDIDData[34] << 2));
             Console.WriteLine("Color.Red X: {0} Y: {1}, Color.Green X: {2} Y: {3}, Color.Blue X: {4} Y: {5}, Color.White X: {6} Y: {7}",
                 EDIDFormData.EDID_Panel_Color.RedX,
                 EDIDFormData.EDID_Panel_Color.RedY,
