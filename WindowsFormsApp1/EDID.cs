@@ -11,6 +11,14 @@ enum Support
     unsupported,
     supported,
 };
+enum FormatError
+{ 
+    Success,
+    HeaderError,
+    VersionError,
+    NoMainTimingError,
+    ChecksumError,
+};
 enum EDIDversion
 {
     V13,
@@ -68,15 +76,64 @@ enum StandardTimingRatio
     Ratio16x9,
 };
 enum InterfaceType
-{ 
-    i_Timing,
+{    
     p_Timing,
+    i_Timing,
 };
-enum StereoViewing
+enum StereoViewingType
 {
     Normal,
-    
+    FieldRightimage,
+    FieldLeftimage,
+    TwoWayRightimage,
+    TwoWayLeftimage,
+    FourWay,
+    SidebySide,
 };
+enum SyncType
+{
+    AnalogComposite,
+    BipolarAnalogComposite,
+    DigitalComposite,
+    DigitalSeparate,
+};
+enum AnalogSyncType
+{
+    Undefined,
+    WithoutSerrations_SyncOnGreenOnly,
+    WithoutSerrations_SyncOnRGB,
+    WithSerrations_SyncOnGreenOnly,
+    WithSerrations_SyncOnRGB,
+};
+enum DigitalSyncType
+{
+    Undefined,
+    WithoutSerrations_HSyncN,
+    WithoutSerrations_HSyncP,
+    WithSerrations_HSyncN,
+    WithSerrations_HSyncP,
+    VSyncN_HSyncN,
+    VSyncN_HSyncP,
+    VSyncP_HSyncN,
+    VSyncP_HSyncP,
+};
+enum EDIDDescriptorsType
+{
+    Undefined,
+    ProductSN,//FF
+    AlphanumericData,//FE
+    RangeLimits,//FD
+    ProductName,//FC
+    ColorData,//FB
+    StandardTiming,//FA
+    DCMdata,//F9
+    CVT3ByteTiming,//F8
+    DummyDescriptors,//11-F6
+    EstablishedTiming,//F7
+    ManufacturerDescriptors,//00-0F
+
+    DetailTiming,
+}
 struct EDIDStandardTiming
 {
     public Support TimingSupport;
@@ -158,12 +215,14 @@ struct EDIDDetailTimingTable
 {
     public ushort PixelClk;
 
+    public ushort HFrequency;
     public ushort HAdressable;
     public ushort HBlanking;
     public ushort HSyncFront;
     public ushort HSyncWidth;
     public byte HBorder;
 
+    public ushort VFrequency;
     public ushort VAdressable;
     public ushort VBlanking;
     public ushort VSyncFront;
@@ -175,31 +234,41 @@ struct EDIDDetailTimingTable
 
     public InterfaceType Interface;
 
-    public StereoViewing StereoFormat;
+    public StereoViewingType StereoFormat;
 
+    public SyncType SyncType;
+    public AnalogSyncType AnalogSync;
+    public DigitalSyncType DigitalSync;
 };
 struct EDIDDisplayRangeLimits
 {
 };
 struct EDIDTable
 {
-    public string EDID_IDManufacturerName;
-    public uint EDID_IDProductCode;
-    public string EDID_IDSerialNumber;
-    public ushort EDID_Week;
-    public ushort EDID_Year;
-    public uint EDID_Model_Year;
-    public EDIDversion EDID_Version;
-    public EDIDBasicDisplayParameters EDID_Basic;
-    public EDIDColorCharacteristics EDID_Panel_Color;
-    public EDIDEstablishedTimings EDID_Established_Timing;
-    public EDIDStandardTiming[] EDID_Standard_Timing;
-    public EDIDDetailTimingTable EDID_Main_Timing;
-    public EDIDDetailTimingTable EDID_Second_Main_Timing;
-    public string EDID_Display_Product_Serial_Number;
-    public EDIDDisplayRangeLimits EDID_Display_Range_Limits;
-    public string EDID_Display_Product_Name;
-    public byte EDID_Ex_Block_Count;
+    public string IDManufacturerName;
+    public uint IDProductCode;
+    public string IDSerialNumber;
+    public ushort Week;
+    public ushort Year;
+    public uint ModelYear;
+    public EDIDversion Version;
+    public EDIDBasicDisplayParameters Basic;
+    public EDIDColorCharacteristics PanelColor;
+    public EDIDEstablishedTimings EstablishedTiming;
+    public EDIDStandardTiming[] StandardTiming;
+
+    public EDIDDescriptorsType Descriptors1;
+    public EDIDDescriptorsType Descriptors2;
+    public EDIDDescriptorsType Descriptors3;
+    public EDIDDescriptorsType Descriptors4;
+
+    public EDIDDetailTimingTable MainTiming;
+    public EDIDDetailTimingTable SecondMainTiming;
+    public string SN;
+    public EDIDDisplayRangeLimits Limits;
+    public string Name;
+
+    public byte ExBlockCount;
     public byte Checksum;
 };
 struct EDIDTable_CEA
@@ -332,7 +401,7 @@ namespace EDID_Form
             }
 
             switch (StandardTimingTable.TimingRatio)
-            {                 
+            {
                 case StandardTimingRatio.Ratio16x10:
                     StandardTimingTable.TimingHeight = (ushort)(StandardTimingTable.TimingWidth / 16 * 10);
                     break;
@@ -352,30 +421,108 @@ namespace EDID_Form
 
             return StandardTimingTable;
         }
-        private static EDIDDetailTimingTable FormatDetailTimingData(byte[] EDIDDetailTimingData)
+        private static EDIDDetailTimingTable FormatDetailTimingData(byte[] Data)
         {
-            EDIDDetailTimingTable TimingTable = new EDIDDetailTimingTable(); 
+            EDIDDetailTimingTable Timing = new EDIDDetailTimingTable();
 
-            return TimingTable;
+            Timing.PixelClk = (ushort)(((uint)Data[1] << 8) + Data[0]);
+
+            Timing.HAdressable = (ushort)(((uint)(Data[4] & 0xF0) << 4) + Data[2]);
+            Timing.HBlanking = (ushort)(((uint)(Data[4] & 0x0F) << 8) + Data[3]);
+
+            Timing.VAdressable = (ushort)(((uint)(Data[7] & 0xF0) << 4) + Data[5]);
+            Timing.VBlanking = (ushort)(((uint)(Data[7] & 0x0F) << 8) + Data[6]);
+
+            Timing.HSyncFront = (ushort)(((uint)(Data[11] & 0xC0) << 2) + Data[8]);
+            Timing.HSyncWidth = (ushort)(((uint)(Data[11] & 0x30) << 4) + Data[9]);
+            Timing.VSyncFront = (ushort)(((uint)(Data[11] & 0x0C) << 2) + ((uint)(Data[10] & 0xF0) >> 4));
+            Timing.VSyncWidth = (ushort)(((uint)(Data[11] & 0x03) << 4) + (Data[10] & 0x0F));
+
+            Timing.VideoSizeH = (ushort)(((uint)(Data[14] & 0xF0) << 4) + Data[12]);
+            Timing.VideoSizeV = (ushort)(((uint)(Data[14] & 0x0F) << 8) + Data[13]);
+
+            Timing.HBorder = Data[15];
+            Timing.VBorder = Data[16];
+
+            Timing.Interface = (InterfaceType)GetByteBit(Data[17],7);
+
+            Timing.StereoFormat = (StereoViewingType)((uint)(Data[17] & 0x60) >> 5);
+
+            Timing.SyncType = (SyncType)((uint)(Data[17] & 0x0C) >> 2);
+            if (Timing.SyncType < SyncType.DigitalComposite)
+                Timing.AnalogSync = (AnalogSyncType)((Data[17] & 0x03) + 1);// + Undefined
+            else if (Timing.SyncType == SyncType.DigitalComposite)
+                Timing.DigitalSync = (DigitalSyncType)((Data[17] & 0x03) + 1);// + Undefined
+            else if (Timing.SyncType == SyncType.DigitalSeparate)
+                Timing.DigitalSync = (DigitalSyncType)((Data[17] & 0x03) + 5);// + VSyncN_HSyncN
+
+
+            Console.WriteLine("Timing PixelClock: {0} H :{1} HB :{2} V :{3} VB :{4} HSF :{5} HSW :{6} VSF :{7} VSW :{8} Hsize :{9} Vsize :{10} Interface :{11} StereoFormat :{12} SyncType :{13}  AnalogSync :{14}  DigitalSync :{15}",
+                    Timing.PixelClk,
+                    Timing.HAdressable,
+                    Timing.HBlanking,
+                    Timing.VAdressable,
+                    Timing.VBlanking,
+                    Timing.HSyncFront,
+                    Timing.HSyncWidth,
+                    Timing.VSyncFront,
+                    Timing.VSyncWidth,
+                    Timing.VideoSizeH,
+                    Timing.VideoSizeV,
+                    Timing.Interface,
+                    Timing.StereoFormat,
+                    Timing.SyncType,
+                    Timing.AnalogSync,
+                    Timing.DigitalSync);
+
+            return Timing;
         }
-        private static bool FormatBaseBlock(byte[] EDIDData)
+        private static EDIDDescriptorsType FormatDisplayDescriptor(byte[] Data)
+        {
+            if ((Data[0] != 0x00) && (Data[1] != 0x00) && (Data[2] != 0x00))
+            {
+                EDIDFormData.SecondMainTiming = FormatDetailTimingData(Data);
+                return EDIDDescriptorsType.DetailTiming;
+            }
+
+            switch (Data[3])
+            {
+                case 0xFF:
+                    EDIDFormData.SN = Encoding.ASCII.GetString(Data, 5, 13);
+                    Console.WriteLine("SN :{0}", EDIDFormData.SN);
+                    return EDIDDescriptorsType.ProductSN;
+
+                case 0xFD:
+                    Console.WriteLine("RangeLimits :");
+                    return EDIDDescriptorsType.RangeLimits;
+
+                case 0xFC:
+                    EDIDFormData.Name = Encoding.ASCII.GetString(Data, 5, 13);
+                    Console.WriteLine("Name :{0}", EDIDFormData.Name);
+                    return EDIDDescriptorsType.ProductName;
+
+                default:            
+                    return EDIDDescriptorsType.Undefined;
+            }
+        }
+        private static FormatError FormatBaseBlock(byte[] EDIDData)
         {
             //00-07
             if ((EDIDData[0] != 0x00) || (EDIDData[1] != 0xFF) || (EDIDData[2] != 0xFF) || (EDIDData[3] != 0xFF) || (EDIDData[4] != 0xFF) || (EDIDData[5] != 0xFF) || (EDIDData[6] != 0xFF) || (EDIDData[7] != 0x00))
-                return false;
+                return FormatError.HeaderError;
 
             //18-19 EDID_Version
             if ((EDIDData[18] == 0x01) && ((EDIDData[19] == 0x03) || (EDIDData[19] == 0x04)))
             {
                 if (EDIDData[19] == 0x03)
-                    EDIDFormData.EDID_Version = EDIDversion.V13;
+                    EDIDFormData.Version = EDIDversion.V13;
                 else
-                    EDIDFormData.EDID_Version = EDIDversion.V14;
+                    EDIDFormData.Version = EDIDversion.V14;
 
-                Console.WriteLine("EDID Version: {0}", EDIDFormData.EDID_Version);
+                Console.WriteLine("EDID Version: {0}", EDIDFormData.Version);
             }
             else
-                return false;
+                return FormatError.VersionError;
 
             //08-09 EDID_IDManufacturerName
             //0001="A",11010="Z",A-Z
@@ -383,199 +530,232 @@ namespace EDID_Form
             ID_Data[0] = (byte)((EDIDData[8] >> 2) + 0x40);
             ID_Data[1] = (byte)(((EDIDData[8] & 0x03) << 3) + (EDIDData[9] >> 5) + 0x40);
             ID_Data[2] = (byte)((EDIDData[9] & 0x1F) + 0x40);
-            EDIDFormData.EDID_IDManufacturerName = Encoding.ASCII.GetString(ID_Data);
-            Console.WriteLine("Manufacturer Name: {0}", EDIDFormData.EDID_IDManufacturerName);
+            EDIDFormData.IDManufacturerName = Encoding.ASCII.GetString(ID_Data);
+            Console.WriteLine("Manufacturer Name: {0}", EDIDFormData.IDManufacturerName);
 
             //10-11 EDID_IDProductCode
-            EDIDFormData.EDID_IDProductCode = (uint)(EDIDData[10] + (EDIDData[11] << 8));
-            Console.WriteLine("ID Product: {0}", Convert.ToString(EDIDFormData.EDID_IDProductCode, 16));
+            EDIDFormData.IDProductCode = (uint)(EDIDData[10] + (EDIDData[11] << 8));
+            Console.WriteLine("ID Product: {0}", Convert.ToString(EDIDFormData.IDProductCode, 16));
 
             //12-15 EDID_IDSerialNumber
-            if (((EDIDFormData.EDID_Version == EDIDversion.V13) && (EDIDData[12] == 0x01) && (EDIDData[13] == 0x01) && (EDIDData[14] == 0x01) && (EDIDData[15] == 0x01))
-                || ((EDIDFormData.EDID_Version == EDIDversion.V14) && (EDIDData[12] == 0x00) && (EDIDData[13] == 0x00) && (EDIDData[14] == 0x00) && (EDIDData[15] == 0x00))
+            if (((EDIDFormData.Version == EDIDversion.V13) && (EDIDData[12] == 0x01) && (EDIDData[13] == 0x01) && (EDIDData[14] == 0x01) && (EDIDData[15] == 0x01))
+                || ((EDIDFormData.Version == EDIDversion.V14) && (EDIDData[12] == 0x00) && (EDIDData[13] == 0x00) && (EDIDData[14] == 0x00) && (EDIDData[15] == 0x00))
                 )
             {
-                EDIDFormData.EDID_IDSerialNumber = null;
+                EDIDFormData.IDSerialNumber = null;
                 Console.WriteLine("ID Serial Number: not used");
             }
             else
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    EDIDFormData.EDID_IDSerialNumber += Convert.ToString(EDIDData[12 + i], 16);
+                    EDIDFormData.IDSerialNumber += Convert.ToString(EDIDData[12 + i], 16);
                 }
-                Console.WriteLine("ID Serial Number: {0}", EDIDFormData.EDID_IDSerialNumber);
+                Console.WriteLine("ID Serial Number: {0}", EDIDFormData.IDSerialNumber);
             }
 
             //16-17 EDID_Week EDID_Year EDID_Model_Year
             if (EDIDData[16] <= 54)
             {
-                EDIDFormData.EDID_Week = EDIDData[16];
-                Console.WriteLine("Week: {0}", EDIDFormData.EDID_Week);
-                EDIDFormData.EDID_Year = (ushort)(EDIDData[17] + 1990);
-                Console.WriteLine("Year: {0}", EDIDFormData.EDID_Year);
+                EDIDFormData.Week = EDIDData[16];
+                Console.WriteLine("Week: {0}", EDIDFormData.Week);
+                EDIDFormData.Year = (ushort)(EDIDData[17] + 1990);
+                Console.WriteLine("Year: {0}", EDIDFormData.Year);
             }
-            else if ((EDIDFormData.EDID_Version == EDIDversion.V14) && (EDIDData[16] == 0xFF))
+            else if ((EDIDFormData.Version == EDIDversion.V14) && (EDIDData[16] == 0xFF))
             {
-                EDIDFormData.EDID_Model_Year = (uint)(EDIDData[17] + 1990);
+                EDIDFormData.ModelYear = (uint)(EDIDData[17] + 1990);
                 Console.WriteLine("Week: not used");
-                Console.WriteLine("Model Year: {0}", EDIDFormData.EDID_Model_Year);
+                Console.WriteLine("Model Year: {0}", EDIDFormData.ModelYear);
             }
 
             //20-24 EDID_Basic
             //20
-            EDIDFormData.EDID_Basic.Video_definition = (EDIDVideoStandard)((EDIDData[20] & 0x80) >> 7);
-            Console.WriteLine("Video Standard: {0}", EDIDFormData.EDID_Basic.Video_definition);
-            if (EDIDFormData.EDID_Version == EDIDversion.V14)
+            EDIDFormData.Basic.Video_definition = (EDIDVideoStandard)((EDIDData[20] & 0x80) >> 7);
+            Console.WriteLine("Video Standard: {0}", EDIDFormData.Basic.Video_definition);
+            if (EDIDFormData.Version == EDIDversion.V14)
             {
-                if (EDIDFormData.EDID_Basic.Video_definition == EDIDVideoStandard.EDIDVideoDigital)//EDID1.4 Digital
+                if (EDIDFormData.Basic.Video_definition == EDIDVideoStandard.EDIDVideoDigital)//EDID1.4 Digital
                 {
-                    EDIDFormData.EDID_Basic.DigitalColorDepth = (EDIDColorBitDepth)((EDIDData[20] & 0x70) >> 4);
-                    Console.WriteLine("Color Bit Depth: {0}", EDIDFormData.EDID_Basic.DigitalColorDepth);
+                    EDIDFormData.Basic.DigitalColorDepth = (EDIDColorBitDepth)((EDIDData[20] & 0x70) >> 4);
+                    Console.WriteLine("Color Bit Depth: {0}", EDIDFormData.Basic.DigitalColorDepth);
 
-                    EDIDFormData.EDID_Basic.DigitalStandard = (EDIDDigitalVideoStandard)(EDIDData[20] & 0x0F);
-                    Console.WriteLine("Digital Standard: {0}", EDIDFormData.EDID_Basic.DigitalStandard);
+                    EDIDFormData.Basic.DigitalStandard = (EDIDDigitalVideoStandard)(EDIDData[20] & 0x0F);
+                    Console.WriteLine("Digital Standard: {0}", EDIDFormData.Basic.DigitalStandard);
                 }
             }
             else
             {
-                if (EDIDFormData.EDID_Basic.Video_definition == EDIDVideoStandard.EDIDVideoDigital)//EDID1.3 Digital
+                if (EDIDFormData.Basic.Video_definition == EDIDVideoStandard.EDIDVideoDigital)//EDID1.3 Digital
                 {
                 }
                 else
                 {
-                    EDIDFormData.EDID_Basic.AnalogSignalLevelStandard = (byte)((EDIDData[20] & 0x60) >> 5);
-                    EDIDFormData.EDID_Basic.AnalogVideoSetup = (byte)((EDIDData[20] & 0x10) >> 4);
-                    EDIDFormData.EDID_Basic.DigitalColorDepth = (EDIDColorBitDepth)(EDIDData[20] & 0x0F);
+                    EDIDFormData.Basic.AnalogSignalLevelStandard = (byte)((EDIDData[20] & 0x60) >> 5);
+                    EDIDFormData.Basic.AnalogVideoSetup = (byte)((EDIDData[20] & 0x10) >> 4);
+                    EDIDFormData.Basic.DigitalColorDepth = (EDIDColorBitDepth)(EDIDData[20] & 0x0F);
                 }
             }
             //21-22
             if ((EDIDData[21] != 0x00) && (EDIDData[22] != 0x00))
             {
-                EDIDFormData.EDID_Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_HV;
-                EDIDFormData.EDID_Basic.ScreenSize.Hsize = EDIDData[21];
-                EDIDFormData.EDID_Basic.ScreenSize.Vsize = EDIDData[22];
-                Console.WriteLine("Screen Size: {0}, H: {1} cm, V: {2} cm", EDIDFormData.EDID_Basic.ScreenSize.Type, EDIDFormData.EDID_Basic.ScreenSize.Hsize, EDIDFormData.EDID_Basic.ScreenSize.Vsize);
+                EDIDFormData.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_HV;
+                EDIDFormData.Basic.ScreenSize.Hsize = EDIDData[21];
+                EDIDFormData.Basic.ScreenSize.Vsize = EDIDData[22];
+                Console.WriteLine("Screen Size: {0}, H: {1} cm, V: {2} cm", EDIDFormData.Basic.ScreenSize.Type, EDIDFormData.Basic.ScreenSize.Hsize, EDIDFormData.Basic.ScreenSize.Vsize);
             }
             else if (EDIDData[22] == 0x00)
             {
-                EDIDFormData.EDID_Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_Ratio;
-                EDIDFormData.EDID_Basic.ScreenSize.Ratio = EDIDData[21];   // ?
-                Console.WriteLine("Screen Size: {0}, Ratio: {1}", EDIDFormData.EDID_Basic.ScreenSize.Type, EDIDFormData.EDID_Basic.ScreenSize.Ratio);
+                EDIDFormData.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_Ratio;
+                EDIDFormData.Basic.ScreenSize.Ratio = EDIDData[21];   // ?
+                Console.WriteLine("Screen Size: {0}, Ratio: {1}", EDIDFormData.Basic.ScreenSize.Type, EDIDFormData.Basic.ScreenSize.Ratio);
             }
             else if (EDIDData[21] == 0x00)
             {
-                EDIDFormData.EDID_Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_Ratio;
-                EDIDFormData.EDID_Basic.ScreenSize.Ratio = EDIDData[22];   // ?
-                Console.WriteLine("Screen Size: {0}, Ratio: {1}", EDIDFormData.EDID_Basic.ScreenSize.Type, EDIDFormData.EDID_Basic.ScreenSize.Ratio);
+                EDIDFormData.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_Ratio;
+                EDIDFormData.Basic.ScreenSize.Ratio = EDIDData[22];   // ?
+                Console.WriteLine("Screen Size: {0}, Ratio: {1}", EDIDFormData.Basic.ScreenSize.Type, EDIDFormData.Basic.ScreenSize.Ratio);
             }
             else
             {
-                EDIDFormData.EDID_Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_undefined;
+                EDIDFormData.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_undefined;
             }
             //23
-            EDIDFormData.EDID_Basic.Gamma = (float)EDIDData[23] / 100 + 1;
-            Console.WriteLine("Gamma: {0} ", EDIDFormData.EDID_Basic.Gamma);
+            EDIDFormData.Basic.Gamma = (float)EDIDData[23] / 100 + 1;
+            Console.WriteLine("Gamma: {0} ", EDIDFormData.Basic.Gamma);
             //24
-            EDIDFormData.EDID_Basic.FeatureSupport.StandbyMode = GetByteBitSupport(EDIDData[24], 7);
-            EDIDFormData.EDID_Basic.FeatureSupport.SuspendMode = GetByteBitSupport(EDIDData[24], 6);
-            EDIDFormData.EDID_Basic.FeatureSupport.VeryLowPowerMode = GetByteBitSupport(EDIDData[24], 5);
-            EDIDFormData.EDID_Basic.FeatureSupport.sRGBStandard = GetByteBitSupport(EDIDData[24], 2);
-            EDIDFormData.EDID_Basic.FeatureSupport.PreferredTimingMode = GetByteBitSupport(EDIDData[24], 1);
-            if (EDIDFormData.EDID_Version == EDIDversion.V13)
+            EDIDFormData.Basic.FeatureSupport.StandbyMode = GetByteBitSupport(EDIDData[24], 7);
+            EDIDFormData.Basic.FeatureSupport.SuspendMode = GetByteBitSupport(EDIDData[24], 6);
+            EDIDFormData.Basic.FeatureSupport.VeryLowPowerMode = GetByteBitSupport(EDIDData[24], 5);
+            EDIDFormData.Basic.FeatureSupport.sRGBStandard = GetByteBitSupport(EDIDData[24], 2);
+            EDIDFormData.Basic.FeatureSupport.PreferredTimingMode = GetByteBitSupport(EDIDData[24], 1);
+            if (EDIDFormData.Version == EDIDversion.V13)
             {
-                EDIDFormData.EDID_Basic.FeatureSupport.DisplayColorType = (ColorType)((EDIDData[24] & 0x18) >> 3);
-                EDIDFormData.EDID_Basic.FeatureSupport.GTFstandard = GetByteBitSupport(EDIDData[24], 0);
+                EDIDFormData.Basic.FeatureSupport.DisplayColorType = (ColorType)((EDIDData[24] & 0x18) >> 3);
+                EDIDFormData.Basic.FeatureSupport.GTFstandard = GetByteBitSupport(EDIDData[24], 0);
                 Console.WriteLine("StandbyMode: {0}, SuspendMode: {1}, LowPowerMode: {2}, DisplayColorType: {3}, sRGBStandard: {4}, PreferredTimingMode: {5}, GTFstandard: {6}",
-                    EDIDFormData.EDID_Basic.FeatureSupport.StandbyMode,
-                    EDIDFormData.EDID_Basic.FeatureSupport.SuspendMode,
-                    EDIDFormData.EDID_Basic.FeatureSupport.VeryLowPowerMode,
-                    EDIDFormData.EDID_Basic.FeatureSupport.DisplayColorType,
-                    EDIDFormData.EDID_Basic.FeatureSupport.sRGBStandard,
-                    EDIDFormData.EDID_Basic.FeatureSupport.PreferredTimingMode,
-                    EDIDFormData.EDID_Basic.FeatureSupport.GTFstandard);
+                    EDIDFormData.Basic.FeatureSupport.StandbyMode,
+                    EDIDFormData.Basic.FeatureSupport.SuspendMode,
+                    EDIDFormData.Basic.FeatureSupport.VeryLowPowerMode,
+                    EDIDFormData.Basic.FeatureSupport.DisplayColorType,
+                    EDIDFormData.Basic.FeatureSupport.sRGBStandard,
+                    EDIDFormData.Basic.FeatureSupport.PreferredTimingMode,
+                    EDIDFormData.Basic.FeatureSupport.GTFstandard);
             }
             else
             {
-                EDIDFormData.EDID_Basic.FeatureSupport.ColorEncodingFormat = (ColorEncoding)((EDIDData[24] & 0x18) >> 3);
-                EDIDFormData.EDID_Basic.FeatureSupport.ContinuousFrequency = GetByteBitSupport(EDIDData[24], 0);
+                EDIDFormData.Basic.FeatureSupport.ColorEncodingFormat = (ColorEncoding)((EDIDData[24] & 0x18) >> 3);
+                EDIDFormData.Basic.FeatureSupport.ContinuousFrequency = GetByteBitSupport(EDIDData[24], 0);
                 Console.WriteLine("StandbyMode: {0}, SuspendMode: {1}, LowPowerMode: {2}, ColorEncodingFormat: {3}, sRGBStandard: {4}, PreferredTimingMode: {5}, ContinuousFrequency: {6}",
-                    EDIDFormData.EDID_Basic.FeatureSupport.StandbyMode,
-                    EDIDFormData.EDID_Basic.FeatureSupport.SuspendMode,
-                    EDIDFormData.EDID_Basic.FeatureSupport.VeryLowPowerMode,
-                    EDIDFormData.EDID_Basic.FeatureSupport.ColorEncodingFormat,
-                    EDIDFormData.EDID_Basic.FeatureSupport.sRGBStandard,
-                    EDIDFormData.EDID_Basic.FeatureSupport.PreferredTimingMode,
-                    EDIDFormData.EDID_Basic.FeatureSupport.ContinuousFrequency);
+                    EDIDFormData.Basic.FeatureSupport.StandbyMode,
+                    EDIDFormData.Basic.FeatureSupport.SuspendMode,
+                    EDIDFormData.Basic.FeatureSupport.VeryLowPowerMode,
+                    EDIDFormData.Basic.FeatureSupport.ColorEncodingFormat,
+                    EDIDFormData.Basic.FeatureSupport.sRGBStandard,
+                    EDIDFormData.Basic.FeatureSupport.PreferredTimingMode,
+                    EDIDFormData.Basic.FeatureSupport.ContinuousFrequency);
             }
 
             //25-34 EDID_Color
-            EDIDFormData.EDID_Panel_Color.RedX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 7)) * 2 + (uint)(GetByteBit(EDIDData[25], 6)) + ((uint)EDIDData[27] << 2));
-            EDIDFormData.EDID_Panel_Color.RedY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 5)) * 2 + (uint)(GetByteBit(EDIDData[25], 4)) + ((uint)EDIDData[28] << 2));
-            EDIDFormData.EDID_Panel_Color.GreenX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 3)) * 2 + (uint)(GetByteBit(EDIDData[25], 2)) + ((uint)EDIDData[29] << 2));
-            EDIDFormData.EDID_Panel_Color.GreenY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 1)) * 2 + (uint)(GetByteBit(EDIDData[25], 0)) + ((uint)EDIDData[30] << 2));
-            EDIDFormData.EDID_Panel_Color.BlueX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 7)) * 2 + (uint)(GetByteBit(EDIDData[26], 6)) + ((uint)EDIDData[31] << 2));
-            EDIDFormData.EDID_Panel_Color.BlueY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 5)) * 2 + (uint)(GetByteBit(EDIDData[26], 4)) + ((uint)EDIDData[32] << 2));
-            EDIDFormData.EDID_Panel_Color.WhiteX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 3)) * 2 + (uint)(GetByteBit(EDIDData[26], 2)) + ((uint)EDIDData[33] << 2));
-            EDIDFormData.EDID_Panel_Color.WhiteY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 1)) * 2 + (uint)(GetByteBit(EDIDData[26], 0)) + ((uint)EDIDData[34] << 2));
+            EDIDFormData.PanelColor.RedX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 7)) * 2 + (uint)(GetByteBit(EDIDData[25], 6)) + ((uint)EDIDData[27] << 2));
+            EDIDFormData.PanelColor.RedY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 5)) * 2 + (uint)(GetByteBit(EDIDData[25], 4)) + ((uint)EDIDData[28] << 2));
+            EDIDFormData.PanelColor.GreenX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 3)) * 2 + (uint)(GetByteBit(EDIDData[25], 2)) + ((uint)EDIDData[29] << 2));
+            EDIDFormData.PanelColor.GreenY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[25], 1)) * 2 + (uint)(GetByteBit(EDIDData[25], 0)) + ((uint)EDIDData[30] << 2));
+            EDIDFormData.PanelColor.BlueX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 7)) * 2 + (uint)(GetByteBit(EDIDData[26], 6)) + ((uint)EDIDData[31] << 2));
+            EDIDFormData.PanelColor.BlueY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 5)) * 2 + (uint)(GetByteBit(EDIDData[26], 4)) + ((uint)EDIDData[32] << 2));
+            EDIDFormData.PanelColor.WhiteX = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 3)) * 2 + (uint)(GetByteBit(EDIDData[26], 2)) + ((uint)EDIDData[33] << 2));
+            EDIDFormData.PanelColor.WhiteY = GetEDIDColorxy((uint)(GetByteBit(EDIDData[26], 1)) * 2 + (uint)(GetByteBit(EDIDData[26], 0)) + ((uint)EDIDData[34] << 2));
             Console.WriteLine("Color.Red X: {0} Y: {1}, Color.Green X: {2} Y: {3}, Color.Blue X: {4} Y: {5}, Color.White X: {6} Y: {7}",
-                EDIDFormData.EDID_Panel_Color.RedX,
-                EDIDFormData.EDID_Panel_Color.RedY,
-                EDIDFormData.EDID_Panel_Color.GreenX,
-                EDIDFormData.EDID_Panel_Color.GreenY,
-                EDIDFormData.EDID_Panel_Color.BlueX,
-                EDIDFormData.EDID_Panel_Color.BlueY,
-                EDIDFormData.EDID_Panel_Color.WhiteX,
-                EDIDFormData.EDID_Panel_Color.WhiteY
+                EDIDFormData.PanelColor.RedX,
+                EDIDFormData.PanelColor.RedY,
+                EDIDFormData.PanelColor.GreenX,
+                EDIDFormData.PanelColor.GreenY,
+                EDIDFormData.PanelColor.BlueX,
+                EDIDFormData.PanelColor.BlueY,
+                EDIDFormData.PanelColor.WhiteX,
+                EDIDFormData.PanelColor.WhiteY
                 );
 
             //35-37 EDID_Established_Timing
-            EDIDFormData.EDID_Established_Timing.Es720x400_70 = GetByteBitSupport(EDIDData[35], 7);
-            EDIDFormData.EDID_Established_Timing.Es720x400_88 = GetByteBitSupport(EDIDData[35], 6);
-            EDIDFormData.EDID_Established_Timing.Es640x480_60 = GetByteBitSupport(EDIDData[35], 5);
-            EDIDFormData.EDID_Established_Timing.Es640x480_67 = GetByteBitSupport(EDIDData[35], 4);
-            EDIDFormData.EDID_Established_Timing.Es640x480_72 = GetByteBitSupport(EDIDData[35], 3);
-            EDIDFormData.EDID_Established_Timing.Es640x480_75 = GetByteBitSupport(EDIDData[35], 2);
-            EDIDFormData.EDID_Established_Timing.Es800x600_56 = GetByteBitSupport(EDIDData[35], 1);
-            EDIDFormData.EDID_Established_Timing.Es800x600_60 = GetByteBitSupport(EDIDData[35], 0);
+            EDIDFormData.EstablishedTiming.Es720x400_70 = GetByteBitSupport(EDIDData[35], 7);
+            EDIDFormData.EstablishedTiming.Es720x400_88 = GetByteBitSupport(EDIDData[35], 6);
+            EDIDFormData.EstablishedTiming.Es640x480_60 = GetByteBitSupport(EDIDData[35], 5);
+            EDIDFormData.EstablishedTiming.Es640x480_67 = GetByteBitSupport(EDIDData[35], 4);
+            EDIDFormData.EstablishedTiming.Es640x480_72 = GetByteBitSupport(EDIDData[35], 3);
+            EDIDFormData.EstablishedTiming.Es640x480_75 = GetByteBitSupport(EDIDData[35], 2);
+            EDIDFormData.EstablishedTiming.Es800x600_56 = GetByteBitSupport(EDIDData[35], 1);
+            EDIDFormData.EstablishedTiming.Es800x600_60 = GetByteBitSupport(EDIDData[35], 0);
 
-            EDIDFormData.EDID_Established_Timing.Es800x600_72 = GetByteBitSupport(EDIDData[36], 7);
-            EDIDFormData.EDID_Established_Timing.Es800x600_75 = GetByteBitSupport(EDIDData[36], 6);
-            EDIDFormData.EDID_Established_Timing.Es832x624_75 = GetByteBitSupport(EDIDData[36], 5);
-            EDIDFormData.EDID_Established_Timing.Es1024x768_87 = GetByteBitSupport(EDIDData[36], 4);
-            EDIDFormData.EDID_Established_Timing.Es1024x768_60 = GetByteBitSupport(EDIDData[36], 3);
-            EDIDFormData.EDID_Established_Timing.Es1024x768_70 = GetByteBitSupport(EDIDData[36], 2);
-            EDIDFormData.EDID_Established_Timing.Es1024x768_75 = GetByteBitSupport(EDIDData[36], 1);
-            EDIDFormData.EDID_Established_Timing.Es1280x1024_75 = GetByteBitSupport(EDIDData[36], 0);
+            EDIDFormData.EstablishedTiming.Es800x600_72 = GetByteBitSupport(EDIDData[36], 7);
+            EDIDFormData.EstablishedTiming.Es800x600_75 = GetByteBitSupport(EDIDData[36], 6);
+            EDIDFormData.EstablishedTiming.Es832x624_75 = GetByteBitSupport(EDIDData[36], 5);
+            EDIDFormData.EstablishedTiming.Es1024x768_87 = GetByteBitSupport(EDIDData[36], 4);
+            EDIDFormData.EstablishedTiming.Es1024x768_60 = GetByteBitSupport(EDIDData[36], 3);
+            EDIDFormData.EstablishedTiming.Es1024x768_70 = GetByteBitSupport(EDIDData[36], 2);
+            EDIDFormData.EstablishedTiming.Es1024x768_75 = GetByteBitSupport(EDIDData[36], 1);
+            EDIDFormData.EstablishedTiming.Es1280x1024_75 = GetByteBitSupport(EDIDData[36], 0);
 
-            EDIDFormData.EDID_Established_Timing.Es1152x870_75 = GetByteBitSupport(EDIDData[37], 7);
+            EDIDFormData.EstablishedTiming.Es1152x870_75 = GetByteBitSupport(EDIDData[37], 7);
 
             //38-53 EDID_Standard_Timing
-            EDIDFormData.EDID_Standard_Timing = new EDIDStandardTiming[8];
-            for (int i = 0; i< 8; i++)
+            EDIDFormData.StandardTiming = new EDIDStandardTiming[8];
+            for (int i = 0; i < 8; i++)
             {
-                EDIDFormData.EDID_Standard_Timing[i] = FormatStandardTimingData(EDIDData[38 + i * 2], EDIDData[39 + i * 2]);
-                if (EDIDFormData.EDID_Standard_Timing[i].TimingSupport == Support.supported)
-                    Console.WriteLine("Standard Timing : {0}x{1} Rate:{2}", EDIDFormData.EDID_Standard_Timing[i].TimingWidth, EDIDFormData.EDID_Standard_Timing[i].TimingHeight, EDIDFormData.EDID_Standard_Timing[i].TimingRate);
-             }
+                EDIDFormData.StandardTiming[i] = FormatStandardTimingData(EDIDData[38 + i * 2], EDIDData[39 + i * 2]);
+                if (EDIDFormData.StandardTiming[i].TimingSupport == Support.supported)
+                    Console.WriteLine("Standard Timing : {0}x{1} Rate:{2}", EDIDFormData.StandardTiming[i].TimingWidth, EDIDFormData.StandardTiming[i].TimingHeight, EDIDFormData.StandardTiming[i].TimingRate);
+            }
 
-            //54-71 EDID_Main_Timing
+            byte[] DsecriptorTable = new byte[18];
+            //54-71 EDID_Main_Timing (Display Dsecriptor 1)
+            if (EDIDData[54] == 0x00)
+                return FormatError.NoMainTimingError;
+            EDIDFormData.Descriptors1 = EDIDDescriptorsType.DetailTiming;
+            Array.Copy(EDIDData, 54, DsecriptorTable, 0, 18);
+            EDIDFormData.MainTiming = FormatDetailTimingData(DsecriptorTable);
 
-            //72-125 Detailed Timing / Display Dsecriptor
+            //72-89 Detailed Timing / Display Dsecriptor 2
+            if (EDIDData[75] == 0x00)
+                EDIDFormData.Descriptors2 = EDIDDescriptorsType.Undefined;
+            else
+            {
+                Array.Copy(EDIDData, 72, DsecriptorTable, 0, 18);
+                EDIDFormData.Descriptors2 = FormatDisplayDescriptor(DsecriptorTable);
+            }
+
+            //90-107 Detailed Timing / Display Dsecriptor 3
+            if (EDIDData[93] == 0x00)
+                EDIDFormData.Descriptors3 = EDIDDescriptorsType.Undefined;
+            else
+            {
+                Array.Copy(EDIDData, 90, DsecriptorTable, 0, 18);
+                EDIDFormData.Descriptors3 = FormatDisplayDescriptor(DsecriptorTable);
+            }
+
+            //108-125 Detailed Timing / Display Dsecriptor 4
+            if (EDIDData[111] == 0x00)
+                EDIDFormData.Descriptors4 = EDIDDescriptorsType.Undefined;
+            else
+            {
+                Array.Copy(EDIDData, 108, DsecriptorTable, 0, 18);
+                EDIDFormData.Descriptors4 = FormatDisplayDescriptor(DsecriptorTable);
+            }
 
             //126 EDID_Ex_Block_Count
+            EDIDFormData.ExBlockCount = EDIDData[126];
 
             //127 Checksum
-
-            // EDID_Main_Timing
-            if (EDIDData[0x4B] == 0xFF)
+            byte checksum = 0x00;
+            for (int i = 0; i < 128; i++)
             {
-                for (int i = 0; i < 13; i++)
-                {
-                    EDIDFormData.EDID_Display_Product_Serial_Number += Encoding.ASCII.GetString(EDIDData, 0x4D + i, 1);
-                }
+                checksum += EDIDData[i];
             }
-            return true;
+            if (checksum != 0x00)
+                return FormatError.ChecksumError;
+            else
+                EDIDFormData.Checksum = EDIDData[127];
+
+            return FormatError.Success;
         }
         private static bool FormatCEABlock(byte[] EDIDData)
         {
@@ -585,9 +765,10 @@ namespace EDID_Form
         {
             return true;
         }
-        public static void Format(string UnicodeText)
+        public static FormatError Format(string UnicodeText)
         {
             int Length;
+            FormatError Error;
             EDIDText = "";
 
             Length = MatchOriginalTextEDID(UnicodeText);
@@ -603,7 +784,9 @@ namespace EDID_Form
 
             if (Length >= 128)
             {
-                FormatBaseBlock(Data);
+                Error = FormatBaseBlock(Data);
+                if(Error != FormatError.Success)
+                    return Error;
             }
             if (Length >= 256)
             {
@@ -613,6 +796,8 @@ namespace EDID_Form
             {
                 FormatDisplayIDBlock(Data);
             }
+
+            return FormatError.Success;
         }
 
         public static bool OutputNotesEDIDText(string Path)

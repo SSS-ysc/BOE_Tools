@@ -141,9 +141,10 @@ namespace WindowsFormsApp_BOE_Tool
                 }
             }
 
-            EDID.Format(UnicodeText);
+            string Formatresult;
+            Formatresult = EDID.Format(UnicodeText).ToString();
 
-            MessageBox.Show("success","EDID解析");
+            MessageBox.Show(Formatresult, "EDID解析");
         }
     }
 }
