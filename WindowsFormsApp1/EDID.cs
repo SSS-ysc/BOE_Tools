@@ -134,6 +134,21 @@ enum EDIDDescriptorsType
 
     DetailTiming,
 }
+enum LimitsHVOffsetsType
+{ 
+    Zero,
+    Reserved,
+    Max255MinZero,
+    Max255Min255,
+}
+enum VideoTimingType
+{ 
+    DefaultGTF,
+    RangeLimitsOnly,
+    SecondaryGTF,
+    CVT,
+    Reserved,
+}
 struct EDIDStandardTiming
 {
     public Support TimingSupport;
@@ -242,6 +257,14 @@ struct EDIDDetailTimingTable
 };
 struct EDIDDisplayRangeLimits
 {
+    public LimitsHVOffsetsType VerticalOffest;
+    public ushort VerticalMin;
+    public ushort VerticalMax;
+    public LimitsHVOffsetsType HorizontalOffest;
+    public ushort HorizontalMin;
+    public ushort HorizontalMax;
+    public ushort PixelClkMax;
+    public VideoTimingType VideoTiming;
 };
 struct EDIDTable
 {
@@ -250,7 +273,7 @@ struct EDIDTable
     public string IDSerialNumber;
     public ushort Week;
     public ushort Year;
-    public uint ModelYear;
+    public ushort ModelYear;
     public EDIDversion Version;
     public EDIDBasicDisplayParameters Basic;
     public EDIDColorCharacteristics PanelColor;
@@ -491,16 +514,45 @@ namespace EDID_Form
                     EDIDFormData.SN = Encoding.ASCII.GetString(Data, 5, 13);
                     Console.WriteLine("SN :{0}", EDIDFormData.SN);
                     return EDIDDescriptorsType.ProductSN;
-
+                case 0xFE:
+                    Console.WriteLine("AlphanumericData : Unresolved");
+                    return EDIDDescriptorsType.AlphanumericData;
                 case 0xFD:
-                    Console.WriteLine("RangeLimits :");
+                    EDIDFormData.Limits.VerticalOffest = (LimitsHVOffsetsType)(Data[4] & 0x03);
+                    EDIDFormData.Limits.HorizontalOffest = (LimitsHVOffsetsType)((uint)(Data[4] & 0x0C)>>2);
+                    EDIDFormData.Limits.VerticalMin = (ushort)(Data[5] + (EDIDFormData.Limits.VerticalOffest == LimitsHVOffsetsType.Max255Min255 ? 255 : 0));
+                    EDIDFormData.Limits.VerticalMax = (ushort)(Data[6] + (EDIDFormData.Limits.VerticalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
+                    EDIDFormData.Limits.HorizontalMin = (ushort)(Data[7] + (EDIDFormData.Limits.HorizontalOffest == LimitsHVOffsetsType.Max255Min255 ? 255 : 0));
+                    EDIDFormData.Limits.HorizontalMax = (ushort)(Data[8] + (EDIDFormData.Limits.HorizontalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
+                    EDIDFormData.Limits.PixelClkMax = (ushort)(Data[9] * 10);
+                    EDIDFormData.Limits.VideoTiming = (VideoTimingType)(Data[10]);
+                    Console.WriteLine("RangeLimits : V {0}-{1}Hz, H {2}-{3}KHz, PixelClkMax {4}MHz, VideoTiming {5}", 
+                        EDIDFormData.Limits.VerticalMin, 
+                        EDIDFormData.Limits.VerticalMax,
+                        EDIDFormData.Limits.HorizontalMin,
+                        EDIDFormData.Limits.HorizontalMax,
+                        EDIDFormData.Limits.PixelClkMax,
+                        EDIDFormData.Limits.VideoTiming);
                     return EDIDDescriptorsType.RangeLimits;
-
                 case 0xFC:
                     EDIDFormData.Name = Encoding.ASCII.GetString(Data, 5, 13);
                     Console.WriteLine("Name :{0}", EDIDFormData.Name);
                     return EDIDDescriptorsType.ProductName;
-
+                case 0xFB:
+                    Console.WriteLine("ColorData : Unresolved");
+                    return EDIDDescriptorsType.ColorData;
+                case 0xFA:
+                    Console.WriteLine("StandardTiming : Unresolved");
+                    return EDIDDescriptorsType.StandardTiming;
+                case 0xF9:
+                    Console.WriteLine("DCMdata : Unresolved");
+                    return EDIDDescriptorsType.DCMdata;
+                case 0xF8:
+                    Console.WriteLine("CVT3ByteTiming : Unresolved");
+                    return EDIDDescriptorsType.CVT3ByteTiming;
+                case 0xF7:
+                    Console.WriteLine("EstablishedTiming : Unresolved");
+                    return EDIDDescriptorsType.EstablishedTiming;
                 default:            
                     return EDIDDescriptorsType.Undefined;
             }
@@ -564,7 +616,7 @@ namespace EDID_Form
             }
             else if ((EDIDFormData.Version == EDIDversion.V14) && (EDIDData[16] == 0xFF))
             {
-                EDIDFormData.ModelYear = (uint)(EDIDData[17] + 1990);
+                EDIDFormData.ModelYear = (ushort)(EDIDData[17] + 1990);
                 Console.WriteLine("Week: not used");
                 Console.WriteLine("Model Year: {0}", EDIDFormData.ModelYear);
             }
@@ -757,13 +809,17 @@ namespace EDID_Form
 
             return FormatError.Success;
         }
-        private static bool FormatCEABlock(byte[] EDIDData)
+        //private static CEABlock FormCEADataBlock(byte[] Data)
+        //{ 
+        
+        //}
+        private static FormatError FormatCEABlock(byte[] EDIDData)
         {
-            return true;
+            return FormatError.Success;
         }
-        private static bool FormatDisplayIDBlock(byte[] EDIDData)
+        private static FormatError FormatDisplayIDBlock(byte[] EDIDData)
         {
-            return true;
+            return FormatError.Success;
         }
         public static FormatError Format(string UnicodeText)
         {
