@@ -17,21 +17,36 @@ namespace WindowsFormsApp_BOE_Tool
 {
     public partial class Form1 : Form
     {
+        System.Windows.Forms.TextBox[] EDIDTextBox = new System.Windows.Forms.TextBox[128];
         public Form1()
         {
             InitializeComponent();
-        }
 
+            int BoxSizeWeight = 32;
+            int BoxSizeHeight = 25;
+            int BoxSpaceX = 2;
+            int BoxSpaceY = 1;
+            for (int i = 0; i < EDIDTextBox.Length; i++)
+            {
+                EDIDTextBox[i] = new System.Windows.Forms.TextBox();
+                EDIDTextBox[i].CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
+                EDIDTextBox[i].Location = new System.Drawing.Point(500 + (i % 16) * (BoxSizeWeight + BoxSpaceX), 300 + (i / 16) * (BoxSizeHeight + BoxSpaceY));
+                EDIDTextBox[i].MaxLength = 2;
+                EDIDTextBox[i].Name = "EDIDTextBox_" + i.ToString();
+                EDIDTextBox[i].Size = new System.Drawing.Size(BoxSizeWeight, BoxSizeHeight);
+                EDIDTextBox[i].TabIndex = 18;
+                EDIDTextBox[i].KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox_KeyPress);
+                Controls.Add(EDIDTextBox[i]);
+            }
+        }
         private void Form1_Load(object sender, EventArgs e)
         {
             timer1.Start();
         }
-
         private void timer1_Tick(object sender, EventArgs e)
         {
             label6.Text = System.DateTime.Now.ToString();
         }
-
         private void button1_Click(object sender, EventArgs e)
         {
             button1.ForeColor = Color.Blue;
@@ -45,7 +60,6 @@ namespace WindowsFormsApp_BOE_Tool
                 //btnConnect->Caption = "Connect CA410";
             }
         }
-
         private void button2_Click(object sender, EventArgs e)
         {
             CA210DataStruct BOECA210;
@@ -56,7 +70,6 @@ namespace WindowsFormsApp_BOE_Tool
             //label2.Text = BOECA210.CA210fY.ToString();
             //label3.Text = BOECA210.CA210fZ.ToString();
         }
-
         private void button3_Click(object sender, EventArgs e)
         {
             //int a;
@@ -68,7 +81,6 @@ namespace WindowsFormsApp_BOE_Tool
              //   DDCCI.BOEDCCCI_Write(byte_buffer);
             }
         }
-
         private void button4_Click(object sender, EventArgs e)
         {
             byte[] return_buffer = new byte[10];
@@ -83,7 +95,6 @@ namespace WindowsFormsApp_BOE_Tool
             //    label4.Text += Convert.ToString(return_buffer[i], 16) + " ";
             }
         }
-
         private void button5_Click(object sender, EventArgs e)
         {
             openFileDialog1.InitialDirectory = @"C:\Hupp";
@@ -93,7 +104,7 @@ namespace WindowsFormsApp_BOE_Tool
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 string filePath = openFileDialog1.FileName;
-                textBox2.Text = filePath;
+                textBoxfile.Text = filePath;
                 using (FileStream fsRead = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 {
                     byte[] b = new byte[50];
@@ -108,7 +119,6 @@ namespace WindowsFormsApp_BOE_Tool
                 }
             }
         }
-
         private void button6_Click(object sender, EventArgs e)
         {
             saveFileDialog1.InitialDirectory = @"C:\Users\user\Desktop";
@@ -122,11 +132,10 @@ namespace WindowsFormsApp_BOE_Tool
                 EDID.OutputNotesEDIDText(saveFileDialog1.FileName);
             }
         }
-
-        private void button7_Click(object sender, EventArgs e)
+        private void Form_button_Click(object sender, EventArgs e)
         {
             string UnicodeText = "";
-            string filePath = textBox2.Text;
+            string filePath = textBoxfile.Text;
 
             using (FileStream fsRead = new FileStream(filePath, FileMode.Open, FileAccess.Read))
             {
@@ -145,6 +154,20 @@ namespace WindowsFormsApp_BOE_Tool
             Formatresult = EDID.Format(UnicodeText).ToString();
 
             MessageBox.Show(Formatresult, "EDID解析");
+
+            for (int i = 0; i < 128; i++)
+            {
+                // 转化输出两位十六进制字符
+                EDIDTextBox[i].Text = string.Format("{0:X2}", EDID.EDIDByteData[i]);
+            }
         }
-    }
+        private void textBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsLower(e.KeyChar) && !char.IsUpper(e.KeyChar) && !char.IsNumber(e.KeyChar) && !(e.KeyChar == '\b'))
+            {
+                //对系统表示事件已处理，及跳过该事件
+                e.Handled = true;
+            }
+        }
+   }
 }
