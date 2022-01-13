@@ -61,14 +61,14 @@ namespace WindowsFormsApp_BOE_Tool
 
             Waitor(5);
 
-            GCHandle hObject = GCHandle.Alloc(return_buffer, GCHandleType.Pinned);
+            GCHandle hObject = GCHandle.Alloc(return_buffer, GCHandleType.Pinned);//获取数值指针
             IntPtr ptr_byte = hObject.AddrOfPinnedObject();
 
             I2CRead(0x6E, 0x51, (short)return_buffer.Length, ptr_byte);
         }
-        public static void BOEDCCCI_Read(byte[] return_buffer)
+        public static void BOEDCCCI_Read(byte[] return_buffer)//函数重载
         {
-            GCHandle hObject = GCHandle.Alloc(return_buffer, GCHandleType.Pinned);
+            GCHandle hObject = GCHandle.Alloc(return_buffer, GCHandleType.Pinned);//获取数值指针
             IntPtr ptr_byte = hObject.AddrOfPinnedObject();
 
             I2CRead(0x6E, 0x51, (short)return_buffer.Length, ptr_byte);

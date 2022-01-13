@@ -30,124 +30,247 @@
         {
             this.components = new System.ComponentModel.Container();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.button5 = new System.Windows.Forms.Button();
-            this.textBoxfile = new System.Windows.Forms.TextBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.button6 = new System.Windows.Forms.Button();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
-            this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.label6 = new System.Windows.Forms.Label();
-            this.button7 = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
+            this.uiSymbolButtonOpenFile = new Sunny.UI.UISymbolButton();
+            this.uiSymbolButtonSaveFile = new Sunny.UI.UISymbolButton();
+            this.uiSymbolButtonFarmot = new Sunny.UI.UISymbolButton();
+            this.uiStyleManager1 = new Sunny.UI.UIStyleManager(this.components);
+            this.uiTextBoxFile = new Sunny.UI.UITextBox();
+            this.uiTabControlMenu1 = new Sunny.UI.UITabControlMenu();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.tabPage6 = new System.Windows.Forms.TabPage();
+            this.uiTabControlMenu1.SuspendLayout();
             this.SuspendLayout();
             // 
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // button5
+            // uiSymbolButtonOpenFile
             // 
-            this.button5.Location = new System.Drawing.Point(510, 70);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(115, 25);
-            this.button5.TabIndex = 9;
-            this.button5.Text = "浏览文件";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
+            this.uiSymbolButtonOpenFile.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.uiSymbolButtonOpenFile.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonOpenFile.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonOpenFile.FillHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonOpenFile.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiSymbolButtonOpenFile.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonOpenFile.Location = new System.Drawing.Point(353, 49);
+            this.uiSymbolButtonOpenFile.MinimumSize = new System.Drawing.Size(1, 1);
+            this.uiSymbolButtonOpenFile.Name = "uiSymbolButtonOpenFile";
+            this.uiSymbolButtonOpenFile.Radius = 10;
+            this.uiSymbolButtonOpenFile.RectHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonOpenFile.Size = new System.Drawing.Size(118, 34);
+            this.uiSymbolButtonOpenFile.Style = Sunny.UI.UIStyle.Custom;
+            this.uiSymbolButtonOpenFile.Symbol = 61717;
+            this.uiSymbolButtonOpenFile.SymbolColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonOpenFile.TabIndex = 15;
+            this.uiSymbolButtonOpenFile.Text = "浏览文件";
+            this.uiSymbolButtonOpenFile.TipsFont = new System.Drawing.Font("微软雅黑", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiSymbolButtonOpenFile.Click += new System.EventHandler(this.Open_File_Click);
             // 
-            // textBoxfile
+            // uiSymbolButtonSaveFile
             // 
-            this.textBoxfile.Location = new System.Drawing.Point(26, 70);
-            this.textBoxfile.Name = "textBoxfile";
-            this.textBoxfile.Size = new System.Drawing.Size(436, 25);
-            this.textBoxfile.TabIndex = 10;
+            this.uiSymbolButtonSaveFile.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.uiSymbolButtonSaveFile.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonSaveFile.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonSaveFile.FillHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonSaveFile.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiSymbolButtonSaveFile.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonSaveFile.Location = new System.Drawing.Point(601, 49);
+            this.uiSymbolButtonSaveFile.MinimumSize = new System.Drawing.Size(1, 1);
+            this.uiSymbolButtonSaveFile.Name = "uiSymbolButtonSaveFile";
+            this.uiSymbolButtonSaveFile.Radius = 10;
+            this.uiSymbolButtonSaveFile.RectHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonSaveFile.Size = new System.Drawing.Size(118, 34);
+            this.uiSymbolButtonSaveFile.Style = Sunny.UI.UIStyle.Custom;
+            this.uiSymbolButtonSaveFile.Symbol = 61639;
+            this.uiSymbolButtonSaveFile.SymbolColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonSaveFile.TabIndex = 16;
+            this.uiSymbolButtonSaveFile.Text = "导出文件";
+            this.uiSymbolButtonSaveFile.TipsFont = new System.Drawing.Font("微软雅黑", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiSymbolButtonSaveFile.Click += new System.EventHandler(this.Save_File_Click);
             // 
-            // label5
+            // uiSymbolButtonFarmot
             // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(23, 125);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(37, 15);
-            this.label5.TabIndex = 11;
-            this.label5.Text = "——";
+            this.uiSymbolButtonFarmot.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.uiSymbolButtonFarmot.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonFarmot.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonFarmot.FillHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonFarmot.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiSymbolButtonFarmot.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonFarmot.Location = new System.Drawing.Point(477, 49);
+            this.uiSymbolButtonFarmot.MinimumSize = new System.Drawing.Size(1, 1);
+            this.uiSymbolButtonFarmot.Name = "uiSymbolButtonFarmot";
+            this.uiSymbolButtonFarmot.Radius = 10;
+            this.uiSymbolButtonFarmot.RectHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonFarmot.Size = new System.Drawing.Size(118, 34);
+            this.uiSymbolButtonFarmot.Style = Sunny.UI.UIStyle.Custom;
+            this.uiSymbolButtonFarmot.Symbol = 61473;
+            this.uiSymbolButtonFarmot.SymbolColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiSymbolButtonFarmot.TabIndex = 17;
+            this.uiSymbolButtonFarmot.Text = "文件解析";
+            this.uiSymbolButtonFarmot.TipsFont = new System.Drawing.Font("微软雅黑", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiSymbolButtonFarmot.Click += new System.EventHandler(this.Form_button_Click);
             // 
-            // button6
+            // uiStyleManager1
             // 
-            this.button6.Location = new System.Drawing.Point(510, 116);
-            this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(115, 24);
-            this.button6.TabIndex = 12;
-            this.button6.Text = "导出文件";
-            this.button6.UseVisualStyleBackColor = true;
-            this.button6.Click += new System.EventHandler(this.button6_Click);
+            this.uiStyleManager1.DPIScale = true;
+            this.uiStyleManager1.Style = Sunny.UI.UIStyle.LightBlue;
             // 
-            // timer1
+            // uiTextBoxFile
             // 
-            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            this.uiTextBoxFile.ButtonFillColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
+            this.uiTextBoxFile.ButtonFillHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiTextBoxFile.ButtonForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiTextBoxFile.ButtonRectHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
+            this.uiTextBoxFile.ButtonSymbol = 61761;
+            this.uiTextBoxFile.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.uiTextBoxFile.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
+            this.uiTextBoxFile.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiTextBoxFile.Location = new System.Drawing.Point(22, 49);
+            this.uiTextBoxFile.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.uiTextBoxFile.Maximum = 2147483647D;
+            this.uiTextBoxFile.Minimum = -2147483648D;
+            this.uiTextBoxFile.MinimumSize = new System.Drawing.Size(1, 16);
+            this.uiTextBoxFile.Name = "uiTextBoxFile";
+            this.uiTextBoxFile.Radius = 10;
+            this.uiTextBoxFile.Size = new System.Drawing.Size(311, 29);
+            this.uiTextBoxFile.Style = Sunny.UI.UIStyle.Custom;
+            this.uiTextBoxFile.TabIndex = 18;
+            this.uiTextBoxFile.TextAlignment = System.Drawing.ContentAlignment.MiddleLeft;
             // 
-            // label6
+            // uiTabControlMenu1
             // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(23, 20);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(55, 15);
-            this.label6.TabIndex = 13;
-            this.label6.Text = "label6";
+            this.uiTabControlMenu1.Alignment = System.Windows.Forms.TabAlignment.Left;
+            this.uiTabControlMenu1.Controls.Add(this.tabPage1);
+            this.uiTabControlMenu1.Controls.Add(this.tabPage2);
+            this.uiTabControlMenu1.Controls.Add(this.tabPage3);
+            this.uiTabControlMenu1.Controls.Add(this.tabPage4);
+            this.uiTabControlMenu1.Controls.Add(this.tabPage5);
+            this.uiTabControlMenu1.Controls.Add(this.tabPage6);
+            this.uiTabControlMenu1.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
+            this.uiTabControlMenu1.FillColor = System.Drawing.Color.Transparent;
+            this.uiTabControlMenu1.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiTabControlMenu1.ItemSize = new System.Drawing.Size(40, 200);
+            this.uiTabControlMenu1.Location = new System.Drawing.Point(353, 115);
+            this.uiTabControlMenu1.MenuStyle = Sunny.UI.UIMenuStyle.Custom;
+            this.uiTabControlMenu1.Multiline = true;
+            this.uiTabControlMenu1.Name = "uiTabControlMenu1";
+            this.uiTabControlMenu1.SelectedIndex = 0;
+            this.uiTabControlMenu1.Size = new System.Drawing.Size(620, 258);
+            this.uiTabControlMenu1.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
+            this.uiTabControlMenu1.Style = Sunny.UI.UIStyle.Custom;
+            this.uiTabControlMenu1.StyleCustomMode = true;
+            this.uiTabControlMenu1.TabBackColor = System.Drawing.Color.White;
+            this.uiTabControlMenu1.TabIndex = 19;
+            this.uiTabControlMenu1.TabSelectedColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
             // 
-            // button7
+            // tabPage1
             // 
-            this.button7.Location = new System.Drawing.Point(659, 72);
-            this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(132, 23);
-            this.button7.TabIndex = 14;
-            this.button7.Text = "文件解析";
-            this.button7.UseVisualStyleBackColor = true;
-            this.button7.Click += new System.EventHandler(this.Form_button_Click);
+            this.tabPage1.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage1.Location = new System.Drawing.Point(201, 0);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Size = new System.Drawing.Size(419, 258);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "tabPage1";
             // 
-            // button1
+            // tabPage2
             // 
-            this.button1.Location = new System.Drawing.Point(1466, 53);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 17;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.tabPage2.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage2.Location = new System.Drawing.Point(201, 0);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Size = new System.Drawing.Size(419, 258);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "tabPage2";
+            // 
+            // tabPage3
+            // 
+            this.tabPage3.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage3.Location = new System.Drawing.Point(201, 0);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Size = new System.Drawing.Size(419, 258);
+            this.tabPage3.TabIndex = 2;
+            this.tabPage3.Text = "tabPage3";
+            // 
+            // tabPage4
+            // 
+            this.tabPage4.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage4.Location = new System.Drawing.Point(201, 0);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Size = new System.Drawing.Size(419, 258);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "tabPage4";
+            // 
+            // tabPage5
+            // 
+            this.tabPage5.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage5.Location = new System.Drawing.Point(201, 0);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Size = new System.Drawing.Size(419, 258);
+            this.tabPage5.TabIndex = 4;
+            this.tabPage5.Text = "tabPage5";
+            // 
+            // tabPage6
+            // 
+            this.tabPage6.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage6.Location = new System.Drawing.Point(201, 0);
+            this.tabPage6.Name = "tabPage6";
+            this.tabPage6.Size = new System.Drawing.Size(419, 258);
+            this.tabPage6.TabIndex = 5;
+            this.tabPage6.Text = "tabPage6";
             // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(1652, 1033);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.button7);
-            this.Controls.Add(this.label6);
-            this.Controls.Add(this.button6);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.textBoxfile);
-            this.Controls.Add(this.button5);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.AutoSize = true;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
+            this.ClientSize = new System.Drawing.Size(1021, 664);
+            this.ControlBoxCloseFillHoverColor = System.Drawing.Color.White;
+            this.ControlBoxFillHoverColor = System.Drawing.Color.White;
+            this.ControlBoxForeColor = System.Drawing.Color.Black;
+            this.Controls.Add(this.uiTabControlMenu1);
+            this.Controls.Add(this.uiTextBoxFile);
+            this.Controls.Add(this.uiSymbolButtonFarmot);
+            this.Controls.Add(this.uiSymbolButtonSaveFile);
+            this.Controls.Add(this.uiSymbolButtonOpenFile);
+            this.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.MaximizeBox = false;
             this.Name = "Form1";
+            this.Opacity = 0.98D;
+            this.Padding = new System.Windows.Forms.Padding(0, 31, 0, 0);
+            this.ShowDragStretch = true;
+            this.ShowRadius = false;
+            this.ShowTitleIcon = true;
+            this.Style = Sunny.UI.UIStyle.Custom;
+            this.StyleCustomMode = true;
             this.Text = "BOE EDID Tool V0.1";
+            this.TitleFont = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.TitleHeight = 31;
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.uiTabControlMenu1.ResumeLayout(false);
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
-        private System.Windows.Forms.Button button5;
-        private System.Windows.Forms.TextBox textBoxfile;
-        private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.Button button6;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
-        private System.Windows.Forms.Timer timer1;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Button button7;
-        private System.Windows.Forms.Button button1;
+        private Sunny.UI.UISymbolButton uiSymbolButtonOpenFile;
+        private Sunny.UI.UISymbolButton uiSymbolButtonSaveFile;
+        private Sunny.UI.UISymbolButton uiSymbolButtonFarmot;
+        private Sunny.UI.UIStyleManager uiStyleManager1;
+        private Sunny.UI.UITextBox uiTextBoxFile;
+        private Sunny.UI.UITabControlMenu uiTabControlMenu1;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.TabPage tabPage4;
+        private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.TabPage tabPage6;
     }
 }
 

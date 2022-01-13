@@ -11,7 +11,7 @@ enum Support
     unsupported,
     supported,
 };
-enum FormatError
+enum DecodeError
 { 
     Success,
     HeaderError,
@@ -308,9 +308,9 @@ namespace EDID_Form
     {
         public static string EDIDText = "";
         public static byte[] EDIDByteData;
+        public static uint EDIDDataLength;
         public static EDIDTable EDIDFormData;
         
-
         private static byte GetByteBit(byte a, byte X)
         {
             switch (X)
@@ -359,9 +359,9 @@ namespace EDID_Form
 
             return Math.Round(xyValue, 3);
         }
-        public static int MatchOriginalTextEDID(string Text)//standard format
+        public static uint MatchOriginalTextEDID(string Text)//standard format
         {
-            int Length = 0;
+            uint Length = 0;
 
             MatchCollection mcText1 = Regex.Matches(Text, @"\|  ([0-9]|[A-Z])([0-9]|[A-Z])  \w\w  \w\w  \w\w  \w\w  \w\w  \w\w  \w\w((  \w\w  \w\w)|\s)");
 
@@ -384,9 +384,9 @@ namespace EDID_Form
             }
             return Length;
         }
-        public static int Match0xTextEDID(string Text)//0x.. format
+        public static uint Match0xTextEDID(string Text)//0x.. format
         {
-            int Length = 0;
+            uint Length = 0;
 
             MatchCollection mcText = Regex.Matches(Text, @"([0-9]|[A-Z])([0-9]|[A-Z])");
 
@@ -411,7 +411,7 @@ namespace EDID_Form
                 i++;
             }
         }
-        private static EDIDStandardTiming FormatStandardTimingData(byte Data0, byte Data1)
+        private static EDIDStandardTiming DecodeStandardTimingData(byte Data0, byte Data1)
         {
             EDIDStandardTiming StandardTimingTable = new EDIDStandardTiming();
 
@@ -446,7 +446,7 @@ namespace EDID_Form
 
             return StandardTimingTable;
         }
-        private static EDIDDetailTimingTable FormatDetailTimingData(byte[] Data)
+        private static EDIDDetailTimingTable DecodeDetailTimingData(byte[] Data)
         {
             EDIDDetailTimingTable Timing = new EDIDDetailTimingTable();
 
@@ -502,11 +502,11 @@ namespace EDID_Form
 
             return Timing;
         }
-        private static EDIDDescriptorsType FormatDisplayDescriptor(byte[] Data)
+        private static EDIDDescriptorsType DecodeDisplayDescriptor(byte[] Data)
         {
             if ((Data[0] != 0x00) && (Data[1] != 0x00) && (Data[2] != 0x00))
             {
-                EDIDFormData.SecondMainTiming = FormatDetailTimingData(Data);
+                EDIDFormData.SecondMainTiming = DecodeDetailTimingData(Data);
                 return EDIDDescriptorsType.DetailTiming;
             }
 
@@ -559,11 +559,11 @@ namespace EDID_Form
                     return EDIDDescriptorsType.Undefined;
             }
         }
-        private static FormatError FormatBaseBlock()
+        private static DecodeError DecodeBaseBlock()
         {
             //00-07
             if ((EDIDByteData[0] != 0x00) || (EDIDByteData[1] != 0xFF) || (EDIDByteData[2] != 0xFF) || (EDIDByteData[3] != 0xFF) || (EDIDByteData[4] != 0xFF) || (EDIDByteData[5] != 0xFF) || (EDIDByteData[6] != 0xFF) || (EDIDByteData[7] != 0x00))
-                return FormatError.HeaderError;
+                return DecodeError.HeaderError;
 
             //18-19 EDID_Version
             if ((EDIDByteData[18] == 0x01) && ((EDIDByteData[19] == 0x03) || (EDIDByteData[19] == 0x04)))
@@ -576,7 +576,7 @@ namespace EDID_Form
                 Console.WriteLine("EDID Version: {0}", EDIDFormData.Version);
             }
             else
-                return FormatError.VersionError;
+                return DecodeError.VersionError;
 
             //08-09 EDID_IDManufacturerName
             //0001="A",11010="Z",A-Z
@@ -755,7 +755,7 @@ namespace EDID_Form
             EDIDFormData.StandardTiming = new EDIDStandardTiming[8];
             for (int i = 0; i < 8; i++)
             {
-                EDIDFormData.StandardTiming[i] = FormatStandardTimingData(EDIDByteData[38 + i * 2], EDIDByteData[39 + i * 2]);
+                EDIDFormData.StandardTiming[i] = DecodeStandardTimingData(EDIDByteData[38 + i * 2], EDIDByteData[39 + i * 2]);
                 if (EDIDFormData.StandardTiming[i].TimingSupport == Support.supported)
                     Console.WriteLine("Standard Timing : {0}x{1} Rate:{2}", EDIDFormData.StandardTiming[i].TimingWidth, EDIDFormData.StandardTiming[i].TimingHeight, EDIDFormData.StandardTiming[i].TimingRate);
             }
@@ -763,10 +763,10 @@ namespace EDID_Form
             byte[] DsecriptorTable = new byte[18];
             //54-71 EDID_Main_Timing (Display Dsecriptor 1)
             if (EDIDByteData[54] == 0x00)
-                return FormatError.NoMainTimingError;
+                return DecodeError.NoMainTimingError;
             EDIDFormData.Descriptors1 = EDIDDescriptorsType.DetailTiming;
             Array.Copy(EDIDByteData, 54, DsecriptorTable, 0, 18);
-            EDIDFormData.MainTiming = FormatDetailTimingData(DsecriptorTable);
+            EDIDFormData.MainTiming = DecodeDetailTimingData(DsecriptorTable);
 
             //72-89 Detailed Timing / Display Dsecriptor 2
             if (EDIDByteData[75] == 0x00)
@@ -774,7 +774,7 @@ namespace EDID_Form
             else
             {
                 Array.Copy(EDIDByteData, 72, DsecriptorTable, 0, 18);
-                EDIDFormData.Descriptors2 = FormatDisplayDescriptor(DsecriptorTable);
+                EDIDFormData.Descriptors2 = DecodeDisplayDescriptor(DsecriptorTable);
             }
 
             //90-107 Detailed Timing / Display Dsecriptor 3
@@ -783,7 +783,7 @@ namespace EDID_Form
             else
             {
                 Array.Copy(EDIDByteData, 90, DsecriptorTable, 0, 18);
-                EDIDFormData.Descriptors3 = FormatDisplayDescriptor(DsecriptorTable);
+                EDIDFormData.Descriptors3 = DecodeDisplayDescriptor(DsecriptorTable);
             }
 
             //108-125 Detailed Timing / Display Dsecriptor 4
@@ -792,7 +792,7 @@ namespace EDID_Form
             else
             {
                 Array.Copy(EDIDByteData, 108, DsecriptorTable, 0, 18);
-                EDIDFormData.Descriptors4 = FormatDisplayDescriptor(DsecriptorTable);
+                EDIDFormData.Descriptors4 = DecodeDisplayDescriptor(DsecriptorTable);
             }
 
             //126 EDID_Ex_Block_Count
@@ -805,56 +805,56 @@ namespace EDID_Form
                 checksum += EDIDByteData[i];
             }
             if (checksum != 0x00)
-                return FormatError.ChecksumError;
+                return DecodeError.ChecksumError;
             else
                 EDIDFormData.Checksum = EDIDByteData[127];
 
-            return FormatError.Success;
+            return DecodeError.Success;
         }
         //private static CEABlock FormCEADataBlock(byte[] Data)
         //{ 
         
         //}
-        private static FormatError FormatCEABlock()
+        private static DecodeError DecodeCEABlock()
         {
-            return FormatError.Success;
+            return DecodeError.Success;
         }
-        private static FormatError FormatDisplayIDBlock()
+        private static DecodeError DecodeDisplayIDBlock()
         {
-            return FormatError.Success;
+            return DecodeError.Success;
         }
-        public static FormatError Format(string UnicodeText)
+        public static DecodeError Decode(string UnicodeText)
         {
-            int Length;
-            FormatError Error;
+            DecodeError Error;
+            EDIDDataLength = 0;
             EDIDText = "";
 
-            Length = MatchOriginalTextEDID(UnicodeText);
+            EDIDDataLength = MatchOriginalTextEDID(UnicodeText);
 
-            if (Length == 0)
+            if (EDIDDataLength == 0)
             {
-                Length = Match0xTextEDID(UnicodeText);
+                EDIDDataLength = Match0xTextEDID(UnicodeText);
             }
 
-            EDIDByteData = new byte[Length];
+            EDIDByteData = new byte[EDIDDataLength];
             FormatStringToByte(EDIDText);
 
-            if (Length >= 128)
+            if (EDIDDataLength >= 128)
             {
-                Error = FormatBaseBlock();
-                if(Error != FormatError.Success)
+                Error = DecodeBaseBlock();
+                if(Error != DecodeError.Success)
                     return Error;
             }
-            if (Length >= 256)
+            if (EDIDDataLength >= 256)
             {
-                FormatCEABlock();
+                DecodeCEABlock();
             }
-            if (Length >= 384)
+            if (EDIDDataLength >= 384)
             {
-                FormatDisplayIDBlock();
+                DecodeDisplayIDBlock();
             }
 
-            return FormatError.Success;
+            return DecodeError.Success;
         }
         public static bool OutputNotesEDIDText(string Path)
         {
