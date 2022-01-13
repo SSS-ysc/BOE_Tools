@@ -866,7 +866,7 @@ namespace EDID_Form
             NoteEDID += "\n";
             NoteEDID += EDIDText;
 
-            using (FileStream fsWrite = new FileStream(Path, FileMode.Open, FileAccess.Write))
+            using (FileStream fsWrite = new FileStream(Path, FileMode.OpenOrCreate, FileAccess.Write))
             {
                 byte[] buffer = Encoding.UTF8.GetBytes(NoteEDID);
                 fsWrite.Write(buffer, 0, buffer.Length);

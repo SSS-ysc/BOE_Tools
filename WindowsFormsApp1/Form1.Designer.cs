@@ -43,6 +43,8 @@
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.tabPage6 = new System.Windows.Forms.TabPage();
+            this.tabPage7 = new System.Windows.Forms.TabPage();
+            this.uiRadioButtonGroup1 = new Sunny.UI.UIRadioButtonGroup();
             this.uiTabControlMenu1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -56,7 +58,7 @@
             this.uiSymbolButtonOpenFile.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonOpenFile.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonOpenFile.FillHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
-            this.uiSymbolButtonOpenFile.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiSymbolButtonOpenFile.Font = new System.Drawing.Font("微软雅黑", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.uiSymbolButtonOpenFile.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonOpenFile.Location = new System.Drawing.Point(353, 49);
             this.uiSymbolButtonOpenFile.MinimumSize = new System.Drawing.Size(1, 1);
@@ -78,7 +80,7 @@
             this.uiSymbolButtonSaveFile.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonSaveFile.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonSaveFile.FillHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
-            this.uiSymbolButtonSaveFile.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiSymbolButtonSaveFile.Font = new System.Drawing.Font("微软雅黑", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.uiSymbolButtonSaveFile.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonSaveFile.Location = new System.Drawing.Point(601, 49);
             this.uiSymbolButtonSaveFile.MinimumSize = new System.Drawing.Size(1, 1);
@@ -100,7 +102,7 @@
             this.uiSymbolButtonFarmot.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonFarmot.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonFarmot.FillHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
-            this.uiSymbolButtonFarmot.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiSymbolButtonFarmot.Font = new System.Drawing.Font("微软雅黑", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.uiSymbolButtonFarmot.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonFarmot.Location = new System.Drawing.Point(477, 49);
             this.uiSymbolButtonFarmot.MinimumSize = new System.Drawing.Size(1, 1);
@@ -130,7 +132,7 @@
             this.uiTextBoxFile.ButtonSymbol = 61761;
             this.uiTextBoxFile.Cursor = System.Windows.Forms.Cursors.IBeam;
             this.uiTextBoxFile.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
-            this.uiTextBoxFile.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiTextBoxFile.Font = new System.Drawing.Font("微软雅黑", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.uiTextBoxFile.Location = new System.Drawing.Point(22, 49);
             this.uiTextBoxFile.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.uiTextBoxFile.Maximum = 2147483647D;
@@ -152,103 +154,137 @@
             this.uiTabControlMenu1.Controls.Add(this.tabPage4);
             this.uiTabControlMenu1.Controls.Add(this.tabPage5);
             this.uiTabControlMenu1.Controls.Add(this.tabPage6);
+            this.uiTabControlMenu1.Controls.Add(this.tabPage7);
             this.uiTabControlMenu1.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
             this.uiTabControlMenu1.FillColor = System.Drawing.Color.Transparent;
-            this.uiTabControlMenu1.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.uiTabControlMenu1.ItemSize = new System.Drawing.Size(40, 200);
-            this.uiTabControlMenu1.Location = new System.Drawing.Point(353, 115);
+            this.uiTabControlMenu1.Font = new System.Drawing.Font("微软雅黑", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiTabControlMenu1.ItemSize = new System.Drawing.Size(40, 150);
+            this.uiTabControlMenu1.Location = new System.Drawing.Point(353, 160);
             this.uiTabControlMenu1.MenuStyle = Sunny.UI.UIMenuStyle.Custom;
             this.uiTabControlMenu1.Multiline = true;
             this.uiTabControlMenu1.Name = "uiTabControlMenu1";
             this.uiTabControlMenu1.SelectedIndex = 0;
-            this.uiTabControlMenu1.Size = new System.Drawing.Size(620, 258);
+            this.uiTabControlMenu1.Size = new System.Drawing.Size(632, 402);
             this.uiTabControlMenu1.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
             this.uiTabControlMenu1.Style = Sunny.UI.UIStyle.Custom;
             this.uiTabControlMenu1.StyleCustomMode = true;
             this.uiTabControlMenu1.TabBackColor = System.Drawing.Color.White;
             this.uiTabControlMenu1.TabIndex = 19;
             this.uiTabControlMenu1.TabSelectedColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
+            this.uiTabControlMenu1.TabStop = false;
+            this.uiTabControlMenu1.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
             // 
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.Transparent;
-            this.tabPage1.Location = new System.Drawing.Point(201, 0);
+            this.tabPage1.Location = new System.Drawing.Point(151, 0);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Size = new System.Drawing.Size(419, 258);
+            this.tabPage1.Size = new System.Drawing.Size(481, 402);
             this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "tabPage1";
+            this.tabPage1.Text = "General Info";
             // 
             // tabPage2
             // 
             this.tabPage2.BackColor = System.Drawing.Color.Transparent;
-            this.tabPage2.Location = new System.Drawing.Point(201, 0);
+            this.tabPage2.Location = new System.Drawing.Point(151, 0);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Size = new System.Drawing.Size(419, 258);
+            this.tabPage2.Size = new System.Drawing.Size(490, 409);
             this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "tabPage2";
+            this.tabPage2.Text = "Basic Params";
             // 
             // tabPage3
             // 
             this.tabPage3.BackColor = System.Drawing.Color.Transparent;
-            this.tabPage3.Location = new System.Drawing.Point(201, 0);
+            this.tabPage3.Location = new System.Drawing.Point(151, 0);
             this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Size = new System.Drawing.Size(419, 258);
+            this.tabPage3.Size = new System.Drawing.Size(490, 409);
             this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "tabPage3";
+            this.tabPage3.Text = "Color";
             // 
             // tabPage4
             // 
             this.tabPage4.BackColor = System.Drawing.Color.Transparent;
-            this.tabPage4.Location = new System.Drawing.Point(201, 0);
+            this.tabPage4.Location = new System.Drawing.Point(151, 0);
             this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Size = new System.Drawing.Size(419, 258);
+            this.tabPage4.Size = new System.Drawing.Size(490, 409);
             this.tabPage4.TabIndex = 3;
-            this.tabPage4.Text = "tabPage4";
+            this.tabPage4.Text = "Es/St Timing";
             // 
             // tabPage5
             // 
             this.tabPage5.BackColor = System.Drawing.Color.Transparent;
-            this.tabPage5.Location = new System.Drawing.Point(201, 0);
+            this.tabPage5.Location = new System.Drawing.Point(151, 0);
             this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Size = new System.Drawing.Size(419, 258);
+            this.tabPage5.Size = new System.Drawing.Size(490, 409);
             this.tabPage5.TabIndex = 4;
-            this.tabPage5.Text = "tabPage5";
+            this.tabPage5.Text = "Main Timing";
             // 
             // tabPage6
             // 
             this.tabPage6.BackColor = System.Drawing.Color.Transparent;
-            this.tabPage6.Location = new System.Drawing.Point(201, 0);
+            this.tabPage6.Location = new System.Drawing.Point(151, 0);
             this.tabPage6.Name = "tabPage6";
-            this.tabPage6.Size = new System.Drawing.Size(419, 258);
+            this.tabPage6.Size = new System.Drawing.Size(490, 409);
             this.tabPage6.TabIndex = 5;
-            this.tabPage6.Text = "tabPage6";
+            this.tabPage6.Text = "Range Limits";
+            // 
+            // tabPage7
+            // 
+            this.tabPage7.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage7.Location = new System.Drawing.Point(151, 0);
+            this.tabPage7.Name = "tabPage7";
+            this.tabPage7.Size = new System.Drawing.Size(490, 409);
+            this.tabPage7.TabIndex = 6;
+            this.tabPage7.Text = "Product Info";
+            // 
+            // uiRadioButtonGroup1
+            // 
+            this.uiRadioButtonGroup1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.uiRadioButtonGroup1.ColumnCount = 3;
+            this.uiRadioButtonGroup1.FillColor = System.Drawing.Color.Transparent;
+            this.uiRadioButtonGroup1.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiRadioButtonGroup1.Items.AddRange(new object[] {
+            "Base",
+            "CEA",
+            "Display"});
+            this.uiRadioButtonGroup1.ItemSize = new System.Drawing.Size(100, 15);
+            this.uiRadioButtonGroup1.Location = new System.Drawing.Point(353, 91);
+            this.uiRadioButtonGroup1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.uiRadioButtonGroup1.MinimumSize = new System.Drawing.Size(1, 1);
+            this.uiRadioButtonGroup1.Name = "uiRadioButtonGroup1";
+            this.uiRadioButtonGroup1.RectColor = System.Drawing.Color.Empty;
+            this.uiRadioButtonGroup1.Size = new System.Drawing.Size(318, 61);
+            this.uiRadioButtonGroup1.Style = Sunny.UI.UIStyle.Custom;
+            this.uiRadioButtonGroup1.StyleCustomMode = true;
+            this.uiRadioButtonGroup1.TabIndex = 21;
+            this.uiRadioButtonGroup1.TabStop = false;
+            this.uiRadioButtonGroup1.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Form1
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.AutoSize = true;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
-            this.ClientSize = new System.Drawing.Size(1021, 664);
+            this.ClientSize = new System.Drawing.Size(1056, 793);
             this.ControlBoxCloseFillHoverColor = System.Drawing.Color.White;
             this.ControlBoxFillHoverColor = System.Drawing.Color.White;
             this.ControlBoxForeColor = System.Drawing.Color.Black;
+            this.Controls.Add(this.uiRadioButtonGroup1);
             this.Controls.Add(this.uiTabControlMenu1);
             this.Controls.Add(this.uiTextBoxFile);
             this.Controls.Add(this.uiSymbolButtonFarmot);
             this.Controls.Add(this.uiSymbolButtonSaveFile);
             this.Controls.Add(this.uiSymbolButtonOpenFile);
-            this.Font = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.Font = new System.Drawing.Font("微软雅黑", 8.64F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.MaximizeBox = false;
             this.Name = "Form1";
-            this.Opacity = 0.98D;
             this.Padding = new System.Windows.Forms.Padding(0, 31, 0, 0);
-            this.ShowDragStretch = true;
             this.ShowRadius = false;
+            this.ShowRect = false;
             this.ShowTitleIcon = true;
             this.Style = Sunny.UI.UIStyle.Custom;
             this.StyleCustomMode = true;
             this.Text = "BOE EDID Tool V0.1";
-            this.TitleFont = new System.Drawing.Font("微软雅黑", 9.6F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.TitleFont = new System.Drawing.Font("微软雅黑", 8.64F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.TitleHeight = 31;
             this.Load += new System.EventHandler(this.Form1_Load);
             this.uiTabControlMenu1.ResumeLayout(false);
@@ -271,6 +307,8 @@
         private System.Windows.Forms.TabPage tabPage4;
         private System.Windows.Forms.TabPage tabPage5;
         private System.Windows.Forms.TabPage tabPage6;
+        private System.Windows.Forms.TabPage tabPage7;
+        private Sunny.UI.UIRadioButtonGroup uiRadioButtonGroup1;
     }
 }
 
