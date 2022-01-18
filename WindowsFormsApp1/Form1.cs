@@ -36,7 +36,7 @@ namespace WindowsFormsApp_BOE_Tool
                 EDIDTextBox[i] = new Sunny.UI.UITextBox();
                 EDIDTextBox[i].ButtonSymbol = 61761;
                 EDIDTextBox[i].Cursor = System.Windows.Forms.Cursors.IBeam;
-                EDIDTextBox[i].Font = new System.Drawing.Font("微软雅黑", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+                EDIDTextBox[i].Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
                 EDIDTextBox[i].Location = new System.Drawing.Point(22 + (i % 10) * (BoxSizeWeight + BoxSpaceX), 115 + (i / 10) * (BoxSizeHeight + BoxSpaceY));
                 EDIDTextBox[i].Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
                 EDIDTextBox[i].Maximum = 2147483647D;
@@ -45,7 +45,7 @@ namespace WindowsFormsApp_BOE_Tool
                 EDIDTextBox[i].Name = "EDIDTextBox_" + i.ToString();
                 EDIDTextBox[i].Size = new System.Drawing.Size(BoxSizeWeight, BoxSizeHeight);
                 EDIDTextBox[i].Style = Sunny.UI.UIStyle.Custom;
-                EDIDTextBox[i].TabStop = false; // ?
+                EDIDTextBox[i].TabStop = false;
                 EDIDTextBox[i].Text = "";
                 EDIDTextBox[i].TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
                 EDIDTextBox[i].KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress_Check);
@@ -129,8 +129,15 @@ namespace WindowsFormsApp_BOE_Tool
             saveFileDialog1.FileName = "EDID_test";
             saveFileDialog1.AddExtension = true;
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
-            { 
-                EDID.OutputNotesEDIDText(saveFileDialog1.FileName);
+            {
+                if (uiCheckBox1.Checked == true)
+                {
+                    EDID.OutputNotesEDIDText(saveFileDialog1.FileName);
+                }
+                else
+                {
+                    EDID.Output0xEDIDText(saveFileDialog1.FileName);
+                }
             }
         }
         private void Form_button_Click(object sender, EventArgs e)
@@ -153,16 +160,16 @@ namespace WindowsFormsApp_BOE_Tool
             DecodeError DecodeResult;
             DecodeResult = EDID.Decode(UnicodeText);
 
-            if(DecodeResult == DecodeError.Success)
+            if (DecodeResult == DecodeError.Success)
+            {
+                uiRadioButtonGroup1.SelectedIndex = 0;
                 for (int i = 0; i < 128; i++)
                 {
                     // 转化输出两位十六进制字符
                     EDIDTextBox[i].Text = string.Format("{0:X2}", EDID.EDIDByteData[i]);
                 }
-
+            }
             MessageBox.Show(DecodeResult.ToString(), "EDID解析");
-
-
         }
         private void TextBox_KeyPress_Check(object sender, KeyPressEventArgs e)
         {

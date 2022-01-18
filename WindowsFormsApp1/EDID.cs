@@ -77,7 +77,7 @@ enum StandardTimingRatio
 };
 enum InterfaceType
 {
-    Non_Interlaced,
+    NonInterlaced,
     Interlaced,
 };
 enum StereoViewingType
@@ -863,7 +863,12 @@ namespace EDID_Form
 
             return DecodeError.Success;
         }
-        private static string OutputNotesLineString(string Notes, int Offset, params object[] Value)
+
+        /*
+         * 导出txt文件
+         */
+        //行格式
+        private static string OutputNotesLineString(string Notes, int ValueOffset, params object[] Value)
         {
             uint Index = 0;
 
@@ -879,9 +884,9 @@ namespace EDID_Form
                 Notes = string.Format(Notes, Value);
             }
             //后置数据匹配偏移量
-            if (Notes.Length < Offset)
+            if (Notes.Length < ValueOffset)
             {
-                Notes += new string(' ', Offset - Notes.Length);
+                Notes += new string(' ', ValueOffset - Notes.Length);
             }
             //后置数据显示
             for (int i = 0; i < (Value.Length - Index); i++)
@@ -893,6 +898,39 @@ namespace EDID_Form
 
             return Notes;
         }
+        private static string OutputNotesLineString(int NotesOffset, string Notes, int ValueOffset, params object[] Value)
+        {
+            uint Index = 0;
+
+            Notes = new string(' ', NotesOffset) + Notes;
+
+            //{}格式数据插入
+            if (Regex.IsMatch(Notes, @"\{") == true)
+            {
+                MatchCollection mcNotes = Regex.Matches(Notes, @"\{");
+
+                foreach (Match m in mcNotes)
+                {
+                    Index++;
+                }
+                Notes = string.Format(Notes, Value);
+            }
+            //后置数据匹配偏移量
+            if (Notes.Length < ValueOffset)
+            {
+                Notes += new string(' ', ValueOffset - Notes.Length);
+            }
+            //后置数据显示
+            for (int i = 0; i < (Value.Length - Index); i++)
+            {
+                Notes += Value[i + Index].ToString();
+            }
+
+            Notes += "\n";
+
+            return Notes;
+        }
+        //列格式
         private static string OutputNotesListString(string Notes, int Offset, params object[] Value)
         {
             Notes += "\n";
@@ -905,6 +943,21 @@ namespace EDID_Form
                     Notes += Value[i].ToString() + "\n";
                 }
             }
+
+            return Notes;
+        }
+        //两列格式
+        private static string OutputNotesListsString(string Notes, int Offset, object Value, string Notes2, int Offset2, object Value2)
+        {
+            //第一列数据
+            Notes = new string(' ', Offset) + string.Format(Notes, Value);
+            //第一列偏移
+            if (Notes.Length < Offset2)
+            {
+                Notes += new string(' ', Offset2 - Notes.Length);
+            }
+            Notes += string.Format(Notes2, Value2);
+            Notes += "\n";
 
             return Notes;
         }
@@ -935,14 +988,35 @@ namespace EDID_Form
         private static string OutputNotesDetailTiming(EDIDDetailTimingTable Timing)
         {
             string Notes;
+            int list_offset = 8;
+            int list_offset2 = 50;
 
-            Notes = OutputNotesLineString("         Timing:{0}x{1}@{2}Hz   Pixel Clock: {3:000.00} MHz", 0, Timing.HAdressable, Timing.VAdressable, Timing.VFrequency, Timing.PixelClk/1000000);
+            Notes = OutputNotesLineString(list_offset, "{0}x{1}@{2}Hz   Pixel Clock: {3:000.00} MHz", 0, Timing.HAdressable, Timing.VAdressable, Timing.VFrequency, (float)Timing.PixelClk/1000000);
             Notes += "\n";
+            Notes += OutputNotesListsString("Horizontal Image Size: {0} mm", list_offset, Timing.VideoSizeH, "Vertical Image Size: {0} mm", list_offset2, Timing.VideoSizeV);
+            Notes += OutputNotesListsString("Refreshed Mode: {0}", list_offset, Timing.Interface, "Normal Display: {0}", list_offset2, Timing.StereoFormat);
+            Notes += "\n";
+            Notes += OutputNotesLineString(list_offset, "Horizontal:", 0);
+            Notes += OutputNotesListsString("Active Time: {0} pixels", list_offset, Timing.HAdressable, "Blanking Time: {0} pixels", list_offset2, Timing.HBlanking);
+            Notes += OutputNotesListsString("Sync Offset: {0} pixels", list_offset, Timing.HSyncFront, "Sync Pulse Width: {0} pixels", list_offset2, Timing.HSyncWidth);
+            Notes += OutputNotesListsString("Border: {0} pixels", list_offset, Timing.HBorder, "Frequency: {0:.00} Khz", list_offset2, (float)Timing.HFrequency/1000);
+            Notes += "\n";
+            Notes += OutputNotesLineString(list_offset, "Vertical:", 0);
+            Notes += OutputNotesListsString("Active Time: {0} Lines", list_offset, Timing.VAdressable, "Blanking Time: {0} Lines", list_offset2, Timing.VBlanking);
+            Notes += OutputNotesListsString("Sync Offset: {0} Lines", list_offset, Timing.VSyncFront, "Sync Pulse Width: {0} Lines", list_offset2, Timing.VSyncWidth);
+            Notes += OutputNotesListsString("Border: {0} Lines", list_offset, Timing.VBorder, "Frequency: {0} Hz", list_offset2, Timing.VFrequency); 
+            Notes += "\n";
+            Notes += OutputNotesLineString(list_offset, "{0},{1}{2}", 0, Timing.SyncType,
+                Timing.AnalogSync == AnalogSyncType.Undefined ? "" : Timing.AnalogSync.ToString(),
+                Timing.DigitalSync == DigitalSyncType.Undefined ? "" : Timing.DigitalSync.ToString()
+                );
+
             return Notes;
         }
         private static string OutputNotesDescriptorBlock(EDIDDescriptorsType Type)
         {
             string Notes = "\n";
+            int list_offset = 8;
 
             switch (Type)
             {
@@ -955,22 +1029,25 @@ namespace EDID_Form
                     break;
 
                 case EDIDDescriptorsType.ProductSN:
-                    Notes += "         Monitor Serial Number:\n";
-                    Notes += "         " + EDIDDTableData.SN;
+                    Notes += OutputNotesLineString(list_offset, "Monitor Serial Number:",0);
+                    Notes += OutputNotesLineString(list_offset, "{0}", 0, EDIDDTableData.SN);
                     break;
 
                 case EDIDDescriptorsType.ProductName:
-                    Notes += "         Monitor Name:\n";
-                    Notes += "         " + EDIDDTableData.Name;
+                    Notes += OutputNotesLineString(list_offset, "Monitor Name:", 0);
+                    Notes += OutputNotesLineString(list_offset, "{0}", 0, EDIDDTableData.Name);
                     break;
 
                 case EDIDDescriptorsType.RangeLimits:
-                    Notes += "         Monitor Range Limits:\n";
-                   
+                    Notes += OutputNotesLineString(list_offset, "Monitor Range Limits:", 0);
+                    Notes += OutputNotesLineString(list_offset, "Vertical Freq: {0} - {1} Hz", 0, EDIDDTableData.Limits.VerticalMin, EDIDDTableData.Limits.VerticalMax);
+                    Notes += OutputNotesLineString(list_offset, "Horizontal Freq: {0} - {1} KHz", 0, EDIDDTableData.Limits.HorizontalMin, EDIDDTableData.Limits.HorizontalMax);
+                    Notes += OutputNotesLineString(list_offset, "Pixel Clock: {0} MHz", 0, EDIDDTableData.Limits.PixelClkMax);
+                    Notes += OutputNotesLineString(list_offset, "VideoTimingType: {0}", 0, EDIDDTableData.Limits.VideoTiming.ToString());
                     break;
 
                 default:
-                    Notes += Type.ToString()+ "\n";
+                    Notes += OutputNotesLineString(list_offset, Type.ToString(), 0);
                     break;
             }
 
@@ -982,7 +1059,7 @@ namespace EDID_Form
             string NoteEDID;
             int ValueOffset = 50;
 
-            NoteEDID = "        Time:" + System.DateTime.Now.ToString() + "\n";
+            NoteEDID = "Time:" + System.DateTime.Now.ToString() + "\n\n";
 
             if (EDIDDecodeStatus == DecodeError.Success)
             {
@@ -1017,8 +1094,8 @@ namespace EDID_Form
                         (EDIDDTableData.Basic.FeatureSupport.GTFstandard == Support.supported ? "GTFstandard" : ""));
 
                     NoteEDID += OutputNotesLineString("(25-34) Panel Color:", 0);
-                    NoteEDID += OutputNotesLineString("        Red X - {0} Blue X - {1} Green X - {2} White X - {3}", 0, EDIDDTableData.PanelColor.RedX, EDIDDTableData.PanelColor.GreenX, EDIDDTableData.PanelColor.BlueX, EDIDDTableData.PanelColor.WhiteX);
-                    NoteEDID += OutputNotesLineString("        Red Y - {0} Blue Y - {1} Green Y - {2} White Y - {3}", 0, EDIDDTableData.PanelColor.RedY, EDIDDTableData.PanelColor.GreenY, EDIDDTableData.PanelColor.BlueY, EDIDDTableData.PanelColor.WhiteY);
+                    NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red X - {0:0.000} Blue X - {1:0.000} Green X - {2:0.000} White X - {3:0.000}", 0, EDIDDTableData.PanelColor.RedX, EDIDDTableData.PanelColor.GreenX, EDIDDTableData.PanelColor.BlueX, EDIDDTableData.PanelColor.WhiteX);
+                    NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red Y - {0:0.000} Blue Y - {1:0.000} Green Y - {2:0.000} White Y - {3:0.000}", 0, EDIDDTableData.PanelColor.RedY, EDIDDTableData.PanelColor.GreenY, EDIDDTableData.PanelColor.BlueY, EDIDDTableData.PanelColor.WhiteY);
 
                     NoteEDID += OutputNotesListString("(35-37) Established Timing:", "(35-37) ".Length,
                         (EDIDDTableData.EstablishedTiming.Es720x400_70 == Support.supported ? "720x400 @ 70Hz" : ""),
@@ -1079,6 +1156,27 @@ namespace EDID_Form
                 fsWrite.Write(buffer, 0, buffer.Length);
             }
 
+            return true;
+        }
+        public static bool Output0xEDIDText(string Path)
+        {
+            string Note0xEDID = "";
+
+            if (EDIDDecodeStatus == DecodeError.Success)
+            {
+                for (int i = 0; i < EDIDDataLength; i++)
+                {
+                    if (i % 16 == 0)
+                        Note0xEDID += "\n";
+                    Note0xEDID += string.Format("0x{0:X2}, ", EDIDByteData[i]);
+                }
+            }
+
+            using (FileStream fsWrite = new FileStream(Path, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                byte[] buffer = Encoding.UTF8.GetBytes(Note0xEDID);
+                fsWrite.Write(buffer, 0, buffer.Length);
+            }
             return true;
         }
     }
