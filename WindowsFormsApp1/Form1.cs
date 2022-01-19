@@ -19,6 +19,8 @@ namespace WindowsFormsApp_BOE_Tool
     public partial class Form1 : UIForm
     {
         Sunny.UI.UITextBox[] EDIDTextBox = new Sunny.UI.UITextBox[128];
+        EDID WindowsFormsEDID = new EDID();
+
         public Form1()
         {
             InitializeComponent();
@@ -114,10 +116,39 @@ namespace WindowsFormsApp_BOE_Tool
             openFileDialog1.RestoreDirectory = false;
             openFileDialog1.Filter = "txt files (*.txt)|*.txt";
             openFileDialog1.FilterIndex = 1;
+
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 string filePath = openFileDialog1.FileName;
+                string UnicodeText = "";
                 uiTextBoxFile.Text = filePath;
+
+                using (FileStream fsRead = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                {
+                    byte[] b = new byte[50];
+                    while (true)
+                    {
+                        int r = fsRead.Read(b, 0, b.Length);
+                        if (r == 0)
+                            break;
+                        UnicodeText += Encoding.UTF8.GetString(b, 0, r);
+                    }
+                }
+
+                
+                DecodeError DecodeResult;
+                DecodeResult = WindowsFormsEDID.Decode(UnicodeText);
+
+                if (DecodeResult == DecodeError.Success)
+                {
+                    uiRadioButtonGroup1.SelectedIndex = 0;
+                    for (int i = 0; i < 128; i++)
+                    {
+                        // 转化输出两位十六进制字符
+                        EDIDTextBox[i].Text = string.Format("{0:X2}", WindowsFormsEDID.EDIDByteData[i]);
+                    }
+                }
+                MessageBox.Show(DecodeResult.ToString(), "EDID解析");
             }
         }
         private void Save_File_Click(object sender, EventArgs e)
@@ -132,44 +163,13 @@ namespace WindowsFormsApp_BOE_Tool
             {
                 if (uiCheckBox1.Checked == true)
                 {
-                    EDID.OutputNotesEDIDText(saveFileDialog1.FileName);
+                    WindowsFormsEDID.OutputNotesEDIDText(saveFileDialog1.FileName);
                 }
                 else
                 {
-                    EDID.Output0xEDIDText(saveFileDialog1.FileName);
+                    WindowsFormsEDID.Output0xEDIDText(saveFileDialog1.FileName);
                 }
             }
-        }
-        private void Form_button_Click(object sender, EventArgs e)
-        {
-            string UnicodeText = "";
-            string filePath = uiTextBoxFile.Text;
-
-            using (FileStream fsRead = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            {
-                byte[] b = new byte[50];
-                while (true)
-                {
-                    int r = fsRead.Read(b, 0, b.Length);
-                    if (r == 0)
-                        break;
-                    UnicodeText += Encoding.UTF8.GetString(b, 0, r);
-                }
-            }
-
-            DecodeError DecodeResult;
-            DecodeResult = EDID.Decode(UnicodeText);
-
-            if (DecodeResult == DecodeError.Success)
-            {
-                uiRadioButtonGroup1.SelectedIndex = 0;
-                for (int i = 0; i < 128; i++)
-                {
-                    // 转化输出两位十六进制字符
-                    EDIDTextBox[i].Text = string.Format("{0:X2}", EDID.EDIDByteData[i]);
-                }
-            }
-            MessageBox.Show(DecodeResult.ToString(), "EDID解析");
         }
         private void TextBox_KeyPress_Check(object sender, KeyPressEventArgs e)
         {

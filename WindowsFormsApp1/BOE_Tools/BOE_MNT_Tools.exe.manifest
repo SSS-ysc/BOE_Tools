@@ -42,14 +42,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="BOE_MNT_Tools.exe" size="55296">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="BOE_MNT_Tools.exe" size="57344">
       <assemblyIdentity name="BOE_MNT_Tools" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>KoDDrQa9tCDtYyM2c+aCueatEckcsztjq0lBbf9nu+k=</dsig:DigestValue>
+        <dsig:DigestValue>j3Tm1mQc9PfcuHWY0qB55Z8IOLTMRbLlKq2NedxfbIE=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

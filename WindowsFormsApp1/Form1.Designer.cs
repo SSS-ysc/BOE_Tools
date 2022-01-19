@@ -34,7 +34,6 @@
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.uiSymbolButtonOpenFile = new Sunny.UI.UISymbolButton();
             this.uiSymbolButtonSaveFile = new Sunny.UI.UISymbolButton();
-            this.uiSymbolButtonFarmot = new Sunny.UI.UISymbolButton();
             this.uiStyleManager1 = new Sunny.UI.UIStyleManager(this.components);
             this.uiTextBoxFile = new Sunny.UI.UITextBox();
             this.uiTabControlMenu1 = new Sunny.UI.UITabControlMenu();
@@ -84,7 +83,7 @@
             this.uiSymbolButtonSaveFile.FillHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonSaveFile.Font = new System.Drawing.Font("微软雅黑", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.uiSymbolButtonSaveFile.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
-            this.uiSymbolButtonSaveFile.Location = new System.Drawing.Point(560, 46);
+            this.uiSymbolButtonSaveFile.Location = new System.Drawing.Point(455, 46);
             this.uiSymbolButtonSaveFile.MinimumSize = new System.Drawing.Size(1, 1);
             this.uiSymbolButtonSaveFile.Name = "uiSymbolButtonSaveFile";
             this.uiSymbolButtonSaveFile.Radius = 10;
@@ -97,28 +96,6 @@
             this.uiSymbolButtonSaveFile.Text = "导出文件";
             this.uiSymbolButtonSaveFile.TipsFont = new System.Drawing.Font("微软雅黑", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.uiSymbolButtonSaveFile.Click += new System.EventHandler(this.Save_File_Click);
-            // 
-            // uiSymbolButtonFarmot
-            // 
-            this.uiSymbolButtonFarmot.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.uiSymbolButtonFarmot.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
-            this.uiSymbolButtonFarmot.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
-            this.uiSymbolButtonFarmot.FillHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
-            this.uiSymbolButtonFarmot.Font = new System.Drawing.Font("微软雅黑", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.uiSymbolButtonFarmot.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
-            this.uiSymbolButtonFarmot.Location = new System.Drawing.Point(454, 46);
-            this.uiSymbolButtonFarmot.MinimumSize = new System.Drawing.Size(1, 1);
-            this.uiSymbolButtonFarmot.Name = "uiSymbolButtonFarmot";
-            this.uiSymbolButtonFarmot.Radius = 10;
-            this.uiSymbolButtonFarmot.RectHoverColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
-            this.uiSymbolButtonFarmot.Size = new System.Drawing.Size(101, 32);
-            this.uiSymbolButtonFarmot.Style = Sunny.UI.UIStyle.Custom;
-            this.uiSymbolButtonFarmot.Symbol = 61473;
-            this.uiSymbolButtonFarmot.SymbolColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
-            this.uiSymbolButtonFarmot.TabIndex = 17;
-            this.uiSymbolButtonFarmot.Text = "文件解析";
-            this.uiSymbolButtonFarmot.TipsFont = new System.Drawing.Font("微软雅黑", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.uiSymbolButtonFarmot.Click += new System.EventHandler(this.Form_button_Click);
             // 
             // uiStyleManager1
             // 
@@ -268,7 +245,7 @@
             this.uiCheckBox1.Cursor = System.Windows.Forms.Cursors.Hand;
             this.uiCheckBox1.Font = new System.Drawing.Font("微软雅黑", 8F);
             this.uiCheckBox1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
-            this.uiCheckBox1.Location = new System.Drawing.Point(666, 51);
+            this.uiCheckBox1.Location = new System.Drawing.Point(562, 51);
             this.uiCheckBox1.MinimumSize = new System.Drawing.Size(1, 1);
             this.uiCheckBox1.Name = "uiCheckBox1";
             this.uiCheckBox1.Padding = new System.Windows.Forms.Padding(22, 0, 0, 0);
@@ -290,7 +267,6 @@
             this.Controls.Add(this.uiRadioButtonGroup1);
             this.Controls.Add(this.uiTabControlMenu1);
             this.Controls.Add(this.uiTextBoxFile);
-            this.Controls.Add(this.uiSymbolButtonFarmot);
             this.Controls.Add(this.uiSymbolButtonSaveFile);
             this.Controls.Add(this.uiSymbolButtonOpenFile);
             this.Font = new System.Drawing.Font("微软雅黑", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
@@ -318,7 +294,6 @@
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
         private Sunny.UI.UISymbolButton uiSymbolButtonOpenFile;
         private Sunny.UI.UISymbolButton uiSymbolButtonSaveFile;
-        private Sunny.UI.UISymbolButton uiSymbolButtonFarmot;
         private Sunny.UI.UIStyleManager uiStyleManager1;
         private Sunny.UI.UITextBox uiTextBoxFile;
         private Sunny.UI.UITabControlMenu uiTabControlMenu1;
