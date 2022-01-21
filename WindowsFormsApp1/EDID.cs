@@ -245,7 +245,7 @@ namespace EDID_Form
         public ushort HSyncWidth;
         public byte HBorder;
 
-        public ushort VFrequency;
+        public float VFrequency;
         public ushort VAdressable;
         public ushort VBlanking;
         public ushort VSyncFront;
@@ -782,7 +782,7 @@ namespace EDID_Form
             Timing.VBorder = Data[16];
 
             Timing.HFrequency = (uint)(Timing.PixelClk / (Timing.HAdressable + Timing.HBlanking));
-            Timing.VFrequency = (ushort)(Timing.HFrequency / (Timing.VAdressable + Timing.VBlanking));
+            Timing.VFrequency = (float)(Timing.HFrequency / (Timing.VAdressable + Timing.VBlanking));
 
             Timing.Interface = (InterfaceType)GetByteBit(Data[17],7);
 
@@ -1575,7 +1575,7 @@ namespace EDID_Form
             int list_offset = 8;
             int list_offset2 = 50;
 
-            Notes = OutputNotesLineString(list_offset, "{0}x{1}@{2}Hz   Pixel Clock: {3:000.00} MHz", 0, Timing.HAdressable, Timing.VAdressable, Timing.VFrequency, (float)Timing.PixelClk/1000000);
+            Notes = OutputNotesLineString(list_offset, "{0}x{1}@{2:.00}Hz   Pixel Clock: {3:000.00} MHz", 0, Timing.HAdressable, Timing.VAdressable, Timing.VFrequency, (float)Timing.PixelClk/1000000);
             Notes += "\n";
             Notes += OutputNotesListsString("Horizontal Image Size: {0} mm", list_offset, Timing.VideoSizeH, "Vertical Image Size: {0} mm", list_offset2, Timing.VideoSizeV);
             Notes += OutputNotesListsString("Refreshed Mode: {0}", list_offset, Timing.Interface, "Normal Display: {0}", list_offset2, Timing.StereoFormat);
@@ -1588,7 +1588,7 @@ namespace EDID_Form
             Notes += OutputNotesLineString(list_offset, "Vertical:", 0);
             Notes += OutputNotesListsString("Active Time: {0} Lines", list_offset, Timing.VAdressable, "Blanking Time: {0} Lines", list_offset2, Timing.VBlanking);
             Notes += OutputNotesListsString("Sync Offset: {0} Lines", list_offset, Timing.VSyncFront, "Sync Pulse Width: {0} Lines", list_offset2, Timing.VSyncWidth);
-            Notes += OutputNotesListsString("Border: {0} Lines", list_offset, Timing.VBorder, "Frequency: {0} Hz", list_offset2, Timing.VFrequency); 
+            Notes += OutputNotesListsString("Border: {0} Lines", list_offset, Timing.VBorder, "Frequency: {0:.00} Hz", list_offset2, Timing.VFrequency); 
             Notes += "\n";
             Notes += OutputNotesLineString(list_offset, "{0},{1}{2}", 0, Timing.SyncType,
                 Timing.AnalogSync == AnalogSyncType.Undefined ? "" : Timing.AnalogSync.ToString(),
@@ -1671,7 +1671,7 @@ namespace EDID_Form
                     Notes += OutputNotesLineString("Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
                     foreach (BlockVideoVIC VIC in EDIDTableCEA.BlockVideoVIC)
                     {
-                        Notes += OutputNotesLineString(list_offset, "{0}{1}", 0, VICcode[VIC.VIC], GetSupportString("Native", VIC.NativeCode));
+                        Notes += OutputNotesLineString(list_offset, "{0}{1} ", 0, VICcode[VIC.VIC], GetSupportString("Native", VIC.NativeCode));
                     }
                     break;
                 case CEATagCodeType.SpeakerAllocation:
@@ -1863,7 +1863,7 @@ namespace EDID_Form
                 if (EDIDDataLength >= 256)
                 {
                     NoteEDID += OutputNotesEDIDList(128);
-                    NoteEDID += OutputNotesLineString("(1) CEA Version:", 0, EDIDTableCEA.Version);
+                    NoteEDID += OutputNotesLineString("(1) CEA Version: {0}", 0, EDIDTableCEA.Version);
                     NoteEDID += OutputNotesListString("(2) General Info:", 8,
                         GetSupportString("Support Underscran", EDIDTableCEA.UnderscranITFormatByDefault),
                         GetSupportString("Support Audio", EDIDTableCEA.Audio),
@@ -1871,20 +1871,28 @@ namespace EDID_Form
                         GetSupportString("Support YCbCr 4:2:2", EDIDTableCEA.YCbCr422),
                         "Native Format:" + EDIDTableCEA.NativeVideoFormatNumber.ToString()
                         );
+                    NoteEDID += OutputNotesLineString("(3) Detailed Timing Start: {0}", 0, EDIDTableCEA.DetailedTimingStart);
+
                     i = 4;
                     foreach (CEABlocksTable Table in EDIDTableCEA.CEABlocksList)
                     {
-                        NoteEDID += "(" + i.ToString() + "-" + (i + Table.BlockPayload + 1).ToString() + ") " + OutputNotesCEABlocks(Table);
+                        NoteEDID += "(" + i.ToString() + "-" + (i + Table.BlockPayload).ToString() + ") " + OutputNotesCEABlocks(Table);
                         i += Table.BlockPayload + 1;
                     }
 
+                    int TimingNumber = 1;
                     foreach (EDIDDetailedTimingTable Timing in EDIDTableCEA.CEATimingList)
                     {
                         NoteEDID += "______________________________________________________________________\n";
-                        NoteEDID += "(" + i.ToString() + "-" + (i + 18).ToString() + ")" + " Detailed Timing:\n\n" + OutputNotesDetailedTiming(Timing);
+                        NoteEDID += "(" + i.ToString() + "-" + (i + 17).ToString() + ")" + " Detailed Timing " + TimingNumber.ToString() + ":\n\n" + OutputNotesDetailedTiming(Timing);
                         i += 18;
+                        TimingNumber++;
                     }
 
+                    if (i != 127)
+                    { 
+                        NoteEDID += "\n(" + i.ToString() + "-" + 126.ToString() + ") No data"; 
+                    }
                     NoteEDID += OutputNotesLineString("\n(127) CheckSum: OK", 0);
                 }
 
