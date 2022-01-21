@@ -16,6 +16,8 @@ namespace EDID_Form
     enum DecodeError
     {
         Success,
+        LengthError,
+
         HeaderError,
         VersionError,
         NoMainTimingError,
@@ -155,43 +157,6 @@ namespace EDID_Form
         CVT,
         Reserved,
     }
-    enum CEATagCodeType
-    {
-        Reserved,
-        Audio,
-        Video,
-        VendorSpecific,
-        SpeakerAllocation,
-        VESADisplayTransferCharacteristic,
-        ReReserved,
-        Extended,
-
-        VS_HDMI_LLC,//Vendor Specific
-        VS_AMD,
-        VS_HDMI_Forum,
-        VS_Mstar,
-        VS_Realtek,
-
-        Ex_Start,
-        Ex_Video_Capability = Ex_Start,//Extended
-        Ex_VS_Video_Capability,
-        Ex_VESA_Display_Device,
-        Ex_VESA_Video_Timing,
-        Ex_VESA_HDMI_Video,
-        Ex_Colorimetry,
-        Ex_HDR_Static_Matadata,//0x06-0x07 : Reserved for video-related blocks
-        Ex_HDR_Dynamic_Matadata,
-        Ex_Video_Format_Preference = Ex_Start + 13,
-        Ex_YCbCr420Video,
-        Ex_YCbCr420CapabilityMap,
-        Ex_VS_Audio,
-        Ex_HDMI_Video,
-        Ex_Room_Configuration,// 0x13-0x1F : Reserved for audio-related blocks
-        Ex_Speaker_Location,
-        Ex_Inframe = Ex_Start + 32,// 0x20
-
-        Ex_VS_Dolby_Version,//Extended Vendor Specific
-    }
     struct EDIDStandardTiming
     {
         public Support TimingSupport;
@@ -309,11 +274,6 @@ namespace EDID_Form
         public ushort PixelClkMax;
         public VideoTimingType VideoTiming;
     };
-    struct CEABlocksTable
-    {
-        public CEATagCodeType Block;
-        public int BlockPayload;
-    }
     struct EDIDTable
     {
         public string IDManufacturerName;
@@ -342,6 +302,144 @@ namespace EDID_Form
         public byte ExBlockCount;
         public byte Checksum;
     };
+    enum CEATagCodeType
+    {
+        Reserved,
+        Audio,
+        Video,
+        VendorSpecific,
+        SpeakerAllocation,
+        VESADisplayTransferCharacteristic,
+        ReReserved,
+        Extended,
+
+        VS_HDMI_LLC,//Vendor Specific
+        VS_AMD,
+        VS_HDMI_Forum,
+        VS_Mstar,
+        VS_Realtek,
+
+        Ex_Video_Capability,//Extended
+        Ex_VS_Video_Capability,
+        Ex_VESA_Display_Device,
+        Ex_VESA_Video_Timing,
+        Ex_VESA_HDMI_Video,
+        Ex_Colorimetry,
+
+        Ex_HDR_Static_Matadata,// 8-12 : Reserved for video-related blocks
+        Ex_HDR_Dynamic_Matadata,
+
+        Ex_Video_Format_Preference = Ex_Video_Capability + 13,
+        Ex_YCbCr420Video,
+        Ex_YCbCr420CapabilityMap,
+        Ex_CEA_Miscellaneous_Audio_Fields,
+        Ex_VS_Audio,
+        Ex_HDMI_Video,
+        Ex_Room_Configuration,
+        Ex_Speaker_Location,
+
+        // 21-31 : Reserved for audio-related blocks
+
+        Ex_Inframe = Ex_Video_Capability + 32,// 32
+
+        Ex_VS_Dolby_Version,//Extended Vendor Specific
+    }
+    enum AudioFormatType
+    {
+        Reserved,
+        L_PCM,
+        AC_3,
+        MPEG_1,
+        MP3,
+        MPEG2,
+        AACLC,
+        DTS,
+        ATRAC,
+        OneBitAudio,
+        EnhanecdAC_3,
+        DTS_HD,
+        MAT,
+        DST,
+        WMA_Pro,
+        Extension,
+    }
+    enum AudioFormatExType
+    { 
+        Reserved,
+    }
+    struct BlockAudio
+    {
+        public AudioFormatType Type;
+        public AudioFormatExType ExType;
+        public int Channels;
+        
+        public Support Freq192Khz;
+        public Support Freq176_4Khz;
+        public Support Freq96Khz;
+        public Support Freq88_2Khz;
+        public Support Freq48Khz;
+        public Support Freq44_1Khz;
+        public Support Freq32Khz;
+        //Type 1 (L_PCM)
+        public Support Size16Bit;
+        public Support Size20Bit;
+        public Support Size24Bit;
+        //Type 2-8
+        public int Maxbit;
+        //Type 9-13
+        public int DependentValue;
+        //Type 14 (WMA Pro)
+        public int Profile;
+    }
+    struct BlockVideoVIC
+    {
+        public Support NativeCode;
+        public byte VIC;
+    }
+    struct BlockSpeaker
+    {
+        public Support FLW_FRW; //Byte1 bit7
+        public Support RLC_RRC;
+        public Support FLC_FRC;
+        public Support BC;
+        public Support BL_BR;
+        public Support FC;
+        public Support LFE;
+        public Support FL_FR;
+
+        public Support TpFC; //Byte2 bit2
+        public Support TpC;
+        public Support TpFL_TpFH;
+    }
+    struct VSBlockHDMILLC
+    { 
+    }
+    struct VSBlockAMD
+    {    
+    }
+    struct VSBlockHDMIForum
+    { 
+    }
+    struct ExBlockVideoCapability
+    { 
+    
+    }
+    struct ExBlockColorimetry
+    { 
+    }
+    struct ExBlockHDRStatic
+    { 
+    
+    }
+    struct ExBlockYCbCr420
+    { 
+    
+    }
+    struct CEABlocksTable
+    {
+        public CEATagCodeType Block;
+        public int BlockPayload;
+    }
     struct EDIDTableCEA
     {
         public byte Version;
@@ -352,6 +450,19 @@ namespace EDID_Form
         public Support YCbCr422;
         public byte NativeVideoFormatNumber;
         public List<CEABlocksTable> CEABlocksList;
+
+        public List<BlockAudio> BlockAudio;
+        public List<BlockVideoVIC> BlockVideoVIC;
+        public List<BlockSpeaker> BlockSpeaker;
+
+        public VSBlockHDMILLC BlockHDMILLC;
+        public VSBlockAMD BlockAMD;
+        public VSBlockHDMIForum BlockHDMIForum;
+
+        public ExBlockVideoCapability BlockVideoCapability;
+        public ExBlockColorimetry BlockColorimetry;
+        public ExBlockHDRStatic BlockHDRStatic;
+        public ExBlockYCbCr420 BlockYCbCr420;
 
         public List<EDIDDetailedTimingTable> CEATimingList;
         public byte Checksum;
@@ -370,6 +481,140 @@ namespace EDID_Form
         public EDIDTableCEA EDIDTableCEA;
         public EDIDTableDisplayID EDIDTableDisplayID;
         public DecodeError EDIDDecodeStatus;
+
+        static public string[] VICcode = {
+                                    "No VIC",
+                                    "640x480p@59.94Hz/60Hz 4:3",
+                                    "720x480p@59.94Hz/60Hz 4:3",
+                                    "720x480p@59.94Hz/60Hz 16:9",
+                                    "1280x720p@59.94Hz/60Hz 16:9",
+                                    "1920x1080i@59.94Hz/60Hz 16:9",
+                                    "720(1440)x480i@59.94Hz/60Hz 4:3",
+                                    "720(1440)x480i@59.94Hz/60Hz 16:9",
+                                    "720(1440)x240p@59.94Hz/60Hz 4:3",
+                                    "720(1440)x240p@59.94Hz/60Hz 16:9",
+                                    "2880x480i@59.94Hz/60Hz 4:3",
+                                    "2880x480i@59.94Hz/60Hz 16:9",
+                                    "2880x240p@59.94Hz/60Hz 4:3",
+                                    "2880x240p@59.94Hz/60Hz 16:9",
+                                    "1440x480p@59.94Hz/60Hz 4:3",
+                                    "1440x480p@59.94Hz/60Hz 16:9",
+                                    "1920x1080p@59.94Hz/60Hz 16:9",
+                                    "720x576p@50Hz 4:3",
+                                    "720x576p@50Hz 16:9",
+                                    "1280x720p@50Hz 16:9",
+                                    "1920x1080i@50Hz 16:9",
+                                    "720(1440)x576i@50Hz 4:3",
+                                    "720(1440)x576i@50Hz 16:9",
+                                    "720(1440)x288p@50Hz 4:3",
+                                    "720(1440)x288p@50Hz 16:9",
+                                    "2880x576i@50Hz 4:3",
+                                    "2880x576i@50Hz 16:9",
+                                    "2880x288p@50Hz 4:3",
+                                    "2880x288p@50Hz 16:9",
+                                    "1440x576p@50Hz 4:3",
+                                    "1440x576p@50Hz 16:9",
+                                    "1920x1080p@50Hz 16:9",
+                                    "1920x1080p@23.98Hz/24Hz 16:9",
+                                    "1920x1080p@25Hz 16:9",
+                                    "1920x1080p@29.97Hz/30Hz 16:9",
+                                    "2880x480p@59.94Hz/60Hz 4:3",
+                                    "2880x480p@59.94Hz/60Hz 16:9",
+                                    "2880x576p@50Hz 4:3",
+                                    "2880x576p@50Hz 16:9",
+                                    "1920x1080i (1250 total)@50Hz 16:9",
+                                    "1920x1080i@100Hz 16:9",
+                                    "1280x720p@100Hz 16:9",
+                                    "720x576p@100Hz 4:3",
+                                    "720x576p@100Hz 16:9",
+                                    "720(1440)x576i@100Hz 4:3",
+                                    "720(1440)x576i@100Hz 16:9",
+                                    "1920x1080i@119.88/120Hz 16:9",
+                                    "1280x720p@119.88/120Hz 16:9",
+                                    "720x480p@119.88/120Hz 4:3",
+                                    "720x480p@119.88/120Hz 16:9",
+                                    "720(1440)x480i@119.88/120Hz 4:3",
+                                    "720(1440)x480i@119.88/120Hz 16:9",
+                                    "720x576p@200Hz 4:3",
+                                    "720x576p@200Hz 16:9",
+                                    "720(1440)x576i@200Hz 4:3",
+                                    "720(1440)x576i@200Hz 16:9",
+                                    "720x480p@239.76/240Hz 4:3",
+                                    "720x480p@239.76/240Hz 16:9",
+                                    "720(1440)x480i@239.76/240Hz 4:3",
+                                    "720(1440)x480i@239.76/240Hz 16:9", // VIC 59 ,CEA-861-D
+
+                                    "1280x720p@239.76/240Hz 16:9",
+                                    "1280x720p@25Hz 16:9",
+                                    "1280x720p@29.97Hz/30Hz 16:9",
+                                    "1920x1080p@119.88/120Hz 16:9",
+                                    "1920x1080p@100Hz 16:9", // VIC 64 ,CEA-861-E
+
+                                    "1280x720p@23.98Hz/24Hz 64:27",
+                                    "1280x720p@25Hz 64:27",
+                                    "1280x720p@29.97Hz/30Hz 64:27",
+                                    "1280x720p@50Hz 64:27",
+                                    "1280x720p@59.94Hz/60Hz 64:27",
+                                    "1280x720p@100Hz 64:27",
+                                    "1280x720p@119.88/120Hz 64:27",
+                                    "1920x1080p@23.98Hz/24Hz 64:27",
+                                    "1920x1080p@25Hz 64:27",
+                                    "1920x1080p@29.97Hz/30Hz 64:27",
+                                    "1920x1080p@50Hz 64:27",
+                                    "1920x1080p@59.94Hz/60Hz 64:27",
+                                    "1920x1080p@100Hz 64:27",
+                                    "1920x1080p@119.88/120Hz 64:27",
+                                    "1680x720p@23.98Hz/24Hz 64:27",
+                                    "1680x720p@25Hz 64:27",
+                                    "1680x720p@29.97Hz/30Hz 64:27",
+                                    "1680x720p@50Hz 64:27",
+                                    "1680x720p@59.94Hz/60Hz 64:27",
+                                    "1680x720p@100Hz 64:27",
+                                    "1680x720p@119.88/120Hz 64:27",
+                                    "2560x1080p@23.98Hz/24Hz 64:27",
+                                    "2560x1080p@25Hz 64:27",
+                                    "2560x1080p@29.97Hz/30Hz 64:27",
+                                    "2560x1080p@50Hz 64:27",
+                                    "2560x1080p@59.94Hz/60Hz 64:27",
+                                    "2560x1080p@100Hz 64:27",
+                                    "2560x1080p@119.88/120Hz 64:27",
+                                    "3840x2160p@23.98Hz/24Hz 16:9",
+                                    "3840x2160p@25Hz 16:9",
+                                    "3840x2160p@29.97Hz/30Hz 16:9",
+                                    "3840x2160p@50Hz 16:9",
+                                    "3840x2160p@59.94Hz/60Hz 16:9",
+                                    "4096x2160p@23.98Hz/24Hz 256:135",
+                                    "4096x2160p@25Hz 256:135",
+                                    "4096x2160p@29.97Hz/30Hz 256:135",
+                                    "4096x2160p@50Hz 256:135",
+                                    "4096x2160p@59.94Hz/60Hz 256:135",
+                                    "3840x2160p@23.98Hz/24Hz 64:27",
+                                    "3840x2160p@25Hz 64:27",
+                                    "3840x2160p@29.97Hz/30Hz 64:27",
+                                    "3840x2160p@50Hz 64:27",
+                                    "3840x2160p@59.94Hz/60Hz 64:27", // VIC 107 ,CEA-861-F
+
+                                    "1280x720p@47.95Hz/48Hz16:9",
+                                    "1280x720p@47.95Hz/48Hz64:27",
+                                    "1680x720p@47.95Hz/48Hz64:27",
+                                    "1920x1080p@47.95Hz/48Hz16:9",
+                                    "1920x1080p@47.95Hz/48Hz64:27",
+                                    "2560x1080p@47.95Hz/48Hz64:27",
+                                    "3840x2160p@47.95Hz/48Hz16:9",
+                                    "4096x2160p@47.95Hz/48Hz256:135",
+                                    "3840x2160p@47.95Hz/48Hz64:27",
+                                    "3840x2160p@100Hz16:9",
+                                    "3840x2160p@119.88/120Hz16:9",
+                                    "3840x2160p@100Hz64:27",
+                                    "3840x2160p@119.88/120Hz64:27",
+                                    "5120x2160p@23.98Hz/24Hz64:27",
+                                    "5120x2160p@25Hz64:27",
+                                    "5120x2160p@29.97Hz/30Hz64:27",
+                                    "5120x2160p@47.95Hz/48Hz64:27",
+                                    "5120x2160p@50Hz64:27",
+                                    "5120x2160p@59.94Hz/60Hz64:27",
+                                    "5120x2160p@100Hz64:27", // VIC 127 ,CTA-861-G
+        };
 
         private byte GetByteBit(byte a, byte X)
         {
@@ -402,6 +647,10 @@ namespace EDID_Form
             else
                 return Support.unsupported;
         }
+        private string GetSupportString(string Text, Support S)
+        {
+            return (S == Support.supported ? Text : "");
+        }
         private double GetEDIDColorxy(uint xy)
         {
             double xyValue = 0;
@@ -419,7 +668,7 @@ namespace EDID_Form
 
             return Math.Round(xyValue, 3);
         }
-        public uint MatchOriginalTextEDID(string Text)//standard format
+        private uint MatchOriginalTextEDID(string Text)//standard format
         {
             uint Length = 0;
 
@@ -444,7 +693,7 @@ namespace EDID_Form
             }
             return Length;
         }
-        public uint Match0xTextEDID(string Text)//0x.. format
+        private uint Match0xTextEDID(string Text)//0x.. format
         {
             uint Length = 0;
 
@@ -882,32 +1131,203 @@ namespace EDID_Form
         /*
          * 解析CEA EDID
          */
+        private BlockAudio DecodeCEAAudioBlock(byte[] Data, int index)
+        {
+            BlockAudio Audio = new BlockAudio();
+
+            Audio.Type = (AudioFormatType)(byte)(Data[index] >> 3);
+            Console.WriteLine("Audio Format: {0}", Audio.Type.ToString());
+
+            Audio.Freq192Khz = GetByteBitSupport(Data[index + 1], 6);
+            Audio.Freq176_4Khz = GetByteBitSupport(Data[index + 1], 5);
+            Audio.Freq96Khz = GetByteBitSupport(Data[ index + 1], 4);
+            Audio.Freq88_2Khz = GetByteBitSupport(Data[index + 1], 3);
+            Audio.Freq48Khz = GetByteBitSupport(Data[index + 1], 2);
+            Audio.Freq44_1Khz = GetByteBitSupport(Data[index + 1], 1);
+            Audio.Freq32Khz = GetByteBitSupport(Data[index + 1], 0);
+
+            switch (Audio.Type)
+            {
+                case AudioFormatType.L_PCM:
+                    Audio.Size24Bit = GetByteBitSupport(Data[index + 2], 2);
+                    Audio.Size20Bit = GetByteBitSupport(Data[index + 2], 1);
+                    Audio.Size16Bit = GetByteBitSupport(Data[index + 2], 0);
+                    break;
+
+                case AudioFormatType.AC_3:
+                case AudioFormatType.MPEG_1:
+                case AudioFormatType.MP3:
+                case AudioFormatType.MPEG2:
+                case AudioFormatType.AACLC:
+                case AudioFormatType.DTS:
+                case AudioFormatType.ATRAC:
+                    break;
+
+                case AudioFormatType.OneBitAudio:
+                case AudioFormatType.EnhanecdAC_3:
+                case AudioFormatType.DTS_HD:
+                case AudioFormatType.MAT:
+                case AudioFormatType.DST:
+                    break;
+
+                case AudioFormatType.WMA_Pro:
+                    break;
+
+                case AudioFormatType.Extension:
+                    break;
+
+                default:break;
+            }
+            return Audio;
+        }
         private CEABlocksTable DecodeCEADataBlocks(byte[] CEAData,int index)
         {
+            int i = 0;
             CEABlocksTable Block = new CEABlocksTable();
 
             Block.BlockPayload = (int)CEAData[index] & 0x1F;
             Block.Block = (CEATagCodeType)((CEAData[index] & 0xE0) >> 5);
-            Console.WriteLine("Decode CEA Data Blocks: {0}", Block.Block.ToString());
+            Console.WriteLine("---------------");
+
+            byte[] BlockData = new byte[Block.BlockPayload];
+            Array.Copy(CEAData, index+1, BlockData, 0, Block.BlockPayload);
 
             switch (Block.Block)
             {
                 case CEATagCodeType.Audio:
+                    EDIDTableCEA.BlockAudio = new List<BlockAudio>();
+
+                    for (i = 0; i < Block.BlockPayload / 3; i++)
+                    {
+                        EDIDTableCEA.BlockAudio.Add(DecodeCEAAudioBlock(BlockData, i * 3));
+                    }
                     break;
 
                 case CEATagCodeType.Video:
+                    EDIDTableCEA.BlockVideoVIC = new List<BlockVideoVIC>();
+                    BlockVideoVIC VIC = new BlockVideoVIC();
+
+                    for (i = 0; i < Block.BlockPayload; i++)
+                    {
+                        if ((BlockData[i] & 0x7F) <= 64)
+                        {
+                            VIC.NativeCode = GetByteBitSupport(BlockData[i], 7);
+                            VIC.VIC = (byte)(BlockData[i] & 0x7F);
+                        }
+                        else
+                        {
+                            VIC.NativeCode = Support.unsupported;
+                            VIC.VIC = BlockData[i];
+                        }
+                        EDIDTableCEA.BlockVideoVIC.Add(VIC);
+
+                        Console.WriteLine("VIC: {0} {1}", 
+                            VICcode[EDIDTableCEA.BlockVideoVIC[i].VIC],
+                            EDIDTableCEA.BlockVideoVIC[i].NativeCode == Support.supported ? "Native" : ""
+                            );
+                    }
                     break;
 
                 case CEATagCodeType.VendorSpecific:
+                    int VSDB_IEEEID = BlockData[0] + (BlockData[1] << 8) + (BlockData[2] << 16);
+                    switch (VSDB_IEEEID)
+                    {
+                        case 0x000C03:
+                            Block.Block = CEATagCodeType.VS_HDMI_LLC;
+                            break;
+
+                        case 0x00001A:
+                            Block.Block = CEATagCodeType.VS_AMD;
+                            break;
+
+                        case 0xC45DD8:
+                            Block.Block = CEATagCodeType.VS_HDMI_Forum;
+                            break;
+
+                        default:
+                            Console.WriteLine("unknow VSDB !!!!!!!!!!!!!!!!");
+                            break;
+                    }
                     break;
 
                 case CEATagCodeType.SpeakerAllocation:
+                    EDIDTableCEA.BlockSpeaker = new List<BlockSpeaker>();
+                    BlockSpeaker Speaker = new BlockSpeaker();
+
+                    for (i = 0; i < Block.BlockPayload / 3; i++)
+                    {
+                        Speaker.FLW_FRW = GetByteBitSupport(BlockData[i * 3], 7);
+                        Speaker.RLC_RRC = GetByteBitSupport(BlockData[i * 3], 6);
+                        Speaker.FLC_FRC = GetByteBitSupport(BlockData[i * 3], 5);
+                        Speaker.BC = GetByteBitSupport(BlockData[i * 3], 4);
+                        Speaker.BL_BR = GetByteBitSupport(BlockData[i * 3], 3);
+                        Speaker.FC = GetByteBitSupport(BlockData[i * 3], 2);
+                        Speaker.LFE = GetByteBitSupport(BlockData[i * 3], 1);
+                        Speaker.FL_FR = GetByteBitSupport(BlockData[i * 3], 0);
+                        Speaker.TpFC = GetByteBitSupport(BlockData[i * 3 + 1], 2);
+                        Speaker.TpC = GetByteBitSupport(BlockData[i * 3 + 1], 1);
+                        Speaker.TpFL_TpFH = GetByteBitSupport(BlockData[i * 3 + 1], 0);
+
+                        EDIDTableCEA.BlockSpeaker.Add(Speaker);
+                        Console.WriteLine("Speaker: {0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}",
+                            GetSupportString("Front Left/Right Wide,", Speaker.FLW_FRW),
+                            GetSupportString("Rear Left/Right Center,", Speaker.RLC_RRC),
+                            GetSupportString("Front Left/Right Center,", Speaker.FLC_FRC),
+                            GetSupportString("Rear Center,", Speaker.BC),
+                            GetSupportString("Rear Left/Right,", Speaker.BL_BR),
+                            GetSupportString("Front Center,", Speaker.FC),
+                            GetSupportString("Low Frequency Effect,", Speaker.LFE),
+                            GetSupportString("Front Left/Right High,", Speaker.FL_FR),
+                            GetSupportString("Front Center High,", Speaker.TpFC),
+                            GetSupportString("Top Center,", Speaker.TpC),
+                            GetSupportString("Front Left/Right High,", Speaker.TpFL_TpFH)
+                            );
+                    }
                     break;
 
                 case CEATagCodeType.VESADisplayTransferCharacteristic:
                     break;
 
                 case CEATagCodeType.Extended:
+                    Block.Block = (CEATagCodeType)(BlockData[0] + CEATagCodeType.Ex_Video_Capability);
+
+                    switch (Block.Block)
+                    {
+                        case CEATagCodeType.Ex_Video_Capability:
+
+                            break;
+
+                        case CEATagCodeType.Ex_VS_Video_Capability:
+                            int VSVDB_IEEEID = BlockData[1] + (BlockData[2] << 8) + (BlockData[3] << 16);
+                            switch (VSVDB_IEEEID)
+                            {
+                                case 0x00D046:
+                                    Block.Block = CEATagCodeType.Ex_VS_Dolby_Version;
+
+                                    break;
+
+                                default:
+                                    Console.WriteLine("unknow VSVDB !!!!!!!!!!!!!!!!");
+                                    break;
+                            }
+                            break;
+
+                        case CEATagCodeType.Ex_HDR_Static_Matadata:
+
+                            break;
+
+                        case CEATagCodeType.Ex_Colorimetry:
+
+                            break;
+
+                        case CEATagCodeType.Ex_YCbCr420CapabilityMap:
+
+                            break;
+
+                        default:
+                            Console.WriteLine("unknow Extended Tag code !!!!!!!!!!!!!!!!");
+                            break;
+                    }
                     break;
                 
                 case CEATagCodeType.Reserved:
@@ -915,13 +1335,13 @@ namespace EDID_Form
                 default:
                     break;
             }
-
+            Console.WriteLine("/ Decode {0} END, BlockPayload: {1} / ", Block.Block.ToString(), Block.BlockPayload);
             return Block;
         }
-        private DecodeError DecodeCEABlock()
+        private DecodeError DecodeCEABlock(int index)
         {
             byte[] CEAByteData = new byte[128];
-            Array.Copy(EDIDByteData, 128, CEAByteData, 0, 128);
+            Array.Copy(EDIDByteData, index, CEAByteData, 0, 128);
 
             //01 Revision Number
             EDIDTableCEA.Version = CEAByteData[1];
@@ -939,7 +1359,7 @@ namespace EDID_Form
             EDIDTableCEA.YCbCr422 = GetByteBitSupport(CEAByteData[3], 4);
             EDIDTableCEA.NativeVideoFormatNumber = (byte)(CEAByteData[3] & 0x0F);
 
-            //04-DetailedTimingStart
+            //04-... CEA Data Blocks
             if (EDIDTableCEA.DetailedTimingStart != 4)
             {
                 int blockindex = 4;
@@ -955,14 +1375,14 @@ namespace EDID_Form
                 }
             }
 
-            //DetailedTimingStart
+            //Detailed Timing Blocks
             if (EDIDTableCEA.DetailedTimingStart != 0)
             {
                 int DetailedTimingindex = EDIDTableCEA.DetailedTimingStart;
                 byte[] TimingByte = new byte[18];
                 EDIDTableCEA.CEATimingList = new List<EDIDDetailedTimingTable>();
 
-                while (CEAByteData[DetailedTimingindex] != 0x00 || (DetailedTimingindex + 18) < 127)
+                while (CEAByteData[DetailedTimingindex] != 0x00 && (DetailedTimingindex + 18) < 127)
                 {
                     Array.Copy(CEAByteData, DetailedTimingindex, TimingByte, 0, 18);
                     EDIDTableCEA.CEATimingList.Add(DecodeDetailedTimingData(TimingByte));
@@ -1004,18 +1424,18 @@ namespace EDID_Form
                 EDIDDataLength = Match0xTextEDID(UnicodeText);
             }
 
+            if (EDIDDataLength % 128 != 0) return DecodeError.LengthError;
+
             EDIDByteData = new byte[EDIDDataLength];
             FormatStringToByte(EDIDText);
 
-            if (EDIDDataLength >= 128)
-            {
-                Error = DecodeBaseBlock();
-                if(Error != DecodeError.Success)
-                    return Error;
-            }
+            Error = DecodeBaseBlock();
+            if(Error != DecodeError.Success)
+                return Error;
+
             if (EDIDDataLength >= 256)
             {
-                Error = DecodeCEABlock();
+                Error = DecodeCEABlock(128);
                 if (Error != DecodeError.Success)
                     return Error;
             }
@@ -1218,10 +1638,151 @@ namespace EDID_Form
             Notes += "\n";
             return Notes;
         }
+        private string OutputNotesCEABlocks(CEABlocksTable Table)
+        {
+            string Notes = "";
+            int list_offset = 8;
+
+            switch (Table.Block)
+            {
+                case CEATagCodeType.Audio:
+                    Notes += OutputNotesLineString("Audio Data Block, Number of Data Byte to Follow: {0}",0, Table.BlockPayload);
+                    foreach (BlockAudio Audio in EDIDTableCEA.BlockAudio)
+                    {
+                        Notes += OutputNotesLineString(list_offset, "Audio Format: {0}, Channel Number: {1}", 0, Audio.Type, Audio.Channels);
+                        Notes += OutputNotesLineString(list_offset, "Sampling: Frequency: {0}{1}{2}{3}{4}{5}{6}", 0, 
+                            GetSupportString("192Khz,",Audio.Freq192Khz),
+                            GetSupportString("176.4Khz,", Audio.Freq176_4Khz),
+                            GetSupportString("96Khz,", Audio.Freq96Khz),
+                            GetSupportString("88.2Khz,", Audio.Freq88_2Khz),
+                            GetSupportString("48Khz,", Audio.Freq48Khz),
+                            GetSupportString("44.1Khz,", Audio.Freq44_1Khz),
+                            GetSupportString("32Khz,", Audio.Freq32Khz));
+                        if (Audio.Type == AudioFormatType.L_PCM)
+                        {
+                            Notes += OutputNotesLineString(list_offset, "Sample: Size: {0}{1}{2}", 0,
+                                GetSupportString("16 bit,", Audio.Size16Bit),
+                                GetSupportString("20 bit,", Audio.Size20Bit),
+                                GetSupportString("24 bit,", Audio.Size24Bit));
+                        }
+                    }
+                    break;
+                case CEATagCodeType.Video:
+                    Notes += OutputNotesLineString("Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    foreach (BlockVideoVIC VIC in EDIDTableCEA.BlockVideoVIC)
+                    {
+                        Notes += OutputNotesLineString(list_offset, "{0}{1}", 0, VICcode[VIC.VIC], GetSupportString("Native", VIC.NativeCode));
+                    }
+                    break;
+                case CEATagCodeType.SpeakerAllocation:
+                    Notes += OutputNotesLineString("Speaker Allocation Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    foreach (BlockSpeaker Speaker in EDIDTableCEA.BlockSpeaker)
+                    {
+                        Notes += OutputNotesLineString(list_offset, "{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}", 0,
+                            GetSupportString("Front Left/Right Wide,", Speaker.FLW_FRW),
+                            GetSupportString("Rear Left/Right Center,", Speaker.RLC_RRC),
+                            GetSupportString("Front Left/Right Center,", Speaker.FLC_FRC),
+                            GetSupportString("Rear Center,", Speaker.BC),
+                            GetSupportString("Rear Left/Right,", Speaker.BL_BR),
+                            GetSupportString("Front Center,", Speaker.FC),
+                            GetSupportString("Low Frequency Effect,", Speaker.LFE),
+                            GetSupportString("Front Left/Right High,", Speaker.FL_FR),
+                            GetSupportString("Front Center High,", Speaker.TpFC),
+                            GetSupportString("Top Center,", Speaker.TpC),
+                            GetSupportString("Front Left/Right High,", Speaker.TpFL_TpFH));
+                    }
+                    break;
+                case CEATagCodeType.VESADisplayTransferCharacteristic:
+                    Notes += OutputNotesLineString("Display Transfer Characteristic Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+
+                /* Vendor-Specific Data Block */
+                case CEATagCodeType.VendorSpecific:
+                    Notes += OutputNotesLineString("unknow Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.VS_HDMI_LLC:
+                    Notes += OutputNotesLineString("HDMI-LLC Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.VS_AMD:
+                    Notes += OutputNotesLineString("AMD Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.VS_HDMI_Forum:
+                    Notes += OutputNotesLineString("HDMI-forum Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+
+                /* Extended */
+                case CEATagCodeType.Extended:
+                    Notes += OutputNotesLineString("unknow Extended Tag Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_Video_Capability:
+                    Notes += OutputNotesLineString("Video Capability Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_VESA_Display_Device:
+                    Notes += OutputNotesLineString("Display Device Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_VESA_Video_Timing:
+                    Notes += OutputNotesLineString("Video Timing Block Extension, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_VESA_HDMI_Video:
+                    Notes += OutputNotesLineString("HDMI Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_Colorimetry:
+                    Notes += OutputNotesLineString("Colorimetry Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_HDR_Static_Matadata:
+                    Notes += OutputNotesLineString("HDR Static Matadata Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_HDR_Dynamic_Matadata:
+                    Notes += OutputNotesLineString("HDR Dynamic Matadata Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_Video_Format_Preference:
+                    Notes += OutputNotesLineString("Video Format Preference Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_YCbCr420Video:
+                    Notes += OutputNotesLineString("YCBCR 4:2:0 Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_YCbCr420CapabilityMap:
+                    Notes += OutputNotesLineString("YCBCR 4:2:0 Capability Map Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_CEA_Miscellaneous_Audio_Fields:
+                    Notes += OutputNotesLineString("CTA Miscellaneous Audio Fields, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_VS_Audio:
+                    Notes += OutputNotesLineString("Vendor-Specific Audio Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_HDMI_Video:
+                    Notes += OutputNotesLineString("HDMI Audio Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_Room_Configuration:
+                    Notes += OutputNotesLineString("Room Configuration Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_Speaker_Location:
+                    Notes += OutputNotesLineString("Speaker Location Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_Inframe:
+                    Notes += OutputNotesLineString("InfoFrame Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+
+                /* Vendor-Specific Video Data Block */
+                case CEATagCodeType.Ex_VS_Video_Capability:
+                    Notes += OutputNotesLineString("unknow Vendor-Specific Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+                case CEATagCodeType.Ex_VS_Dolby_Version:
+                    Notes += OutputNotesLineString("Dolby Version Vendor-Specific Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
+
+                default:
+                    break;
+            }
+
+            Notes += "\n";
+            return Notes;
+        }
         public bool OutputNotesEDIDText(string Path)
         {
             string NoteEDID;
             int ValueOffset = 50;
+            int i = 0;
 
             NoteEDID = "Time:" + System.DateTime.Now.ToString() + "\n\n";
 
@@ -1249,39 +1810,39 @@ namespace EDID_Form
                     NoteEDID += OutputNotesLineString("(23) Display Gamma:", ValueOffset, EDIDTable.Basic.Gamma);
                     NoteEDID += OutputNotesLineString("(24) Power Management and Supported Feature(s):", 0);
                     NoteEDID += OutputNotesLineString("     ", 0,
-                        (EDIDTable.Basic.FeatureSupport.StandbyMode == Support.supported ? "Standby Mode/":""),
-                        (EDIDTable.Basic.FeatureSupport.SuspendMode == Support.supported ? "Suspend Mode/" : ""),
-                        (EDIDTable.Basic.FeatureSupport.VeryLowPowerMode == Support.supported ? "Very Low Power/" : ""),
+                        GetSupportString("Standby Mode/", EDIDTable.Basic.FeatureSupport.StandbyMode),
+                        GetSupportString("Suspend Mode/", EDIDTable.Basic.FeatureSupport.SuspendMode),
+                        GetSupportString("Very Low Power/", EDIDTable.Basic.FeatureSupport.VeryLowPowerMode),
                         EDIDTable.Basic.FeatureSupport.DisplayColorType, "/",
-                        (EDIDTable.Basic.FeatureSupport.sRGBStandard == Support.supported ? "sRGBStandard/" : ""),
-                        (EDIDTable.Basic.FeatureSupport.PreferredTimingMode == Support.supported ? "PreferredTimingMode/" : ""),
-                        (EDIDTable.Basic.FeatureSupport.GTFstandard == Support.supported ? "GTFstandard" : ""));
+                        GetSupportString("sRGBStandard/", EDIDTable.Basic.FeatureSupport.sRGBStandard),
+                        GetSupportString("PreferredTimingMode/", EDIDTable.Basic.FeatureSupport.PreferredTimingMode),
+                        GetSupportString("PreferredTimingMode/", EDIDTable.Basic.FeatureSupport.GTFstandard));
 
                     NoteEDID += OutputNotesLineString("(25-34) Panel Color:", 0);
                     NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red X - {0:0.000} Blue X - {1:0.000} Green X - {2:0.000} White X - {3:0.000}", 0, EDIDTable.PanelColor.RedX, EDIDTable.PanelColor.GreenX, EDIDTable.PanelColor.BlueX, EDIDTable.PanelColor.WhiteX);
                     NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red Y - {0:0.000} Blue Y - {1:0.000} Green Y - {2:0.000} White Y - {3:0.000}", 0, EDIDTable.PanelColor.RedY, EDIDTable.PanelColor.GreenY, EDIDTable.PanelColor.BlueY, EDIDTable.PanelColor.WhiteY);
 
                     NoteEDID += OutputNotesListString("(35-37) Established Timing:", "(35-37) ".Length,
-                        (EDIDTable.EstablishedTiming.Es720x400_70 == Support.supported ? "720x400 @ 70Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es720x400_88 == Support.supported ? "720x400 @ 88Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es640x480_60 == Support.supported ? "640x480 @ 60Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es640x480_67 == Support.supported ? "640x480 @ 67Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es640x480_72 == Support.supported ? "640x480 @ 72Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es640x480_75 == Support.supported ? "640x480 @ 75Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es800x600_56 == Support.supported ? "800x600 @ 56Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es800x600_60 == Support.supported ? "800x600 @ 60Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es800x600_72 == Support.supported ? "800x600 @ 72Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es800x600_75 == Support.supported ? "800x600 @ 75Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es832x624_75 == Support.supported ? "832x624 @ 75Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es1024x768_87 == Support.supported ? "1024x768 @ 87Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es1024x768_60 == Support.supported ? "1024x768 @ 60Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es1024x768_70 == Support.supported ? "1024x768 @ 70Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es1024x768_75 == Support.supported ? "1024x768 @ 75Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es1280x1024_75 == Support.supported ? "1280x1024 @ 75Hz" : ""),
-                        (EDIDTable.EstablishedTiming.Es1152x870_75 == Support.supported ? "1152x870 @ 75Hz" : ""));
+                        GetSupportString("720x400 @ 70Hz", EDIDTable.EstablishedTiming.Es720x400_70),
+                        GetSupportString("720x400 @ 88Hz", EDIDTable.EstablishedTiming.Es720x400_88),
+                        GetSupportString("640x480 @ 60Hz", EDIDTable.EstablishedTiming.Es640x480_60),
+                        GetSupportString("640x480 @ 67Hz", EDIDTable.EstablishedTiming.Es640x480_67),
+                        GetSupportString("640x480 @ 72Hz", EDIDTable.EstablishedTiming.Es640x480_72),
+                        GetSupportString("640x480 @ 75Hz", EDIDTable.EstablishedTiming.Es640x480_75),
+                        GetSupportString("800x600 @ 56Hz", EDIDTable.EstablishedTiming.Es800x600_56),
+                        GetSupportString("800x600 @ 60Hz", EDIDTable.EstablishedTiming.Es800x600_60),
+                        GetSupportString("800x600 @ 72Hz", EDIDTable.EstablishedTiming.Es800x600_72),
+                        GetSupportString("800x600 @ 75Hz", EDIDTable.EstablishedTiming.Es800x600_75),
+                        GetSupportString("832x624 @ 75Hz", EDIDTable.EstablishedTiming.Es832x624_75),
+                        GetSupportString("1024x768 @ 87Hz", EDIDTable.EstablishedTiming.Es1024x768_87),
+                        GetSupportString("1024x768 @ 60Hz", EDIDTable.EstablishedTiming.Es1024x768_60),
+                        GetSupportString("1024x768 @ 70Hz", EDIDTable.EstablishedTiming.Es1024x768_70),
+                        GetSupportString("1024x768 @ 75Hz", EDIDTable.EstablishedTiming.Es1024x768_75),
+                        GetSupportString("1280x1024 @ 75Hz", EDIDTable.EstablishedTiming.Es1280x1024_75),
+                        GetSupportString("1152x870 @ 75Hz", EDIDTable.EstablishedTiming.Es1152x870_75)); 
 
                     NoteEDID += OutputNotesLineString("(38-53) Standard Timing:", 0);
-                    for (int i = 0; i < 8; i++)
+                    for (i = 0; i < 8; i++)
                     {
                         if (EDIDTable.StandardTiming[i].TimingSupport == Support.supported)
                             NoteEDID += OutputNotesLineString("", "(38-53) ".Length, EDIDTable.StandardTiming[i].TimingWidth, "x", EDIDTable.StandardTiming[i].TimingHeight, " @ ", EDIDTable.StandardTiming[i].TimingRate, "Hz");
@@ -1302,6 +1863,29 @@ namespace EDID_Form
                 if (EDIDDataLength >= 256)
                 {
                     NoteEDID += OutputNotesEDIDList(128);
+                    NoteEDID += OutputNotesLineString("(1) CEA Version:", 0, EDIDTableCEA.Version);
+                    NoteEDID += OutputNotesListString("(2) General Info:", 8,
+                        GetSupportString("Support Underscran", EDIDTableCEA.UnderscranITFormatByDefault),
+                        GetSupportString("Support Audio", EDIDTableCEA.Audio),
+                        GetSupportString("Support YCbCr 4:4:4", EDIDTableCEA.YCbCr444),
+                        GetSupportString("Support YCbCr 4:2:2", EDIDTableCEA.YCbCr422),
+                        "Native Format:" + EDIDTableCEA.NativeVideoFormatNumber.ToString()
+                        );
+                    i = 4;
+                    foreach (CEABlocksTable Table in EDIDTableCEA.CEABlocksList)
+                    {
+                        NoteEDID += "(" + i.ToString() + "-" + (i + Table.BlockPayload + 1).ToString() + ") " + OutputNotesCEABlocks(Table);
+                        i += Table.BlockPayload + 1;
+                    }
+
+                    foreach (EDIDDetailedTimingTable Timing in EDIDTableCEA.CEATimingList)
+                    {
+                        NoteEDID += "______________________________________________________________________\n";
+                        NoteEDID += "(" + i.ToString() + "-" + (i + 18).ToString() + ")" + " Detailed Timing:\n\n" + OutputNotesDetailedTiming(Timing);
+                        i += 18;
+                    }
+
+                    NoteEDID += OutputNotesLineString("\n(127) CheckSum: OK", 0);
                 }
 
                 if (EDIDDataLength >= 384)
