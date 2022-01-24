@@ -106,7 +106,7 @@ namespace WindowsFormsApp_BOE_Tool
         }
         private void Open_File_Click(object sender, EventArgs e)
         {
-            openFileDialog1.InitialDirectory = "@" + System.Environment.GetFolderPath(Environment.SpecialFolder.MyComputer);
+            openFileDialog1.InitialDirectory = "@" + System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             openFileDialog1.RestoreDirectory = false;
             openFileDialog1.Filter = "txt files (*.txt)|*.txt";
             openFileDialog1.FilterIndex = 1;

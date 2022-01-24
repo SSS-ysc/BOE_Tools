@@ -513,7 +513,7 @@ namespace EDID_Form
         public EDIDTableDisplayID EDIDTableDisplayID;
         public DecodeError EDIDDecodeStatus;
 
-        static public string[] VICcode = {
+        static string[] VICcode = {
                                     "No VIC",
                                     "640x480p@59.94Hz/60Hz 4:3",
                                     "720x480p@59.94Hz/60Hz 4:3",
@@ -646,6 +646,20 @@ namespace EDID_Form
                                     "5120x2160p@59.94Hz/60Hz64:27",
                                     "5120x2160p@100Hz64:27", // VIC 127 ,CTA-861-G
         };
+        static string[] DetailTimingAnalogSyncType = { "",
+            "WithoutSerrations SyncOnGreenOnly" ,
+            "WithoutSerrations SyncOnRGB" ,
+            "WithSerrations SyncOnGreenOnly",
+            "WithSerrations SyncOnRGB" };
+        static string[] DetailTimingDigitalSyncType = { "",
+            "WithoutSerrations, Horizontal Polarity (-)",
+            "WithoutSerrations, Horizontal Polarity (+)",
+            "WithSerrations, Horizontal Polarity (-)",
+            "WithSerrations, Horizontal Polarity (+)",
+            "Horizontal Polarity (-) Vertical Polarity (-)",
+            "Horizontal Polarity (+) Vertical Polarity (-)",
+            "Horizontal Polarity (-) Vertical Polarity (+)",
+            "Horizontal Polarity (+) Vertical Polarity (+)"};
 
         private byte GetByteBit(byte a, byte X)
         {
@@ -940,7 +954,7 @@ namespace EDID_Form
 
             //10-11 EDID_IDProductCode
             EDIDTable.IDProductCode = (uint)(EDIDByteData[10] + (EDIDByteData[11] << 8));
-            Console.WriteLine("ID Product: {0}", Convert.ToString(EDIDTable.IDProductCode, 16));
+            Console.WriteLine("ID Product: {0}", string.Format("{0:X}", EDIDTable.IDProductCode));
 
             //12-15 EDID_IDSerialNumber
             if (   ((EDIDByteData[12] == 0x01) && (EDIDByteData[13] == 0x01) && (EDIDByteData[14] == 0x01) && (EDIDByteData[15] == 0x01))
@@ -954,7 +968,7 @@ namespace EDID_Form
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    EDIDTable.IDSerialNumber += Convert.ToString(EDIDByteData[12 + i], 16);
+                    EDIDTable.IDSerialNumber += string.Format("{0:X2}",EDIDByteData[15 - i]);
                 }
                 Console.WriteLine("ID Serial Number: {0}", EDIDTable.IDSerialNumber);
             }
@@ -1689,8 +1703,8 @@ namespace EDID_Form
             Notes += OutputNotesListsString("Border: {0} Lines", list_offset, Timing.VBorder, "Frequency: {0:.00} Hz", list_offset2, Timing.VFrequency); 
             Notes += "\r\n";
             Notes += OutputNotesLineString(list_offset, "{0},{1}{2}", 0, Timing.SyncType,
-                Timing.AnalogSync == AnalogSyncType.Undefined ? "" : Timing.AnalogSync.ToString(),
-                Timing.DigitalSync == DigitalSyncType.Undefined ? "" : Timing.DigitalSync.ToString()
+                DetailTimingAnalogSyncType[(int)Timing.AnalogSync],
+                DetailTimingDigitalSyncType[(int)Timing.DigitalSync]
                 );
 
             return Notes;
@@ -1921,7 +1935,7 @@ namespace EDID_Form
                 {
                     NoteEDID += OutputNotesEDIDList(0);
                     NoteEDID += OutputNotesLineString("(08-09) ID Manufacturer Name:", ValueOffset, EDIDTable.IDManufacturerName);
-                    NoteEDID += OutputNotesLineString("(10-11) Product ID Code:", ValueOffset, Convert.ToString(EDIDTable.IDProductCode, 16));
+                    NoteEDID += OutputNotesLineString("(10-11) Product ID Code:", ValueOffset, string.Format("{0:X}", EDIDTable.IDProductCode));
                     if (EDIDTable.IDSerialNumber == null)
                         NoteEDID += OutputNotesLineString("(12-15) ID Serial Number:", ValueOffset, "not used");
                     else

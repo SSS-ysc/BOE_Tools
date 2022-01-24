@@ -42,14 +42,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="BOE_MNT_Tools.exe" size="81408">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="BOE_MNT_Tools.exe" size="82432">
       <assemblyIdentity name="BOE_MNT_Tools" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>UHV124YrEpM2AXuhmZJ/cK7WGf3YFZvt0oMU4jDGhFg=</dsig:DigestValue>
+        <dsig:DigestValue>n8GzpT8K37Wia309qVeRgqt33H99F2I5UGEFPQiOj2o=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -86,13 +86,13 @@
       <dsig:DigestValue>huZAISrjaN1mFQxC8ceSGwcld83uISIlEtDxEOWG//c=</dsig:DigestValue>
     </hash>
   </file>
-  <file name="BOE_MNT_Tools.exe.config" size="189">
+  <file name="BOE_MNT_Tools.exe.config" size="260">
     <hash>
       <dsig:Transforms>
         <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
       </dsig:Transforms>
       <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-      <dsig:DigestValue>R+Wg8QGvQVHX8T0ta/qbhH1bXkqY0fRnS3wBV3J0bN8=</dsig:DigestValue>
+      <dsig:DigestValue>vWe0xHw3+bQ66voiY4WhI/pmCeDKcR+HmD5fhzEj5mE=</dsig:DigestValue>
     </hash>
   </file>
   <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
