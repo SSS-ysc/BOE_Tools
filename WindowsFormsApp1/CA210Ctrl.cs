@@ -32,7 +32,7 @@ struct CA210DataStruct
 
 namespace WindowsFormsApp_BOE_Tool
 {
-    internal static class CA
+    internal class CA
     {
         [DllImport("CA210Ctrl.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern bool ca210Connect(long nChannelNO);

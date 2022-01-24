@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Configuration;
 
 using Sunny.UI;
 using EDID_Form;
@@ -64,15 +65,12 @@ namespace WindowsFormsApp_BOE_Tool
         }
         private void CA_Connect_Click(object sender, EventArgs e)
         {
-            //button1.ForeColor = Color.Blue;
             if (CA.ca210Connect(0) == true)
             {
                 CA.ca210SetSyncMode(0);
                 CA.ca210SetSpeed(1);
-                //button1.Text = "Success";
 
                 CA.ca210ZeroCal();
-                //btnConnect->Caption = "Connect CA410";
             }
         }
         private void CA_Measure_Click(object sender, EventArgs e)
@@ -80,10 +78,6 @@ namespace WindowsFormsApp_BOE_Tool
             CA210DataStruct BOECA210;
 
             BOECA210 = CA.ca210Measure();
-
-            //label1.Text = BOECA210.CA210fX.ToString();
-            //label2.Text = BOECA210.CA210fY.ToString();
-            //label3.Text = BOECA210.CA210fZ.ToString();
         }
         private void DDCCI_Write_Click(object sender, EventArgs e)
         {
@@ -112,10 +106,11 @@ namespace WindowsFormsApp_BOE_Tool
         }
         private void Open_File_Click(object sender, EventArgs e)
         {
-            openFileDialog1.InitialDirectory = @"C:\Hupp";
+            openFileDialog1.InitialDirectory = "@" + System.Environment.GetFolderPath(Environment.SpecialFolder.MyComputer);
             openFileDialog1.RestoreDirectory = false;
             openFileDialog1.Filter = "txt files (*.txt)|*.txt";
             openFileDialog1.FilterIndex = 1;
+            openFileDialog1.FileName = "";
 
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
@@ -135,7 +130,6 @@ namespace WindowsFormsApp_BOE_Tool
                     }
                 }
 
-                
                 DecodeError DecodeResult;
                 DecodeResult = WindowsFormsEDID.Decode(UnicodeText);
 
@@ -149,16 +143,22 @@ namespace WindowsFormsApp_BOE_Tool
                     }
                 }
                 MessageBox.Show(DecodeResult.ToString(), "EDID解析");
+
+                //窗体关闭时，获取文件夹对话框的路径写入配置文件中
+                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                config.AppSettings.Settings["EDIDFilePath"].Value = filePath;
+                config.Save(ConfigurationSaveMode.Modified);
             }
         }
         private void Save_File_Click(object sender, EventArgs e)
         {
-            saveFileDialog1.InitialDirectory = @"C:\Users\user\Desktop";
+            saveFileDialog1.InitialDirectory = "@" + ConfigurationManager.AppSettings["EDIDFilePath"];
             saveFileDialog1.RestoreDirectory= false;
             saveFileDialog1.Filter = ".txt文件(*.txt)|*.txt |.h文件（.h）|*.h";
             saveFileDialog1.FilterIndex = 1;
             saveFileDialog1.FileName = "EDID_test";
             saveFileDialog1.AddExtension = true;
+
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 if (uiCheckBox1.Checked == true)
@@ -169,6 +169,11 @@ namespace WindowsFormsApp_BOE_Tool
                 {
                     WindowsFormsEDID.Output0xEDIDText(saveFileDialog1.FileName);
                 }
+
+                //窗体关闭时，获取文件夹对话框的路径写入配置文件中
+                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                config.AppSettings.Settings["EDIDFilePath"].Value = saveFileDialog1.FileName;
+                config.Save(ConfigurationSaveMode.Modified);
             }
         }
         private void TextBox_KeyPress_Check(object sender, KeyPressEventArgs e)
