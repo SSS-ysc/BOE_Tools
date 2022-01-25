@@ -6,505 +6,101 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.IO;
 
-namespace EDID_Form
+namespace EDIDApp
 {
-    enum Support
-    {
-        unsupported,
-        supported,
-    };
-    enum DecodeError
-    {
-        NoDecode,
-        Success,
-        LengthError,
-
-        HeaderError,
-        VersionError,
-        NoMainTimingError,
-        ChecksumError,
-
-        CEAVersionError,
-        CEAChecksumError
-    };
-    enum EDIDversion
-    {
-        V13,
-        V14,
-    };
-    enum EDIDColorBitDepth
-    {
-        color_undefined,
-        color_6bit,
-        color_8bit,
-        color_10bit,
-        color_12bit,
-        color_14bit,
-        color_16bit,
-    };
-    enum EDIDVideoStandard
-    {
-        Analog,
-        Digital,
-    };
-    enum EDIDDigitalVideoStandard
-    {
-        undefined,
-        DVI,
-        HDMI_a,
-        HDMI_b,
-        MDDI,
-        DisplayPort,
-    };
-    enum ScreenSizeType
-    {
-        ScreenSize_undefined,
-        ScreenSize_HV,
-        ScreenSize_Ratio,
-    };
-    enum ColorType
-    {
-        Grayscale,
-        RGB,
-        NonRGB,
-        ColorType_undefined,
-    };
-    enum ColorEncoding
-    {
-        RGB444,
-        RGB444YCrCb444,
-        RGB444YCrCb422,
-        RGB444YCrCb444YCrCb422,
-    };
-    enum StandardTimingRatio
-    {
-        Ratio16x10,
-        Ratio4x3,
-        Ratio5x4,
-        Ratio16x9,
-    };
-    enum InterfaceType
-    {
-        NonInterlaced,
-        Interlaced,
-    };
-    enum StereoViewingType
-    {
-        Normal,
-        FieldRightimage,
-        FieldLeftimage,
-        TwoWayRightimage,
-        TwoWayLeftimage,
-        FourWay,
-        SidebySide,
-    };
-    enum SyncType
-    {
-        AnalogComposite,
-        BipolarAnalogComposite,
-        DigitalComposite,
-        DigitalSeparate,
-    };
-    enum AnalogSyncType
-    {
-        Undefined,
-        WithoutSerrations_SyncOnGreenOnly,
-        WithoutSerrations_SyncOnRGB,
-        WithSerrations_SyncOnGreenOnly,
-        WithSerrations_SyncOnRGB,
-    };
-    enum DigitalSyncType
-    {
-        Undefined,
-        WithoutSerrations_HSyncN,
-        WithoutSerrations_HSyncP,
-        WithSerrations_HSyncN,
-        WithSerrations_HSyncP,
-        VSyncN_HSyncN,
-        VSyncN_HSyncP,
-        VSyncP_HSyncN,
-        VSyncP_HSyncP,
-    };
-    enum EDIDDescriptorsType
-    {
-        Undefined,
-        ProductSN,//FF
-        AlphanumericData,//FE
-        RangeLimits,//FD
-        ProductName,//FC
-        ColorData,//FB
-        StandardTiming,//FA
-        DCMdata,//F9
-        CVT3ByteTiming,//F8
-        DummyDescriptors,//11-F6
-        EstablishedTiming,//F7
-        ManufacturerDescriptors,//00-0F
-
-        MainTiming,
-        SecondMainTiming,
-    }
-    enum LimitsHVOffsetsType
-    {
-        Zero,
-        Reserved,
-        Max255MinZero,
-        Max255Min255,
-    }
-    enum VideoTimingType
-    {
-        DefaultGTF,
-        RangeLimitsOnly,
-        SecondaryGTF,
-        CVT,
-        Reserved,
-    }
-    struct EDIDStandardTiming
-    {
-        public Support TimingSupport;
-        public StandardTimingRatio TimingRatio;
-        public ushort TimingWidth;
-        public ushort TimingHeight;
-        public byte TimingRate;
-    };
-    struct EDIDFeatureSupport
-    {
-        public Support StandbyMode;
-        public Support SuspendMode;
-        public Support VeryLowPowerMode;
-        public ColorType DisplayColorType;
-        public ColorEncoding ColorEncodingFormat;//(EDID1.4)
-        public Support sRGBStandard;
-        public Support PreferredTimingMode;
-        public Support ContinuousFrequency;//(EDID1.4)
-        public Support GTFstandard;//(EDID1.3)
-    };
-    struct EDIDBasicScreenSize
-    {
-        public ScreenSizeType Type;
-        public byte Hsize;
-        public byte Vsize;
-        public byte Ratio;
-    };
-    struct EDIDBasicDisplayParameters
-    {
-        public EDIDVideoStandard Video_definition;
-
-        public byte AnalogSignalLevelStandard; //(EDID1.3 VGA)
-        public byte AnalogVideoSetup;
-        public byte AnalogSyncInputsSupported;
-
-        public EDIDColorBitDepth DigitalColorDepth; //(EDID1.4 HDMI)
-        public EDIDDigitalVideoStandard DigitalStandard;
-
-        public EDIDBasicScreenSize ScreenSize;
-
-        public float Gamma;
-
-        public EDIDFeatureSupport FeatureSupport;
-    }
-    struct EDIDColorCharacteristics
-    {
-        public double RedX;
-        public double RedY;
-        public double GreenX;
-        public double GreenY;
-        public double BlueX;
-        public double BlueY;
-        public double WhiteX;
-        public double WhiteY;
-    };
-    struct EDIDEstablishedTimings
-    {
-        public Support Es720x400_70;
-        public Support Es720x400_88;
-        public Support Es640x480_60;
-        public Support Es640x480_67;
-        public Support Es640x480_72;
-        public Support Es640x480_75;
-        public Support Es800x600_56;
-        public Support Es800x600_60;
-
-        public Support Es800x600_72;
-        public Support Es800x600_75;
-        public Support Es832x624_75;
-        public Support Es1024x768_87;
-        public Support Es1024x768_60;
-        public Support Es1024x768_70;
-        public Support Es1024x768_75;
-        public Support Es1280x1024_75;
-
-        public Support Es1152x870_75;
-    };
-    struct EDIDDetailedTimingTable
-    {
-        public uint PixelClk;
-
-        public uint HFrequency;
-        public ushort HAdressable;
-        public ushort HBlanking;
-        public ushort HSyncFront;
-        public ushort HSyncWidth;
-        public byte HBorder;
-
-        public float VFrequency;
-        public ushort VAdressable;
-        public ushort VBlanking;
-        public ushort VSyncFront;
-        public ushort VSyncWidth;
-        public byte VBorder;
-
-        public ushort VideoSizeH;
-        public ushort VideoSizeV;
-
-        public InterfaceType Interface;
-
-        public StereoViewingType StereoFormat;
-
-        public SyncType SyncType;
-        public AnalogSyncType AnalogSync;
-        public DigitalSyncType DigitalSync;
-    };
-    struct EDIDDisplayRangeLimits
-    {
-        public LimitsHVOffsetsType VerticalOffest;
-        public ushort VerticalMin;
-        public ushort VerticalMax;
-        public LimitsHVOffsetsType HorizontalOffest;
-        public ushort HorizontalMin;
-        public ushort HorizontalMax;
-        public ushort PixelClkMax;
-        public VideoTimingType VideoTiming;
-    };
-    struct EDIDTable
-    {
-        public string IDManufacturerName;
-        public uint IDProductCode;
-        public string IDSerialNumber;
-        public ushort Week;
-        public ushort Year;
-        public ushort ModelYear;
-        public EDIDversion Version;
-        public EDIDBasicDisplayParameters Basic;
-        public EDIDColorCharacteristics PanelColor;
-        public EDIDEstablishedTimings EstablishedTiming;
-        public EDIDStandardTiming[] StandardTiming;
-
-        public EDIDDescriptorsType Descriptors1;
-        public EDIDDescriptorsType Descriptors2;
-        public EDIDDescriptorsType Descriptors3;
-        public EDIDDescriptorsType Descriptors4;
-
-        public EDIDDetailedTimingTable MainTiming;
-        public EDIDDetailedTimingTable SecondMainTiming;
-        public string SN;
-        public EDIDDisplayRangeLimits Limits;
-        public string Name;
-
-        public byte ExBlockCount;
-        public byte Checksum;
-    };
-    enum CEATagCodeType
-    {
-        Reserved,
-        Audio,
-        Video,
-        VendorSpecific,
-        SpeakerAllocation,
-        VESADisplayTransferCharacteristic,
-        ReReserved,
-        Extended,
-
-        VS_HDMI_LLC,//Vendor Specific
-        VS_AMD,
-        VS_HDMI_Forum,
-        VS_Mstar,
-        VS_Realtek,
-
-        Ex_Video_Capability,//Extended
-        Ex_VS_Video_Capability,
-        Ex_VESA_Display_Device,
-        Ex_VESA_Video_Timing,
-        Ex_HDMI_Video,
-        Ex_Colorimetry,
-
-        Ex_HDR_Static_Matadata,// 8-12 : Reserved for video-related blocks
-        Ex_HDR_Dynamic_Matadata,
-
-        Ex_Video_Format_Preference = Ex_Video_Capability + 13,
-        Ex_YCbCr420Video,
-        Ex_YCbCr420CapabilityMap,
-        Ex_CEA_Miscellaneous_Audio_Fields,
-        Ex_VS_Audio,
-        Ex_HDMI_Audio,
-        Ex_Room_Configuration,
-        Ex_Speaker_Location,
-
-        // 21-31 : Reserved for audio-related blocks
-
-        Ex_Inframe = Ex_Video_Capability + 32,// 32
-
-        Ex_VS_Dolby_Version,//Extended Vendor Specific
-    }
-    enum AudioFormatType
-    {
-        Reserved,
-        L_PCM,
-        AC_3,
-        MPEG_1,
-        MP3,
-        MPEG2,
-        AACLC,
-        DTS,
-        ATRAC,
-        OneBitAudio,
-        EnhanecdAC_3,
-        DTS_HD,
-        MAT,
-        DST,
-        WMA_Pro,
-        Extension,
-    }
-    enum AudioFormatExType
-    {
-        Reserved,
-    }
-    enum VideoCapabilityType
-    {
-        NoSupport,
-        AlwaysOverscanned,
-        AlwaysUnderscanned,
-        SupportBothOverAndUnder,
-    }
-    struct BlockAudio
-    {
-        public AudioFormatType Type;
-        public AudioFormatExType ExType;
-        public int Channels;
-
-        public Support Freq192Khz;
-        public Support Freq176_4Khz;
-        public Support Freq96Khz;
-        public Support Freq88_2Khz;
-        public Support Freq48Khz;
-        public Support Freq44_1Khz;
-        public Support Freq32Khz;
-        //Type 1 (L_PCM)
-        public Support Size16Bit;
-        public Support Size20Bit;
-        public Support Size24Bit;
-        //Type 2-8
-        public int Maxbit;
-        //Type 9-13
-        public int DependentValue;
-        //Type 14 (WMA Pro)
-        public int Profile;
-    }
-    struct BlockVideoVIC
-    {
-        public Support NativeCode;
-        public byte VIC;
-    }
-    struct BlockSpeaker
-    {
-        public Support FLW_FRW; //Byte1 bit7
-        public Support RLC_RRC;
-        public Support FLC_FRC;
-        public Support BC;
-        public Support BL_BR;
-        public Support FC;
-        public Support LFE;
-        public Support FL_FR;
-
-        public Support TpFC; //Byte2 bit2
-        public Support TpC;
-        public Support TpFL_TpFH;
-    }
-    struct VSBlockHDMILLC
-    {
-    }
-    struct VSBlockAMD
-    {
-    }
-    struct VSBlockHDMIForum
-    {
-    }
-    struct ExBlockVideoCapability
-    {
-        public Support QY;
-        public Support QS;
-        public VideoCapabilityType PT;
-        public VideoCapabilityType IT;
-        public VideoCapabilityType CE;
-    }
-    struct ExBlockColorimetry
-    {
-        public Support BT2020_RGB;
-        public Support BT2020_YCC;
-        public Support BT2020_cYCC;
-        public Support opRGB;
-        public Support opYCC601;
-        public Support sYCC601;
-        public Support xvYCC709;
-        public Support xvYCC601;
-        public Support DCI_P3;
-        public Support MD3;
-        public Support MD2;
-        public Support MD1;
-        public Support MD0;
-    }
-    struct ExBlockHDRStatic
-    {
-        public Support Gamma_SDR;
-        public Support Gamma_HDR;
-        public Support SMPTE_ST_2084;
-        public Support HLG;
-        public Support Static_Metadata_Type1;
-        public float Max_Luminance_Data;
-        public float Max_Frame_Avg_Lum_Data;
-        public float Min_Luminance_Data;
-    }
-    struct ExBlockYCbCr420
-    {
-
-    }
-    struct CEABlocksTable
-    {
-        public CEATagCodeType Block;
-        public int BlockPayload;
-    }
-    struct EDIDTableCEA
-    {
-        public byte Version;
-        public byte DetailedTimingStart;
-        public Support UnderscranITFormatByDefault;
-        public Support Audio;
-        public Support YCbCr444;
-        public Support YCbCr422;
-        public byte NativeVideoFormatNumber;
-        public List<CEABlocksTable> CEABlocksList;
-
-        public List<BlockAudio> BlockAudio;
-        public List<BlockVideoVIC> BlockVideoVIC;
-        public List<BlockSpeaker> BlockSpeaker;
-
-        public VSBlockHDMILLC BlockHDMILLC;
-        public VSBlockAMD BlockAMD;
-        public VSBlockHDMIForum BlockHDMIForum;
-
-        public ExBlockVideoCapability BlockVideoCapability;
-        public ExBlockColorimetry BlockColorimetry;
-        public ExBlockHDRStatic BlockHDRStatic;
-        public ExBlockYCbCr420 BlockYCbCr420;
-
-        public List<EDIDDetailedTimingTable> CEATimingList;
-        public byte Checksum;
-    };
-    struct EDIDTableDisplayID
-    {
-
-    };
     internal class EDIDCommon
     {
+        public enum Support
+        {
+            unsupported,
+            supported,
+        };
+        public enum DecodeError
+        {
+            NoDecode,
+            Success,
+            LengthError,
+
+            HeaderError,
+            VersionError,
+            NoMainTimingError,
+            ChecksumError,
+
+            CEAVersionError,
+            CEAChecksumError
+        };
+        public enum InterfaceType
+        {
+            NonInterlaced,
+            Interlaced,
+        };
+        public enum StereoViewingType
+        {
+            Normal,
+            FieldRightimage,
+            FieldLeftimage,
+            TwoWayRightimage,
+            TwoWayLeftimage,
+            FourWay,
+            SidebySide,
+        };
+        public enum SyncType
+        {
+            AnalogComposite,
+            BipolarAnalogComposite,
+            DigitalComposite,
+            DigitalSeparate,
+        };
+        public enum AnalogSyncType
+        {
+            Undefined,
+            WithoutSerrations_SyncOnGreenOnly,
+            WithoutSerrations_SyncOnRGB,
+            WithSerrations_SyncOnGreenOnly,
+            WithSerrations_SyncOnRGB,
+        };
+        public enum DigitalSyncType
+        {
+            Undefined,
+            WithoutSerrations_HSyncN,
+            WithoutSerrations_HSyncP,
+            WithSerrations_HSyncN,
+            WithSerrations_HSyncP,
+            VSyncN_HSyncN,
+            VSyncN_HSyncP,
+            VSyncP_HSyncN,
+            VSyncP_HSyncP,
+        };
+        public struct EDIDDetailedTimingTable
+        {
+            public uint PixelClk;
+
+            public uint HFrequency;
+            public ushort HAdressable;
+            public ushort HBlanking;
+            public ushort HSyncFront;
+            public ushort HSyncWidth;
+            public byte HBorder;
+
+            public float VFrequency;
+            public ushort VAdressable;
+            public ushort VBlanking;
+            public ushort VSyncFront;
+            public ushort VSyncWidth;
+            public byte VBorder;
+
+            public ushort VideoSizeH;
+            public ushort VideoSizeV;
+
+            public InterfaceType Interface;
+
+            public StereoViewingType StereoFormat;
+
+            public SyncType SyncType;
+            public AnalogSyncType AnalogSync;
+            public DigitalSyncType DigitalSync;
+        };
+
         string[] DetailTimingAnalogSyncType = { "",
             "WithoutSerrations SyncOnGreenOnly" ,
             "WithoutSerrations SyncOnRGB" ,
@@ -765,7 +361,212 @@ namespace EDID_Form
     }
     internal class EDIDBase : EDIDCommon
     {
-        public static EDIDTable EDIDTable;
+        public enum EDIDversion
+        {
+            V13,
+            V14,
+        };
+        public enum EDIDColorBitDepth
+        {
+            color_undefined,
+            color_6bit,
+            color_8bit,
+            color_10bit,
+            color_12bit,
+            color_14bit,
+            color_16bit,
+        };
+        public enum EDIDVideoStandard
+        {
+            Analog,
+            Digital,
+        };
+        public enum EDIDDigitalVideoStandard
+        {
+            undefined,
+            DVI,
+            HDMI_a,
+            HDMI_b,
+            MDDI,
+            DisplayPort,
+        };
+        public enum ScreenSizeType
+        {
+            ScreenSize_undefined,
+            ScreenSize_HV,
+            ScreenSize_Ratio,
+        };
+        public enum ColorType
+        {
+            Grayscale,
+            RGB,
+            NonRGB,
+            ColorType_undefined,
+        };
+        public enum ColorEncoding
+        {
+            RGB444,
+            RGB444YCrCb444,
+            RGB444YCrCb422,
+            RGB444YCrCb444YCrCb422,
+        };
+        public enum StandardTimingRatio
+        {
+            Ratio16x10,
+            Ratio4x3,
+            Ratio5x4,
+            Ratio16x9,
+        };
+        public enum EDIDDescriptorsType
+        {
+            Undefined,
+            ProductSN,//FF
+            AlphanumericData,//FE
+            RangeLimits,//FD
+            ProductName,//FC
+            ColorData,//FB
+            StandardTiming,//FA
+            DCMdata,//F9
+            CVT3ByteTiming,//F8
+            DummyDescriptors,//11-F6
+            EstablishedTiming,//F7
+            ManufacturerDescriptors,//00-0F
+
+            MainTiming,
+            SecondMainTiming,
+        }
+        public enum LimitsHVOffsetsType
+        {
+            Zero,
+            Reserved,
+            Max255MinZero,
+            Max255Min255,
+        }
+        public enum VideoTimingType
+        {
+            DefaultGTF,
+            RangeLimitsOnly,
+            SecondaryGTF,
+            CVT,
+            Reserved,
+        }
+        public struct EDIDStandardTiming
+        {
+            public Support TimingSupport;
+            public StandardTimingRatio TimingRatio;
+            public ushort TimingWidth;
+            public ushort TimingHeight;
+            public byte TimingRate;
+        };
+        public struct EDIDFeatureSupport
+        {
+            public Support StandbyMode;
+            public Support SuspendMode;
+            public Support VeryLowPowerMode;
+            public ColorType DisplayColorType;
+            public ColorEncoding ColorEncodingFormat;//(EDID1.4)
+            public Support sRGBStandard;
+            public Support PreferredTimingMode;
+            public Support ContinuousFrequency;//(EDID1.4)
+            public Support GTFstandard;//(EDID1.3)
+        };
+        public struct EDIDBasicScreenSize
+        {
+            public ScreenSizeType Type;
+            public byte Hsize;
+            public byte Vsize;
+            public byte Ratio;
+        };
+        public struct EDIDBasicDisplayParameters
+        {
+            public EDIDVideoStandard Video_definition;
+
+            public byte AnalogSignalLevelStandard; //(EDID1.3 VGA)
+            public byte AnalogVideoSetup;
+            public byte AnalogSyncInputsSupported;
+
+            public EDIDColorBitDepth DigitalColorDepth; //(EDID1.4 HDMI)
+            public EDIDDigitalVideoStandard DigitalStandard;
+
+            public EDIDBasicScreenSize ScreenSize;
+
+            public float Gamma;
+
+            public EDIDFeatureSupport FeatureSupport;
+        }
+        public struct EDIDColorCharacteristics
+        {
+            public double RedX;
+            public double RedY;
+            public double GreenX;
+            public double GreenY;
+            public double BlueX;
+            public double BlueY;
+            public double WhiteX;
+            public double WhiteY;
+        };
+        public struct EDIDEstablishedTimings
+        {
+            public Support Es720x400_70;
+            public Support Es720x400_88;
+            public Support Es640x480_60;
+            public Support Es640x480_67;
+            public Support Es640x480_72;
+            public Support Es640x480_75;
+            public Support Es800x600_56;
+            public Support Es800x600_60;
+
+            public Support Es800x600_72;
+            public Support Es800x600_75;
+            public Support Es832x624_75;
+            public Support Es1024x768_87;
+            public Support Es1024x768_60;
+            public Support Es1024x768_70;
+            public Support Es1024x768_75;
+            public Support Es1280x1024_75;
+
+            public Support Es1152x870_75;
+        };
+        public struct EDIDDisplayRangeLimits
+        {
+            public LimitsHVOffsetsType VerticalOffest;
+            public ushort VerticalMin;
+            public ushort VerticalMax;
+            public LimitsHVOffsetsType HorizontalOffest;
+            public ushort HorizontalMin;
+            public ushort HorizontalMax;
+            public ushort PixelClkMax;
+            public VideoTimingType VideoTiming;
+        };
+        public struct BaseTable
+        {
+            public string IDManufacturerName;
+            public uint IDProductCode;
+            public string IDSerialNumber;
+            public ushort Week;
+            public ushort Year;
+            public ushort ModelYear;
+            public EDIDversion Version;
+            public EDIDBasicDisplayParameters Basic;
+            public EDIDColorCharacteristics PanelColor;
+            public EDIDEstablishedTimings EstablishedTiming;
+            public EDIDStandardTiming[] StandardTiming;
+
+            public EDIDDescriptorsType Descriptors1;
+            public EDIDDescriptorsType Descriptors2;
+            public EDIDDescriptorsType Descriptors3;
+            public EDIDDescriptorsType Descriptors4;
+
+            public EDIDDetailedTimingTable MainTiming;
+            public EDIDDetailedTimingTable SecondMainTiming;
+            public string SN;
+            public EDIDDisplayRangeLimits Limits;
+            public string Name;
+
+            public byte ExBlockCount;
+            public byte Checksum;
+        };
+        public static BaseTable EDIDTable;
         public static byte[] BaseByteData;
         private double GetEDIDColorxy(uint xy)
         {
@@ -1174,7 +975,7 @@ namespace EDID_Form
         {
             int ValueOffset = 50;
             int i;
-            string NoteEDID = "";
+            string NoteEDID = "\r\nBlock Type: Externded Display Identification Data\r\n";
 
             NoteEDID += OutputNotesEDIDList(BaseByteData);
             NoteEDID += OutputNotesLineString("(08-09) ID Manufacturer Name:", ValueOffset, EDIDTable.IDManufacturerName);
@@ -1250,7 +1051,218 @@ namespace EDID_Form
     }
     internal class EDIDCEA : EDIDCommon
     {
-        public static EDIDTableCEA EDIDTableCEA;
+        public enum CEATagCodeType
+        {
+            Reserved,
+            Audio,
+            Video,
+            VendorSpecific,
+            SpeakerAllocation,
+            VESADisplayTransferCharacteristic,
+            ReReserved,
+            Extended,
+
+            VS_HDMI_LLC,//Vendor Specific
+            VS_AMD,
+            VS_HDMI_Forum,
+            VS_Mstar,
+            VS_Realtek,
+
+            Ex_Video_Capability,//Extended
+            Ex_VS_Video_Capability,
+            Ex_VESA_Display_Device,
+            Ex_VESA_Video_Timing,
+            Ex_HDMI_Video,
+            Ex_Colorimetry,
+
+            Ex_HDR_Static_Matadata,// 8-12 : Reserved for video-related blocks
+            Ex_HDR_Dynamic_Matadata,
+
+            Ex_Video_Format_Preference = Ex_Video_Capability + 13,
+            Ex_YCbCr420Video,
+            Ex_YCbCr420CapabilityMap,
+            Ex_CEA_Miscellaneous_Audio_Fields,
+            Ex_VS_Audio,
+            Ex_HDMI_Audio,
+            Ex_Room_Configuration,
+            Ex_Speaker_Location,
+
+            // 21-31 : Reserved for audio-related blocks
+
+            Ex_Inframe = Ex_Video_Capability + 32,// 32
+
+            Ex_VS_Dolby_Version,//Extended Vendor Specific
+            Ex_VS_HDR10Plus,
+        }
+        public enum AudioFormatType
+        {
+            Reserved,
+            L_PCM,
+            AC_3,
+            MPEG_1,
+            MP3,
+            MPEG2,
+            AACLC,
+            DTS,
+            ATRAC,
+            OneBitAudio,
+            EnhanecdAC_3,
+            DTS_HD,
+            MAT,
+            DST,
+            WMA_Pro,
+            Extension,
+        }
+        public enum AudioFormatExType
+        {
+            Reserved,
+        }
+        public enum VideoCapabilityType
+        {
+            NoSupport,
+            AlwaysOverscanned,
+            AlwaysUnderscanned,
+            SupportBothOverAndUnder,
+        }
+        public struct BlockAudio
+        {
+            public AudioFormatType Type;
+            public AudioFormatExType ExType;
+            public int Channels;
+
+            public Support Freq192Khz;
+            public Support Freq176_4Khz;
+            public Support Freq96Khz;
+            public Support Freq88_2Khz;
+            public Support Freq48Khz;
+            public Support Freq44_1Khz;
+            public Support Freq32Khz;
+            //Type 1 (L_PCM)
+            public Support Size16Bit;
+            public Support Size20Bit;
+            public Support Size24Bit;
+            //Type 2-8
+            public int Maxbit;
+            //Type 9-13
+            public int DependentValue;
+            //Type 14 (WMA Pro)
+            public int Profile;
+        }
+        public struct BlockVideoVIC
+        {
+            public Support NativeCode;
+            public byte VIC;
+        }
+        public struct BlockSpeaker
+        {
+            public Support FLW_FRW; //Byte1 bit7
+            public Support RLC_RRC;
+            public Support FLC_FRC;
+            public Support BC;
+            public Support BL_BR;
+            public Support FC;
+            public Support LFE;
+            public Support FL_FR;
+
+            public Support TpFC; //Byte2 bit2
+            public Support TpC;
+            public Support TpFL_TpFH;
+        }
+        public struct VSBlockHDMILLC
+        {
+        }
+        public struct VSBlockAMD
+        {
+            public byte Version;
+            public Support LocalDimmingControl;
+            public Support NativeColorSpaceSet;
+            public Support FreeSync;
+            public uint MinRefreshRate;
+            public uint MaxRefreshRate;
+            public byte MCCSVCPCode;
+            public Support Gamma22EOTF;
+            public float MaxBrightness_MaxBL;
+            public float MinBrightness_MaxBL;
+            public float MaxBrightness_MinBL;
+            public float MinBrightness_MinBL;
+            public uint MaxRefreshRate255;
+        }
+        public struct VSBlockHDMIForum
+        {
+        }
+        public struct ExBlockVideoCapability
+        {
+            public Support QY;
+            public Support QS;
+            public VideoCapabilityType PT;
+            public VideoCapabilityType IT;
+            public VideoCapabilityType CE;
+        }
+        public struct ExBlockColorimetry
+        {
+            public Support BT2020_RGB;
+            public Support BT2020_YCC;
+            public Support BT2020_cYCC;
+            public Support opRGB;
+            public Support opYCC601;
+            public Support sYCC601;
+            public Support xvYCC709;
+            public Support xvYCC601;
+            public Support DCI_P3;
+            public Support MD3;
+            public Support MD2;
+            public Support MD1;
+            public Support MD0;
+        }
+        public struct ExBlockHDRStatic
+        {
+            public Support Gamma_SDR;
+            public Support Gamma_HDR;
+            public Support SMPTE_ST_2084;
+            public Support HLG;
+            public Support Static_Metadata_Type1;
+            public float Max_Luminance_Data;
+            public float Max_Frame_Avg_Lum_Data;
+            public float Min_Luminance_Data;
+        }
+
+        public struct CEABlocksTable
+        {
+            public CEATagCodeType Block;
+            public int BlockPayload;
+
+            public byte UnknowExtendedCode;
+            public int UnknowIEEEID;
+        }
+        public struct CEATable
+        {
+            public byte Version;
+            public byte DetailedTimingStart;
+            public Support UnderscranITFormatByDefault;
+            public Support Audio;
+            public Support YCbCr444;
+            public Support YCbCr422;
+            public byte NativeVideoFormatNumber;
+            public List<CEABlocksTable> CEABlocksList;
+
+            public List<BlockAudio> BlockAudio;
+            public List<BlockVideoVIC> BlockVideoVIC;
+            public List<BlockSpeaker> BlockSpeaker;
+
+            public VSBlockHDMILLC BlockHDMILLC;
+            public VSBlockAMD BlockAMD;
+            public VSBlockHDMIForum BlockHDMIForum;
+
+            public ExBlockVideoCapability BlockVideoCapability;
+            public ExBlockColorimetry BlockColorimetry;
+            public ExBlockHDRStatic BlockHDRStatic;
+            public List<BlockVideoVIC> BlockYCbCr420VIC;
+
+            public List<EDIDDetailedTimingTable> CEATimingList;
+            public byte Checksum;
+        };
+
+        public static CEATable EDIDTableCEA;
         public static byte[] CEAByteData;
         static string[] VICcode = {
                                     "No VIC",
@@ -1435,7 +1447,7 @@ namespace EDID_Form
         }
         private CEABlocksTable DecodeCEADataBlocks(byte[] CEAData, int index)
         {
-            int i = 0;
+            int i;
             CEABlocksTable Block = new CEABlocksTable();
 
             Block.BlockPayload = (int)CEAData[index] & 0x1F;
@@ -1482,16 +1494,36 @@ namespace EDID_Form
                         case 0x000C03:
                             Block.Block = CEATagCodeType.VS_HDMI_LLC;
                             break;
-
                         case 0x00001A:
                             Block.Block = CEATagCodeType.VS_AMD;
+                            EDIDTableCEA.BlockAMD.Version = BlockData[3];
+                            if ((EDIDTableCEA.BlockAMD.Version >= 1) && (Block.BlockPayload >= 8))
+                            {
+                                EDIDTableCEA.BlockAMD.FreeSync = GetByteBitSupport(BlockData[4], 0);
+                                EDIDTableCEA.BlockAMD.NativeColorSpaceSet = GetByteBitSupport(BlockData[4], 1);
+                                EDIDTableCEA.BlockAMD.LocalDimmingControl = GetByteBitSupport(BlockData[4], 2);
+                                EDIDTableCEA.BlockAMD.MinRefreshRate = BlockData[5];
+                                EDIDTableCEA.BlockAMD.MaxRefreshRate = BlockData[6];
+                                EDIDTableCEA.BlockAMD.MCCSVCPCode = BlockData[7];
+                            }
+                            if ((EDIDTableCEA.BlockAMD.Version >= 2) && (Block.BlockPayload >= 13))
+                            {
+                                EDIDTableCEA.BlockAMD.Gamma22EOTF = GetByteBitSupport(BlockData[8], 2);
+                                EDIDTableCEA.BlockAMD.MaxBrightness_MaxBL = (float)(50 * Math.Pow(2, (double)(BlockData[9]) / 32));
+                                EDIDTableCEA.BlockAMD.MinBrightness_MaxBL = (float)(Math.Pow((double)BlockData[10] / 255, 2) / 100);
+                                EDIDTableCEA.BlockAMD.MaxBrightness_MinBL = (float)(50 * Math.Pow(2, (double)(BlockData[11]) / 32));
+                                EDIDTableCEA.BlockAMD.MinBrightness_MinBL = (float)(Math.Pow((double)BlockData[12] / 255, 2) / 100);
+                            }
+                            if ((EDIDTableCEA.BlockAMD.Version >= 3) && (Block.BlockPayload >= 18))
+                            {
+                                EDIDTableCEA.BlockAMD.MaxRefreshRate255 = (uint)(BlockData[13] + (BlockData[14] & 0x03 << 8));
+                            }
                             break;
-
                         case 0xC45DD8:
                             Block.Block = CEATagCodeType.VS_HDMI_Forum;
                             break;
-
                         default:
+                            Block.UnknowIEEEID = VSDB_IEEEID;
                             Console.WriteLine("unknow VSDB !!!!!!!!!!!!!!!!");
                             break;
                     }
@@ -1545,8 +1577,11 @@ namespace EDID_Form
                                 case 0x00D046:
                                     Block.Block = CEATagCodeType.Ex_VS_Dolby_Version;
                                     break;
-
+                                case 0x90848B:
+                                    Block.Block = CEATagCodeType.Ex_VS_HDR10Plus;
+                                    break;
                                 default:
+                                    Block.UnknowIEEEID = VSVDB_IEEEID;
                                     Console.WriteLine("unknow VSVDB !!!!!!!!!!!!!!!!");
                                     break;
                             }
@@ -1601,6 +1636,18 @@ namespace EDID_Form
                             break;
 
                         case CEATagCodeType.Ex_YCbCr420CapabilityMap:
+                            EDIDTableCEA.BlockYCbCr420VIC = new List<BlockVideoVIC>();
+                            for (i = 0; i < Block.BlockPayload - 1; i++)
+                            {
+                                for (int j = 0; j < 8; j++)
+                                {
+                                    if (GetByteBit(BlockExData[i], (byte)j) == 1)
+                                    {
+                                        if((i * 8 + j) < EDIDTableCEA.BlockVideoVIC.Count)
+                                            EDIDTableCEA.BlockYCbCr420VIC.Add(EDIDTableCEA.BlockVideoVIC[i * 8 + j]);
+                                    }
+                                }
+                            }
                             break;
 
                         case CEATagCodeType.Ex_CEA_Miscellaneous_Audio_Fields:
@@ -1623,6 +1670,7 @@ namespace EDID_Form
 
                         default:
                             Block.Block = CEATagCodeType.Extended;
+                            Block.UnknowExtendedCode = BlockData[0];
                             Console.WriteLine("unknow Extended Tag code !!!!!!!!!!!!!!!!");
                             break;
                     }
@@ -1761,12 +1809,34 @@ namespace EDID_Form
                 /* Vendor-Specific Data Block */
                 case CEATagCodeType.VendorSpecific:
                     Notes += OutputNotesLineString("unknow Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString(list_offset, "IEEE ID: {0:X6}", 0, Table.UnknowIEEEID); 
                     break;
                 case CEATagCodeType.VS_HDMI_LLC:
                     Notes += OutputNotesLineString("HDMI-LLC Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
                     break;
                 case CEATagCodeType.VS_AMD:
                     Notes += OutputNotesLineString("AMD Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString(list_offset, "Version: {0}", 0, EDIDTableCEA.BlockAMD.Version);
+                    Notes += OutputNotesLineString(list_offset, "{0}{1}{2}{3}", 0, 
+                        GetSupportString("FreeSync Supported, ", EDIDTableCEA.BlockAMD.FreeSync),
+                        GetSupportString("Native Color Space Set Supported, ", EDIDTableCEA.BlockAMD.NativeColorSpaceSet),
+                        GetSupportString("Local Dimming Control Supported, ", EDIDTableCEA.BlockAMD.LocalDimmingControl),
+                        GetSupportString("Camma 2.2 EOTF Supported, ", EDIDTableCEA.BlockAMD.Gamma22EOTF)
+                        );
+                    Notes += OutputNotesLineString(list_offset, "Min Refresh Rate: {0}Hz", 0, EDIDTableCEA.BlockAMD.MinRefreshRate);
+                    Notes += OutputNotesLineString(list_offset, "Max Refresh Rate: {0}Hz", 0, EDIDTableCEA.BlockAMD.MaxRefreshRate);
+                    Notes += OutputNotesLineString(list_offset, "MCCS VCP Code: 0x{0:X2}", 0, EDIDTableCEA.BlockAMD.MCCSVCPCode);
+                    if (EDIDTableCEA.BlockAMD.Version >= 2)
+                    {
+                        Notes += OutputNotesLineString(list_offset, "Maximum luminance (Max Backlight): {0:0.000}Cd/m2", 0, EDIDTableCEA.BlockAMD.MaxBrightness_MaxBL);
+                        Notes += OutputNotesLineString(list_offset, "Minimum luminance (Max Backlight): {0:0.000}Cd/m2", 0, EDIDTableCEA.BlockAMD.MinBrightness_MaxBL);
+                        Notes += OutputNotesLineString(list_offset, "Maximum luminance (Min Backlight): {0:0.000}Cd/m2", 0, EDIDTableCEA.BlockAMD.MaxBrightness_MinBL);
+                        Notes += OutputNotesLineString(list_offset, "Minimum luminance (Min Backlight): {0:0.000}Cd/m2", 0, EDIDTableCEA.BlockAMD.MinBrightness_MinBL);
+                    }
+                    if (EDIDTableCEA.BlockAMD.Version >= 3)
+                    {
+                        Notes += OutputNotesLineString(list_offset, "Version 3 Max Refresh Rate: {0}Hz", 0, EDIDTableCEA.BlockAMD.MaxRefreshRate255);
+                    }
                     break;
                 case CEATagCodeType.VS_HDMI_Forum:
                     Notes += OutputNotesLineString("HDMI-forum Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
@@ -1775,6 +1845,7 @@ namespace EDID_Form
                 /* Extended */
                 case CEATagCodeType.Extended:
                     Notes += OutputNotesLineString("unknow Extended Tag Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("Extended Tag Code: {0:X2}", 0, Table.UnknowExtendedCode);
                     break;
                 case CEATagCodeType.Ex_Video_Capability:
                     Notes += OutputNotesLineString("Video Capability Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
@@ -1836,6 +1907,10 @@ namespace EDID_Form
                     break;
                 case CEATagCodeType.Ex_YCbCr420CapabilityMap:
                     Notes += OutputNotesLineString("YCBCR 4:2:0 Capability Map Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    foreach (BlockVideoVIC VIC in EDIDTableCEA.BlockYCbCr420VIC)
+                    {
+                        Notes += OutputNotesLineString(list_offset, "{0}", 0, VICcode[VIC.VIC]);
+                    }
                     break;
                 case CEATagCodeType.Ex_CEA_Miscellaneous_Audio_Fields:
                     Notes += OutputNotesLineString("CTA Miscellaneous Audio Fields, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
@@ -1859,11 +1934,14 @@ namespace EDID_Form
                 /* Vendor-Specific Video Data Block */
                 case CEATagCodeType.Ex_VS_Video_Capability:
                     Notes += OutputNotesLineString("unknow Vendor-Specific Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString(list_offset, "IEEE ID: {0:X6}", 0, Table.UnknowIEEEID);
                     break;
                 case CEATagCodeType.Ex_VS_Dolby_Version:
                     Notes += OutputNotesLineString("Dolby Version Vendor-Specific Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
                     break;
-
+                case CEATagCodeType.Ex_VS_HDR10Plus:
+                    Notes += OutputNotesLineString("HDR10+ Vendor-Specific Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    break;
                 default:
                     break;
             }
@@ -1874,7 +1952,7 @@ namespace EDID_Form
         internal string OutputNotesEDIDCEA()
         {
             int i;
-            string NoteEDID = "";
+            string NoteEDID = "\r\nBlock Type: CTA Extension Data(CTA-861-G)\r\n";
             NoteEDID += OutputNotesEDIDList(CEAByteData);
             NoteEDID += OutputNotesLineString("(01) CEA Version: {0}", 0, EDIDTableCEA.Version);
             NoteEDID += OutputNotesListString("(02) General Info:", 8,
@@ -1913,7 +1991,11 @@ namespace EDID_Form
     }
     internal class EDIDDisplayID : EDIDCommon
     {
-        public static EDIDTableDisplayID EDIDTableDisplayID;
+        public struct DisplayIDTable
+        {
+
+        };
+        public static DisplayIDTable EDIDTableDisplayID;
         public static byte[] DisplayIDByteData;
         internal DecodeError DecodeDisplayIDBlock()
         {
@@ -2031,7 +2113,7 @@ namespace EDID_Form
         {
             string NoteEDID;
 
-            NoteEDID = "Time:" + System.DateTime.Now.ToString() + "\r\n\r\n";
+            NoteEDID = "Time:" + System.DateTime.Now.ToString() + "\r\n";
 
             if (Error == DecodeError.Success)
             {

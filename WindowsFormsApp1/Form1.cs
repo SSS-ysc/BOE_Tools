@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 using System.Configuration;
 
 using Sunny.UI;
-using EDID_Form;
+using EDIDApp;
 
 namespace WindowsFormsApp_BOE_Tool
 {
@@ -130,11 +130,25 @@ namespace WindowsFormsApp_BOE_Tool
                     }
                 }
 
-                DecodeError DecodeResult;
+                EDIDCommon.DecodeError DecodeResult;
                 DecodeResult = WindowsFormsEDID.Decode(UnicodeText);
 
-                if (DecodeResult == DecodeError.Success)
+                if (DecodeResult == EDIDCommon.DecodeError.Success)
                 {
+                    uiRadioButtonGroup1.Items.Clear();
+                    if (WindowsFormsEDID.EDIDDataLength == 384)
+                    {
+                        uiRadioButtonGroup1.Items.AddRange(new object[] { "Base", "CEA", "DisplayID" });
+                    }
+                    if (WindowsFormsEDID.EDIDDataLength == 256)
+                    {
+                        uiRadioButtonGroup1.Items.AddRange(new object[] { "Base", "CEA" });
+                    }
+                    if (WindowsFormsEDID.EDIDDataLength == 128)
+                    {
+                        uiRadioButtonGroup1.Items.AddRange(new object[] { "Base" });
+                    }
+
                     uiRadioButtonGroup1.SelectedIndex = 0;
                     for (int i = 0; i < 128; i++)
                     {

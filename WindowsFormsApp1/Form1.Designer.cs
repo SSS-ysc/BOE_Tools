@@ -71,6 +71,7 @@
             this.uiSymbolButtonOpenFile.Symbol = 61717;
             this.uiSymbolButtonOpenFile.SymbolColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonOpenFile.TabIndex = 15;
+            this.uiSymbolButtonOpenFile.TabStop = false;
             this.uiSymbolButtonOpenFile.Text = "浏览文件";
             this.uiSymbolButtonOpenFile.TipsFont = new System.Drawing.Font("微软雅黑", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.uiSymbolButtonOpenFile.Click += new System.EventHandler(this.Open_File_Click);
@@ -93,6 +94,7 @@
             this.uiSymbolButtonSaveFile.Symbol = 61639;
             this.uiSymbolButtonSaveFile.SymbolColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(160)))), ((int)(((byte)(255)))));
             this.uiSymbolButtonSaveFile.TabIndex = 16;
+            this.uiSymbolButtonSaveFile.TabStop = false;
             this.uiSymbolButtonSaveFile.Text = "导出文件";
             this.uiSymbolButtonSaveFile.TipsFont = new System.Drawing.Font("微软雅黑", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.uiSymbolButtonSaveFile.Click += new System.EventHandler(this.Save_File_Click);
@@ -121,6 +123,7 @@
             this.uiTextBoxFile.Size = new System.Drawing.Size(323, 27);
             this.uiTextBoxFile.Style = Sunny.UI.UIStyle.Custom;
             this.uiTextBoxFile.TabIndex = 18;
+            this.uiTextBoxFile.TabStop = false;
             this.uiTextBoxFile.TextAlignment = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // uiTabControlMenu1
@@ -224,14 +227,14 @@
             this.uiRadioButtonGroup1.Items.AddRange(new object[] {
             "Base",
             "CEA",
-            "Display"});
-            this.uiRadioButtonGroup1.ItemSize = new System.Drawing.Size(100, 15);
+            "DisplayID"});
+            this.uiRadioButtonGroup1.ItemSize = new System.Drawing.Size(90, 18);
             this.uiRadioButtonGroup1.Location = new System.Drawing.Point(348, 86);
             this.uiRadioButtonGroup1.Margin = new System.Windows.Forms.Padding(3, 5, 3, 5);
             this.uiRadioButtonGroup1.MinimumSize = new System.Drawing.Size(1, 1);
             this.uiRadioButtonGroup1.Name = "uiRadioButtonGroup1";
-            this.uiRadioButtonGroup1.Padding = new System.Windows.Forms.Padding(0, 30, 0, 0);
-            this.uiRadioButtonGroup1.Size = new System.Drawing.Size(313, 57);
+            this.uiRadioButtonGroup1.Padding = new System.Windows.Forms.Padding(0, 20, 0, 0);
+            this.uiRadioButtonGroup1.Size = new System.Drawing.Size(300, 58);
             this.uiRadioButtonGroup1.Style = Sunny.UI.UIStyle.Custom;
             this.uiRadioButtonGroup1.StyleCustomMode = true;
             this.uiRadioButtonGroup1.TabIndex = 21;
@@ -254,13 +257,14 @@
             this.uiCheckBox1.Style = Sunny.UI.UIStyle.Custom;
             this.uiCheckBox1.StyleCustomMode = true;
             this.uiCheckBox1.TabIndex = 22;
+            this.uiCheckBox1.TabStop = false;
             this.uiCheckBox1.Text = "厂内格式";
             // 
             // Form1
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(243)))), ((int)(((byte)(255)))));
-            this.ClientSize = new System.Drawing.Size(924, 576);
+            this.ClientSize = new System.Drawing.Size(1108, 691);
             this.ControlBoxCloseFillHoverColor = System.Drawing.Color.White;
             this.ControlBoxFillHoverColor = System.Drawing.Color.White;
             this.ControlBoxForeColor = System.Drawing.Color.Black;
