@@ -238,6 +238,7 @@
             this.uiRadioButtonGroup1.TabStop = false;
             this.uiRadioButtonGroup1.Text = null;
             this.uiRadioButtonGroup1.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
+            this.uiRadioButtonGroup1.ValueChanged += new Sunny.UI.UIRadioButtonGroup.OnValueChanged(this.uiRadioButtonGroup1_ValueChanged);
             // 
             // uiCheckBox1
             // 

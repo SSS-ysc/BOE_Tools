@@ -138,7 +138,6 @@ namespace WindowsFormsApp_BOE_Tool
                     uiRadioButtonGroup1.SelectedIndex = 0;
                     for (int i = 0; i < 128; i++)
                     {
-                        // 转化输出两位十六进制字符
                         EDIDTextBox[i].Text = string.Format("{0:X2}", WindowsFormsEDID.EDIDByteData[i]);
                     }
                 }
@@ -182,6 +181,31 @@ namespace WindowsFormsApp_BOE_Tool
             {
                 //对系统表示事件已处理，及跳过该事件
                 e.Handled = true;
+            }
+        }
+
+        private void uiRadioButtonGroup1_ValueChanged(object sender, int index, string text)
+        {
+            if (index == 0)
+            {
+                for (int i = 0; i < 128; i++)
+                {
+                    EDIDTextBox[i].Text = string.Format("{0:X2}", WindowsFormsEDID.EDIDByteData[i]);
+                }
+            }
+            else if ((index == 1) && (WindowsFormsEDID.EDIDDataLength >= 128))
+            {
+                for (int i = 0; i < 128; i++)
+                {
+                    EDIDTextBox[i].Text = string.Format("{0:X2}", WindowsFormsEDID.EDIDByteData[128 + i]);
+                }
+            }
+            else if ((index == 2) && (WindowsFormsEDID.EDIDDataLength >= 256))
+            {
+                for (int i = 0; i < 128; i++)
+                {
+                    EDIDTextBox[i].Text = string.Format("{0:X2}", WindowsFormsEDID.EDIDByteData[256 + i]);
+                }
             }
         }
     }
