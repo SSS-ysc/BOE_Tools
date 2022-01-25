@@ -1510,9 +1510,9 @@ namespace EDIDApp
                             {
                                 EDIDTableCEA.BlockAMD.Gamma22EOTF = GetByteBitSupport(BlockData[8], 2);
                                 EDIDTableCEA.BlockAMD.MaxBrightness_MaxBL = (float)(50 * Math.Pow(2, (double)(BlockData[9]) / 32));
-                                EDIDTableCEA.BlockAMD.MinBrightness_MaxBL = (float)(Math.Pow((double)BlockData[10] / 255, 2) / 100);
+                                EDIDTableCEA.BlockAMD.MinBrightness_MaxBL = EDIDTableCEA.BlockAMD.MaxBrightness_MaxBL * (float)(Math.Pow((double)BlockData[10] / 255, 2) / 100);
                                 EDIDTableCEA.BlockAMD.MaxBrightness_MinBL = (float)(50 * Math.Pow(2, (double)(BlockData[11]) / 32));
-                                EDIDTableCEA.BlockAMD.MinBrightness_MinBL = (float)(Math.Pow((double)BlockData[12] / 255, 2) / 100);
+                                EDIDTableCEA.BlockAMD.MinBrightness_MinBL = EDIDTableCEA.BlockAMD.MaxBrightness_MinBL * (float)(Math.Pow((double)BlockData[12] / 255, 2) / 100);
                             }
                             if ((EDIDTableCEA.BlockAMD.Version >= 3) && (Block.BlockPayload >= 18))
                             {
@@ -1623,7 +1623,7 @@ namespace EDIDApp
                             if (Block.BlockPayload >= 5)
                                 EDIDTableCEA.BlockHDRStatic.Max_Frame_Avg_Lum_Data = (float)(50 * Math.Pow(2, (double)(BlockExData[3]) / 32));
                             if (Block.BlockPayload >= 6)
-                                EDIDTableCEA.BlockHDRStatic.Min_Luminance_Data = (float)(Math.Pow((double)BlockExData[4] / 255, 2) / 100);
+                                EDIDTableCEA.BlockHDRStatic.Min_Luminance_Data = EDIDTableCEA.BlockHDRStatic.Max_Luminance_Data * (float)(Math.Pow((double)BlockExData[4] / 255, 2) / 100);
                             break;
 
                         case CEATagCodeType.Ex_HDR_Dynamic_Matadata:
@@ -1828,10 +1828,10 @@ namespace EDIDApp
                     Notes += OutputNotesLineString(list_offset, "MCCS VCP Code: 0x{0:X2}", 0, EDIDTableCEA.BlockAMD.MCCSVCPCode);
                     if (EDIDTableCEA.BlockAMD.Version >= 2)
                     {
-                        Notes += OutputNotesLineString(list_offset, "Maximum luminance (Max Backlight): {0:0.000}Cd/m2", 0, EDIDTableCEA.BlockAMD.MaxBrightness_MaxBL);
-                        Notes += OutputNotesLineString(list_offset, "Minimum luminance (Max Backlight): {0:0.000}Cd/m2", 0, EDIDTableCEA.BlockAMD.MinBrightness_MaxBL);
-                        Notes += OutputNotesLineString(list_offset, "Maximum luminance (Min Backlight): {0:0.000}Cd/m2", 0, EDIDTableCEA.BlockAMD.MaxBrightness_MinBL);
-                        Notes += OutputNotesLineString(list_offset, "Minimum luminance (Min Backlight): {0:0.000}Cd/m2", 0, EDIDTableCEA.BlockAMD.MinBrightness_MinBL);
+                        Notes += OutputNotesLineString(list_offset, "Maximum luminance (Max Backlight): {0:0.000} cd/m2", 0, EDIDTableCEA.BlockAMD.MaxBrightness_MaxBL);
+                        Notes += OutputNotesLineString(list_offset, "Minimum luminance (Max Backlight): {0:0.00000} cd/m2", 0, EDIDTableCEA.BlockAMD.MinBrightness_MaxBL);
+                        Notes += OutputNotesLineString(list_offset, "Maximum luminance (Min Backlight): {0:0.000} cd/m2", 0, EDIDTableCEA.BlockAMD.MaxBrightness_MinBL);
+                        Notes += OutputNotesLineString(list_offset, "Minimum luminance (Min Backlight): {0:0.00000} cd/m2", 0, EDIDTableCEA.BlockAMD.MinBrightness_MinBL);
                     }
                     if (EDIDTableCEA.BlockAMD.Version >= 3)
                     {
@@ -1890,11 +1890,11 @@ namespace EDIDApp
                         GetSupportString("EOTF HLG,", EDIDTableCEA.BlockHDRStatic.HLG),
                         GetSupportString("Static MetaData Type 1,", EDIDTableCEA.BlockHDRStatic.Static_Metadata_Type1));
                     if (EDIDTableCEA.BlockHDRStatic.Max_Luminance_Data != 0)
-                        Notes += OutputNotesLineString(list_offset, "Desired Content Max Luminance: {0:.000}", 0, EDIDTableCEA.BlockHDRStatic.Max_Luminance_Data);
+                        Notes += OutputNotesLineString(list_offset, "Desired Content Max Luminance: {0:0.000} cd/m2", 0, EDIDTableCEA.BlockHDRStatic.Max_Luminance_Data);
                     if (EDIDTableCEA.BlockHDRStatic.Max_Frame_Avg_Lum_Data != 0)
-                        Notes += OutputNotesLineString(list_offset, "Desired Content Max Frame-average Luminance: {0:.000}", 0, EDIDTableCEA.BlockHDRStatic.Max_Frame_Avg_Lum_Data);
+                        Notes += OutputNotesLineString(list_offset, "Desired Content Max Frame-average Luminance: {0:0.000} cd/m2", 0, EDIDTableCEA.BlockHDRStatic.Max_Frame_Avg_Lum_Data);
                     if (EDIDTableCEA.BlockHDRStatic.Min_Luminance_Data != 0)
-                        Notes += OutputNotesLineString(list_offset, "Desired Content Min Luminance: {0:.00000}", 0, EDIDTableCEA.BlockHDRStatic.Min_Luminance_Data);
+                        Notes += OutputNotesLineString(list_offset, "Desired Content Min Luminance: {0:0.00000} cd/m2", 0, EDIDTableCEA.BlockHDRStatic.Min_Luminance_Data);
                     break;
                 case CEATagCodeType.Ex_HDR_Dynamic_Matadata:
                     Notes += OutputNotesLineString("HDR Dynamic Matadata Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
