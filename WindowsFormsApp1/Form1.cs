@@ -175,13 +175,9 @@ namespace WindowsFormsApp_BOE_Tool
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 if (uiCheckBox1.Checked == true)
-                {
                     WindowsFormsEDID.OutputNotesEDIDText(saveFileDialog1.FileName);
-                }
                 else
-                {
                     WindowsFormsEDID.Output0xEDIDText(saveFileDialog1.FileName);
-                }
 
                 //窗体关闭时，获取文件夹对话框的路径写入配置文件中
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);

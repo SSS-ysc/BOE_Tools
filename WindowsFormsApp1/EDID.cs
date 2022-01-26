@@ -100,7 +100,6 @@ namespace EDIDApp
             public AnalogSyncType AnalogSync;
             public DigitalSyncType DigitalSync;
         };
-
         string[] DetailTimingAnalogSyncType = { "",
             "WithoutSerrations SyncOnGreenOnly" ,
             "WithoutSerrations SyncOnRGB" ,
@@ -243,6 +242,8 @@ namespace EDIDApp
 
             Notes += "\r\n";
 
+            Notes = Notes.Replace("_"," ");//替换某些枚举成员名称的 _ 符号
+
             return Notes;
         }
         protected string OutputNotesLineString(int NotesOffset, string Notes, int ValueOffset, params object[] Value)
@@ -275,6 +276,8 @@ namespace EDIDApp
 
             Notes += "\r\n";
 
+            Notes = Notes.Replace("_", " ");//替换某些枚举成员名称的 _ 符号
+
             return Notes;
         }
         protected string OutputNotesListString(string Notes, int Offset, params object[] Value)
@@ -289,7 +292,7 @@ namespace EDIDApp
                     Notes += Value[i].ToString() + "\r\n";
                 }
             }
-
+            Notes = Notes.Replace("_", " ");//替换某些枚举成员名称的 _ 符号
             return Notes;
         }
         protected string OutputNotesListsString(string Notes, int Offset, object Value, string Notes2, int Offset2, object Value2)
@@ -303,7 +306,7 @@ namespace EDIDApp
             }
             Notes += string.Format(Notes2, Value2);
             Notes += "\r\n";
-
+            Notes = Notes.Replace("_", " ");//替换某些枚举成员名称的 _ 符号
             return Notes;
         }
         protected string OutputNotesEDIDList(byte[] Data)
@@ -398,17 +401,17 @@ namespace EDIDApp
         };
         public enum ColorType
         {
-            Grayscale,
+            Gray_scale,
             RGB,
-            NonRGB,
+            Non_RGB,
             ColorType_undefined,
         };
         public enum ColorEncoding
         {
             RGB444,
-            RGB444YCrCb444,
-            RGB444YCrCb422,
-            RGB444YCrCb444YCrCb422,
+            RGB444_YCrCr444,
+            RGB444_YCrCr422,
+            RGB444_YCrCr,
         };
         public enum StandardTimingRatio
         {
@@ -444,9 +447,9 @@ namespace EDIDApp
         }
         public enum VideoTimingType
         {
-            DefaultGTF,
-            RangeLimitsOnly,
-            SecondaryGTF,
+            Default_GTF,
+            Range_Limits_Only,
+            Secondary_GTF,
             CVT,
             Reserved,
         }
@@ -566,8 +569,9 @@ namespace EDIDApp
             public byte ExBlockCount;
             public byte Checksum;
         };
-        public static BaseTable EDIDTable;
-        public static byte[] BaseByteData;
+
+        internal BaseTable Table;
+        internal byte[] Data;
         private double GetEDIDColorxy(uint xy)
         {
             double xyValue = 0;
@@ -624,39 +628,39 @@ namespace EDIDApp
         {
             if ((Data[0] != 0x00) && (Data[1] != 0x00) && (Data[2] != 0x00))
             {
-                EDIDTable.SecondMainTiming = DecodeDetailedTimingData(Data);
+                Table.SecondMainTiming = DecodeDetailedTimingData(Data);
                 return EDIDDescriptorsType.SecondMainTiming;
             }
 
             switch (Data[3])
             {
                 case 0xFF:
-                    EDIDTable.SN = Encoding.ASCII.GetString(Data, 5, 13);
-                    Console.WriteLine("SN :{0}", EDIDTable.SN);
+                    Table.SN = Encoding.ASCII.GetString(Data, 5, 13);
+                    Console.WriteLine("SN :{0}", Table.SN);
                     return EDIDDescriptorsType.ProductSN;
                 case 0xFE:
                     Console.WriteLine("AlphanumericData : Unresolved");
                     return EDIDDescriptorsType.AlphanumericData;
                 case 0xFD:
-                    EDIDTable.Limits.VerticalOffest = (LimitsHVOffsetsType)(Data[4] & 0x03);
-                    EDIDTable.Limits.HorizontalOffest = (LimitsHVOffsetsType)((uint)(Data[4] & 0x0C) >> 2);
-                    EDIDTable.Limits.VerticalMin = (ushort)(Data[5] + (EDIDTable.Limits.VerticalOffest == LimitsHVOffsetsType.Max255Min255 ? 255 : 0));
-                    EDIDTable.Limits.VerticalMax = (ushort)(Data[6] + (EDIDTable.Limits.VerticalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
-                    EDIDTable.Limits.HorizontalMin = (ushort)(Data[7] + (EDIDTable.Limits.HorizontalOffest == LimitsHVOffsetsType.Max255Min255 ? 255 : 0));
-                    EDIDTable.Limits.HorizontalMax = (ushort)(Data[8] + (EDIDTable.Limits.HorizontalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
-                    EDIDTable.Limits.PixelClkMax = (ushort)(Data[9] * 10);
-                    EDIDTable.Limits.VideoTiming = (VideoTimingType)(Data[10]);
+                    Table.Limits.VerticalOffest = (LimitsHVOffsetsType)(Data[4] & 0x03);
+                    Table.Limits.HorizontalOffest = (LimitsHVOffsetsType)((uint)(Data[4] & 0x0C) >> 2);
+                    Table.Limits.VerticalMin = (ushort)(Data[5] + (Table.Limits.VerticalOffest == LimitsHVOffsetsType.Max255Min255 ? 255 : 0));
+                    Table.Limits.VerticalMax = (ushort)(Data[6] + (Table.Limits.VerticalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
+                    Table.Limits.HorizontalMin = (ushort)(Data[7] + (Table.Limits.HorizontalOffest == LimitsHVOffsetsType.Max255Min255 ? 255 : 0));
+                    Table.Limits.HorizontalMax = (ushort)(Data[8] + (Table.Limits.HorizontalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
+                    Table.Limits.PixelClkMax = (ushort)(Data[9] * 10);
+                    Table.Limits.VideoTiming = (VideoTimingType)(Data[10]);
                     Console.WriteLine("RangeLimits : V {0}-{1}Hz, H {2}-{3}KHz, PixelClkMax {4}MHz, VideoTiming {5}",
-                        EDIDTable.Limits.VerticalMin,
-                        EDIDTable.Limits.VerticalMax,
-                        EDIDTable.Limits.HorizontalMin,
-                        EDIDTable.Limits.HorizontalMax,
-                        EDIDTable.Limits.PixelClkMax,
-                        EDIDTable.Limits.VideoTiming);
+                        Table.Limits.VerticalMin,
+                        Table.Limits.VerticalMax,
+                        Table.Limits.HorizontalMin,
+                        Table.Limits.HorizontalMax,
+                        Table.Limits.PixelClkMax,
+                        Table.Limits.VideoTiming);
                     return EDIDDescriptorsType.RangeLimits;
                 case 0xFC:
-                    EDIDTable.Name = Encoding.ASCII.GetString(Data, 5, 13);
-                    Console.WriteLine("Name :{0}", EDIDTable.Name);
+                    Table.Name = Encoding.ASCII.GetString(Data, 5, 13);
+                    Console.WriteLine("Name :{0}", Table.Name);
                     return EDIDDescriptorsType.ProductName;
                 case 0xFB:
                     Console.WriteLine("ColorData : Unresolved");
@@ -679,19 +683,20 @@ namespace EDIDApp
         }
         internal DecodeError DecodeBaseBlock()
         {
+            Table = new BaseTable();
             //00-07
-            if ((BaseByteData[0] != 0x00) || (BaseByteData[1] != 0xFF) || (BaseByteData[2] != 0xFF) || (BaseByteData[3] != 0xFF) || (BaseByteData[4] != 0xFF) || (BaseByteData[5] != 0xFF) || (BaseByteData[6] != 0xFF) || (BaseByteData[7] != 0x00))
+            if ((Data[0] != 0x00) || (Data[1] != 0xFF) || (Data[2] != 0xFF) || (Data[3] != 0xFF) || (Data[4] != 0xFF) || (Data[5] != 0xFF) || (Data[6] != 0xFF) || (Data[7] != 0x00))
                 return DecodeError.HeaderError;
 
             //18-19 EDID_Version
-            if ((BaseByteData[18] == 0x01) && ((BaseByteData[19] == 0x03) || (BaseByteData[19] == 0x04)))
+            if ((Data[18] == 0x01) && ((Data[19] == 0x03) || (Data[19] == 0x04)))
             {
-                if (BaseByteData[19] == 0x03)
-                    EDIDTable.Version = EDIDversion.V13;
+                if (Data[19] == 0x03)
+                    Table.Version = EDIDversion.V13;
                 else
-                    EDIDTable.Version = EDIDversion.V14;
+                    Table.Version = EDIDversion.V14;
 
-                Console.WriteLine("EDID Version: {0}", EDIDTable.Version);
+                Console.WriteLine("EDID Version: {0}", Table.Version);
             }
             else
                 return DecodeError.VersionError;
@@ -699,233 +704,233 @@ namespace EDIDApp
             //08-09 EDID_IDManufacturerName
             //0001="A",11010="Z",A-Z
             byte[] ID_Data = new byte[3];
-            ID_Data[0] = (byte)((BaseByteData[8] >> 2) + 0x40);
-            ID_Data[1] = (byte)(((BaseByteData[8] & 0x03) << 3) + (BaseByteData[9] >> 5) + 0x40);
-            ID_Data[2] = (byte)((BaseByteData[9] & 0x1F) + 0x40);
-            EDIDTable.IDManufacturerName = Encoding.ASCII.GetString(ID_Data);
-            Console.WriteLine("Manufacturer Name: {0}", EDIDTable.IDManufacturerName);
+            ID_Data[0] = (byte)((Data[8] >> 2) + 0x40);
+            ID_Data[1] = (byte)(((Data[8] & 0x03) << 3) + (Data[9] >> 5) + 0x40);
+            ID_Data[2] = (byte)((Data[9] & 0x1F) + 0x40);
+            Table.IDManufacturerName = Encoding.ASCII.GetString(ID_Data);
+            Console.WriteLine("Manufacturer Name: {0}", Table.IDManufacturerName);
 
             //10-11 EDID_IDProductCode
-            EDIDTable.IDProductCode = (uint)(BaseByteData[10] + (BaseByteData[11] << 8));
-            Console.WriteLine("ID Product: {0}", string.Format("{0:X}", EDIDTable.IDProductCode));
+            Table.IDProductCode = (uint)(Data[10] + (Data[11] << 8));
+            Console.WriteLine("ID Product: {0}", string.Format("{0:X}", Table.IDProductCode));
 
             //12-15 EDID_IDSerialNumber
-            if (((BaseByteData[12] == 0x01) && (BaseByteData[13] == 0x01) && (BaseByteData[14] == 0x01) && (BaseByteData[15] == 0x01))
-                || ((BaseByteData[12] == 0x00) && (BaseByteData[13] == 0x00) && (BaseByteData[14] == 0x00) && (BaseByteData[15] == 0x00))
+            if (((Data[12] == 0x01) && (Data[13] == 0x01) && (Data[14] == 0x01) && (Data[15] == 0x01))
+                || ((Data[12] == 0x00) && (Data[13] == 0x00) && (Data[14] == 0x00) && (Data[15] == 0x00))
                 )
             {
-                EDIDTable.IDSerialNumber = null;
+                Table.IDSerialNumber = null;
                 Console.WriteLine("ID Serial Number: not used");
             }
             else
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    EDIDTable.IDSerialNumber += string.Format("{0:X2}", BaseByteData[15 - i]);
+                    Table.IDSerialNumber += string.Format("{0:X2}", Data[15 - i]);
                 }
-                Console.WriteLine("ID Serial Number: {0}", EDIDTable.IDSerialNumber);
+                Console.WriteLine("ID Serial Number: {0}", Table.IDSerialNumber);
             }
 
             //16-17 EDID_Week EDID_Year EDID_Model_Year
-            if (BaseByteData[16] <= 54)
+            if (Data[16] <= 54)
             {
-                EDIDTable.Week = BaseByteData[16];
-                Console.WriteLine("Week: {0}", EDIDTable.Week);
-                EDIDTable.Year = (ushort)(BaseByteData[17] + 1990);
-                Console.WriteLine("Year: {0}", EDIDTable.Year);
+                Table.Week = Data[16];
+                Console.WriteLine("Week: {0}", Table.Week);
+                Table.Year = (ushort)(Data[17] + 1990);
+                Console.WriteLine("Year: {0}", Table.Year);
             }
-            else if ((EDIDTable.Version == EDIDversion.V14) && (BaseByteData[16] == 0xFF))
+            else if ((Table.Version == EDIDversion.V14) && (Data[16] == 0xFF))
             {
-                EDIDTable.ModelYear = (ushort)(BaseByteData[17] + 1990);
+                Table.ModelYear = (ushort)(Data[17] + 1990);
                 Console.WriteLine("Week: not used");
-                Console.WriteLine("Model Year: {0}", EDIDTable.ModelYear);
+                Console.WriteLine("Model Year: {0}", Table.ModelYear);
             }
 
             //20-24 EDID_Basic
             //20
-            EDIDTable.Basic.Video_definition = (EDIDVideoStandard)((BaseByteData[20] & 0x80) >> 7);
-            Console.WriteLine("Video Standard: {0}", EDIDTable.Basic.Video_definition);
-            if (EDIDTable.Version == EDIDversion.V14)
+            Table.Basic.Video_definition = (EDIDVideoStandard)((Data[20] & 0x80) >> 7);
+            Console.WriteLine("Video Standard: {0}", Table.Basic.Video_definition);
+            if (Table.Version == EDIDversion.V14)
             {
-                if (EDIDTable.Basic.Video_definition == EDIDVideoStandard.Digital)//EDID1.4 Digital
+                if (Table.Basic.Video_definition == EDIDVideoStandard.Digital)//EDID1.4 Digital
                 {
-                    EDIDTable.Basic.DigitalColorDepth = (EDIDColorBitDepth)((BaseByteData[20] & 0x70) >> 4);
-                    Console.WriteLine("Color Bit Depth: {0}", EDIDTable.Basic.DigitalColorDepth);
+                    Table.Basic.DigitalColorDepth = (EDIDColorBitDepth)((Data[20] & 0x70) >> 4);
+                    Console.WriteLine("Color Bit Depth: {0}", Table.Basic.DigitalColorDepth);
 
-                    EDIDTable.Basic.DigitalStandard = (EDIDDigitalVideoStandard)(BaseByteData[20] & 0x0F);
-                    Console.WriteLine("Digital Standard: {0}", EDIDTable.Basic.DigitalStandard);
+                    Table.Basic.DigitalStandard = (EDIDDigitalVideoStandard)(Data[20] & 0x0F);
+                    Console.WriteLine("Digital Standard: {0}", Table.Basic.DigitalStandard);
                 }
             }
             else
             {
-                if (EDIDTable.Basic.Video_definition == EDIDVideoStandard.Digital)//EDID1.3 Digital
+                if (Table.Basic.Video_definition == EDIDVideoStandard.Digital)//EDID1.3 Digital
                 {
                 }
                 else
                 {
-                    EDIDTable.Basic.AnalogSignalLevelStandard = (byte)((BaseByteData[20] & 0x60) >> 5);//?
-                    EDIDTable.Basic.AnalogVideoSetup = (byte)((BaseByteData[20] & 0x10) >> 4);//?
-                    EDIDTable.Basic.DigitalColorDepth = (EDIDColorBitDepth)(BaseByteData[20] & 0x0F);//?
+                    Table.Basic.AnalogSignalLevelStandard = (byte)((Data[20] & 0x60) >> 5);//?
+                    Table.Basic.AnalogVideoSetup = (byte)((Data[20] & 0x10) >> 4);//?
+                    Table.Basic.DigitalColorDepth = (EDIDColorBitDepth)(Data[20] & 0x0F);//?
                 }
             }
             //21-22
-            if ((BaseByteData[21] != 0x00) && (BaseByteData[22] != 0x00))
+            if ((Data[21] != 0x00) && (Data[22] != 0x00))
             {
-                EDIDTable.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_HV;
-                EDIDTable.Basic.ScreenSize.Hsize = BaseByteData[21];
-                EDIDTable.Basic.ScreenSize.Vsize = BaseByteData[22];
-                Console.WriteLine("Screen Size: {0}, H: {1} cm, V: {2} cm", EDIDTable.Basic.ScreenSize.Type, EDIDTable.Basic.ScreenSize.Hsize, EDIDTable.Basic.ScreenSize.Vsize);
+                Table.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_HV;
+                Table.Basic.ScreenSize.Hsize = Data[21];
+                Table.Basic.ScreenSize.Vsize = Data[22];
+                Console.WriteLine("Screen Size: {0}, H: {1} cm, V: {2} cm", Table.Basic.ScreenSize.Type, Table.Basic.ScreenSize.Hsize, Table.Basic.ScreenSize.Vsize);
             }
-            else if (BaseByteData[22] == 0x00)
+            else if (Data[22] == 0x00)
             {
-                EDIDTable.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_Ratio;
-                EDIDTable.Basic.ScreenSize.Ratio = BaseByteData[21];   // ?
-                Console.WriteLine("Screen Size: {0}, Ratio: {1}", EDIDTable.Basic.ScreenSize.Type, EDIDTable.Basic.ScreenSize.Ratio);
+                Table.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_Ratio;
+                Table.Basic.ScreenSize.Ratio = Data[21];   // ?
+                Console.WriteLine("Screen Size: {0}, Ratio: {1}", Table.Basic.ScreenSize.Type, Table.Basic.ScreenSize.Ratio);
             }
-            else if (BaseByteData[21] == 0x00)
+            else if (Data[21] == 0x00)
             {
-                EDIDTable.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_Ratio;
-                EDIDTable.Basic.ScreenSize.Ratio = BaseByteData[22];   // ?
-                Console.WriteLine("Screen Size: {0}, Ratio: {1}", EDIDTable.Basic.ScreenSize.Type, EDIDTable.Basic.ScreenSize.Ratio);
+                Table.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_Ratio;
+                Table.Basic.ScreenSize.Ratio = Data[22];   // ?
+                Console.WriteLine("Screen Size: {0}, Ratio: {1}", Table.Basic.ScreenSize.Type, Table.Basic.ScreenSize.Ratio);
             }
             else
             {
-                EDIDTable.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_undefined;
+                Table.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_undefined;
             }
             //23
-            EDIDTable.Basic.Gamma = (float)BaseByteData[23] / 100 + 1;
-            Console.WriteLine("Gamma: {0} ", EDIDTable.Basic.Gamma);
+            Table.Basic.Gamma = (float)Data[23] / 100 + 1;
+            Console.WriteLine("Gamma: {0} ", Table.Basic.Gamma);
             //24
-            EDIDTable.Basic.FeatureSupport.StandbyMode = GetByteBitSupport(BaseByteData[24], 7);
-            EDIDTable.Basic.FeatureSupport.SuspendMode = GetByteBitSupport(BaseByteData[24], 6);
-            EDIDTable.Basic.FeatureSupport.VeryLowPowerMode = GetByteBitSupport(BaseByteData[24], 5);
-            EDIDTable.Basic.FeatureSupport.sRGBStandard = GetByteBitSupport(BaseByteData[24], 2);
-            EDIDTable.Basic.FeatureSupport.PreferredTimingMode = GetByteBitSupport(BaseByteData[24], 1);
-            if (EDIDTable.Version == EDIDversion.V13)
+            Table.Basic.FeatureSupport.StandbyMode = GetByteBitSupport(Data[24], 7);
+            Table.Basic.FeatureSupport.SuspendMode = GetByteBitSupport(Data[24], 6);
+            Table.Basic.FeatureSupport.VeryLowPowerMode = GetByteBitSupport(Data[24], 5);
+            Table.Basic.FeatureSupport.sRGBStandard = GetByteBitSupport(Data[24], 2);
+            Table.Basic.FeatureSupport.PreferredTimingMode = GetByteBitSupport(Data[24], 1);
+            if (Table.Version == EDIDversion.V13)
             {
-                EDIDTable.Basic.FeatureSupport.DisplayColorType = (ColorType)((BaseByteData[24] & 0x18) >> 3);
-                EDIDTable.Basic.FeatureSupport.GTFstandard = GetByteBitSupport(BaseByteData[24], 0);
+                Table.Basic.FeatureSupport.DisplayColorType = (ColorType)((Data[24] & 0x18) >> 3);
+                Table.Basic.FeatureSupport.GTFstandard = GetByteBitSupport(Data[24], 0);
                 Console.WriteLine("StandbyMode: {0}, SuspendMode: {1}, LowPowerMode: {2}, DisplayColorType: {3}, sRGBStandard: {4}, PreferredTimingMode: {5}, GTFstandard: {6}",
-                    EDIDTable.Basic.FeatureSupport.StandbyMode,
-                    EDIDTable.Basic.FeatureSupport.SuspendMode,
-                    EDIDTable.Basic.FeatureSupport.VeryLowPowerMode,
-                    EDIDTable.Basic.FeatureSupport.DisplayColorType,
-                    EDIDTable.Basic.FeatureSupport.sRGBStandard,
-                    EDIDTable.Basic.FeatureSupport.PreferredTimingMode,
-                    EDIDTable.Basic.FeatureSupport.GTFstandard);
+                    Table.Basic.FeatureSupport.StandbyMode,
+                    Table.Basic.FeatureSupport.SuspendMode,
+                    Table.Basic.FeatureSupport.VeryLowPowerMode,
+                    Table.Basic.FeatureSupport.DisplayColorType,
+                    Table.Basic.FeatureSupport.sRGBStandard,
+                    Table.Basic.FeatureSupport.PreferredTimingMode,
+                    Table.Basic.FeatureSupport.GTFstandard);
             }
             else
             {
-                EDIDTable.Basic.FeatureSupport.ColorEncodingFormat = (ColorEncoding)((BaseByteData[24] & 0x18) >> 3);
-                EDIDTable.Basic.FeatureSupport.ContinuousFrequency = GetByteBitSupport(BaseByteData[24], 0);
+                Table.Basic.FeatureSupport.ColorEncodingFormat = (ColorEncoding)((Data[24] & 0x18) >> 3);
+                Table.Basic.FeatureSupport.ContinuousFrequency = GetByteBitSupport(Data[24], 0);
                 Console.WriteLine("StandbyMode: {0}, SuspendMode: {1}, LowPowerMode: {2}, ColorEncodingFormat: {3}, sRGBStandard: {4}, PreferredTimingMode: {5}, ContinuousFrequency: {6}",
-                    EDIDTable.Basic.FeatureSupport.StandbyMode,
-                    EDIDTable.Basic.FeatureSupport.SuspendMode,
-                    EDIDTable.Basic.FeatureSupport.VeryLowPowerMode,
-                    EDIDTable.Basic.FeatureSupport.ColorEncodingFormat,
-                    EDIDTable.Basic.FeatureSupport.sRGBStandard,
-                    EDIDTable.Basic.FeatureSupport.PreferredTimingMode,
-                    EDIDTable.Basic.FeatureSupport.ContinuousFrequency);
+                    Table.Basic.FeatureSupport.StandbyMode,
+                    Table.Basic.FeatureSupport.SuspendMode,
+                    Table.Basic.FeatureSupport.VeryLowPowerMode,
+                    Table.Basic.FeatureSupport.ColorEncodingFormat,
+                    Table.Basic.FeatureSupport.sRGBStandard,
+                    Table.Basic.FeatureSupport.PreferredTimingMode,
+                    Table.Basic.FeatureSupport.ContinuousFrequency);
             }
 
             //25-34 EDID_Color
-            EDIDTable.PanelColor.RedX = GetEDIDColorxy((uint)(GetByteBit(BaseByteData[25], 7)) * 2 + (uint)(GetByteBit(BaseByteData[25], 6)) + ((uint)BaseByteData[27] << 2));
-            EDIDTable.PanelColor.RedY = GetEDIDColorxy((uint)(GetByteBit(BaseByteData[25], 5)) * 2 + (uint)(GetByteBit(BaseByteData[25], 4)) + ((uint)BaseByteData[28] << 2));
-            EDIDTable.PanelColor.GreenX = GetEDIDColorxy((uint)(GetByteBit(BaseByteData[25], 3)) * 2 + (uint)(GetByteBit(BaseByteData[25], 2)) + ((uint)BaseByteData[29] << 2));
-            EDIDTable.PanelColor.GreenY = GetEDIDColorxy((uint)(GetByteBit(BaseByteData[25], 1)) * 2 + (uint)(GetByteBit(BaseByteData[25], 0)) + ((uint)BaseByteData[30] << 2));
-            EDIDTable.PanelColor.BlueX = GetEDIDColorxy((uint)(GetByteBit(BaseByteData[26], 7)) * 2 + (uint)(GetByteBit(BaseByteData[26], 6)) + ((uint)BaseByteData[31] << 2));
-            EDIDTable.PanelColor.BlueY = GetEDIDColorxy((uint)(GetByteBit(BaseByteData[26], 5)) * 2 + (uint)(GetByteBit(BaseByteData[26], 4)) + ((uint)BaseByteData[32] << 2));
-            EDIDTable.PanelColor.WhiteX = GetEDIDColorxy((uint)(GetByteBit(BaseByteData[26], 3)) * 2 + (uint)(GetByteBit(BaseByteData[26], 2)) + ((uint)BaseByteData[33] << 2));
-            EDIDTable.PanelColor.WhiteY = GetEDIDColorxy((uint)(GetByteBit(BaseByteData[26], 1)) * 2 + (uint)(GetByteBit(BaseByteData[26], 0)) + ((uint)BaseByteData[34] << 2));
+            Table.PanelColor.RedX = GetEDIDColorxy((uint)(GetByteBit(Data[25], 7)) * 2 + (uint)(GetByteBit(Data[25], 6)) + ((uint)Data[27] << 2));
+            Table.PanelColor.RedY = GetEDIDColorxy((uint)(GetByteBit(Data[25], 5)) * 2 + (uint)(GetByteBit(Data[25], 4)) + ((uint)Data[28] << 2));
+            Table.PanelColor.GreenX = GetEDIDColorxy((uint)(GetByteBit(Data[25], 3)) * 2 + (uint)(GetByteBit(Data[25], 2)) + ((uint)Data[29] << 2));
+            Table.PanelColor.GreenY = GetEDIDColorxy((uint)(GetByteBit(Data[25], 1)) * 2 + (uint)(GetByteBit(Data[25], 0)) + ((uint)Data[30] << 2));
+            Table.PanelColor.BlueX = GetEDIDColorxy((uint)(GetByteBit(Data[26], 7)) * 2 + (uint)(GetByteBit(Data[26], 6)) + ((uint)Data[31] << 2));
+            Table.PanelColor.BlueY = GetEDIDColorxy((uint)(GetByteBit(Data[26], 5)) * 2 + (uint)(GetByteBit(Data[26], 4)) + ((uint)Data[32] << 2));
+            Table.PanelColor.WhiteX = GetEDIDColorxy((uint)(GetByteBit(Data[26], 3)) * 2 + (uint)(GetByteBit(Data[26], 2)) + ((uint)Data[33] << 2));
+            Table.PanelColor.WhiteY = GetEDIDColorxy((uint)(GetByteBit(Data[26], 1)) * 2 + (uint)(GetByteBit(Data[26], 0)) + ((uint)Data[34] << 2));
             Console.WriteLine("Color.Red X: {0} Y: {1}, Color.Green X: {2} Y: {3}, Color.Blue X: {4} Y: {5}, Color.White X: {6} Y: {7}",
-                EDIDTable.PanelColor.RedX,
-                EDIDTable.PanelColor.RedY,
-                EDIDTable.PanelColor.GreenX,
-                EDIDTable.PanelColor.GreenY,
-                EDIDTable.PanelColor.BlueX,
-                EDIDTable.PanelColor.BlueY,
-                EDIDTable.PanelColor.WhiteX,
-                EDIDTable.PanelColor.WhiteY
+                Table.PanelColor.RedX,
+                Table.PanelColor.RedY,
+                Table.PanelColor.GreenX,
+                Table.PanelColor.GreenY,
+                Table.PanelColor.BlueX,
+                Table.PanelColor.BlueY,
+                Table.PanelColor.WhiteX,
+                Table.PanelColor.WhiteY
                 );
 
             //35-37 EDID_Established_Timing
-            EDIDTable.EstablishedTiming.Es720x400_70 = GetByteBitSupport(BaseByteData[35], 7);
-            EDIDTable.EstablishedTiming.Es720x400_88 = GetByteBitSupport(BaseByteData[35], 6);
-            EDIDTable.EstablishedTiming.Es640x480_60 = GetByteBitSupport(BaseByteData[35], 5);
-            EDIDTable.EstablishedTiming.Es640x480_67 = GetByteBitSupport(BaseByteData[35], 4);
-            EDIDTable.EstablishedTiming.Es640x480_72 = GetByteBitSupport(BaseByteData[35], 3);
-            EDIDTable.EstablishedTiming.Es640x480_75 = GetByteBitSupport(BaseByteData[35], 2);
-            EDIDTable.EstablishedTiming.Es800x600_56 = GetByteBitSupport(BaseByteData[35], 1);
-            EDIDTable.EstablishedTiming.Es800x600_60 = GetByteBitSupport(BaseByteData[35], 0);
+            Table.EstablishedTiming.Es720x400_70 = GetByteBitSupport(Data[35], 7);
+            Table.EstablishedTiming.Es720x400_88 = GetByteBitSupport(Data[35], 6);
+            Table.EstablishedTiming.Es640x480_60 = GetByteBitSupport(Data[35], 5);
+            Table.EstablishedTiming.Es640x480_67 = GetByteBitSupport(Data[35], 4);
+            Table.EstablishedTiming.Es640x480_72 = GetByteBitSupport(Data[35], 3);
+            Table.EstablishedTiming.Es640x480_75 = GetByteBitSupport(Data[35], 2);
+            Table.EstablishedTiming.Es800x600_56 = GetByteBitSupport(Data[35], 1);
+            Table.EstablishedTiming.Es800x600_60 = GetByteBitSupport(Data[35], 0);
 
-            EDIDTable.EstablishedTiming.Es800x600_72 = GetByteBitSupport(BaseByteData[36], 7);
-            EDIDTable.EstablishedTiming.Es800x600_75 = GetByteBitSupport(BaseByteData[36], 6);
-            EDIDTable.EstablishedTiming.Es832x624_75 = GetByteBitSupport(BaseByteData[36], 5);
-            EDIDTable.EstablishedTiming.Es1024x768_87 = GetByteBitSupport(BaseByteData[36], 4);
-            EDIDTable.EstablishedTiming.Es1024x768_60 = GetByteBitSupport(BaseByteData[36], 3);
-            EDIDTable.EstablishedTiming.Es1024x768_70 = GetByteBitSupport(BaseByteData[36], 2);
-            EDIDTable.EstablishedTiming.Es1024x768_75 = GetByteBitSupport(BaseByteData[36], 1);
-            EDIDTable.EstablishedTiming.Es1280x1024_75 = GetByteBitSupport(BaseByteData[36], 0);
+            Table.EstablishedTiming.Es800x600_72 = GetByteBitSupport(Data[36], 7);
+            Table.EstablishedTiming.Es800x600_75 = GetByteBitSupport(Data[36], 6);
+            Table.EstablishedTiming.Es832x624_75 = GetByteBitSupport(Data[36], 5);
+            Table.EstablishedTiming.Es1024x768_87 = GetByteBitSupport(Data[36], 4);
+            Table.EstablishedTiming.Es1024x768_60 = GetByteBitSupport(Data[36], 3);
+            Table.EstablishedTiming.Es1024x768_70 = GetByteBitSupport(Data[36], 2);
+            Table.EstablishedTiming.Es1024x768_75 = GetByteBitSupport(Data[36], 1);
+            Table.EstablishedTiming.Es1280x1024_75 = GetByteBitSupport(Data[36], 0);
 
-            EDIDTable.EstablishedTiming.Es1152x870_75 = GetByteBitSupport(BaseByteData[37], 7);
+            Table.EstablishedTiming.Es1152x870_75 = GetByteBitSupport(Data[37], 7);
 
             //38-53 EDID_Standard_Timing
-            EDIDTable.StandardTiming = new EDIDStandardTiming[8];
+            Table.StandardTiming = new EDIDStandardTiming[8];
             for (int i = 0; i < 8; i++)
             {
-                EDIDTable.StandardTiming[i] = DecodeStandardTimingData(BaseByteData[38 + i * 2], BaseByteData[39 + i * 2]);
-                if (EDIDTable.StandardTiming[i].TimingSupport == Support.supported)
-                    Console.WriteLine("Standard Timing : {0}x{1} Rate:{2}", EDIDTable.StandardTiming[i].TimingWidth, EDIDTable.StandardTiming[i].TimingHeight, EDIDTable.StandardTiming[i].TimingRate);
+                Table.StandardTiming[i] = DecodeStandardTimingData(Data[38 + i * 2], Data[39 + i * 2]);
+                if (Table.StandardTiming[i].TimingSupport == Support.supported)
+                    Console.WriteLine("Standard Timing : {0}x{1} Rate:{2}", Table.StandardTiming[i].TimingWidth, Table.StandardTiming[i].TimingHeight, Table.StandardTiming[i].TimingRate);
             }
 
             byte[] DsecriptorTable = new byte[18];
             //54-71 EDID_Main_Timing (Display Dsecriptor 1)
-            if (BaseByteData[54] == 0x00)
+            if (Data[54] == 0x00)
                 return DecodeError.NoMainTimingError;
-            EDIDTable.Descriptors1 = EDIDDescriptorsType.MainTiming;
-            Array.Copy(BaseByteData, 54, DsecriptorTable, 0, 18);
-            EDIDTable.MainTiming = DecodeDetailedTimingData(DsecriptorTable);
+            Table.Descriptors1 = EDIDDescriptorsType.MainTiming;
+            Array.Copy(Data, 54, DsecriptorTable, 0, 18);
+            Table.MainTiming = DecodeDetailedTimingData(DsecriptorTable);
 
             //72-89 Detailed Timing / Display Dsecriptor 2
-            if (BaseByteData[75] == 0x00)
-                EDIDTable.Descriptors2 = EDIDDescriptorsType.Undefined;
+            if (Data[75] == 0x00)
+                Table.Descriptors2 = EDIDDescriptorsType.Undefined;
             else
             {
-                Array.Copy(BaseByteData, 72, DsecriptorTable, 0, 18);
-                EDIDTable.Descriptors2 = DecodeDisplayDescriptor(DsecriptorTable);
+                Array.Copy(Data, 72, DsecriptorTable, 0, 18);
+                Table.Descriptors2 = DecodeDisplayDescriptor(DsecriptorTable);
             }
 
             //90-107 Detailed Timing / Display Dsecriptor 3
-            if (BaseByteData[93] == 0x00)
-                EDIDTable.Descriptors3 = EDIDDescriptorsType.Undefined;
+            if (Data[93] == 0x00)
+                Table.Descriptors3 = EDIDDescriptorsType.Undefined;
             else
             {
-                Array.Copy(BaseByteData, 90, DsecriptorTable, 0, 18);
-                EDIDTable.Descriptors3 = DecodeDisplayDescriptor(DsecriptorTable);
+                Array.Copy(Data, 90, DsecriptorTable, 0, 18);
+                Table.Descriptors3 = DecodeDisplayDescriptor(DsecriptorTable);
             }
 
             //108-125 Detailed Timing / Display Dsecriptor 4
-            if (BaseByteData[111] == 0x00)
-                EDIDTable.Descriptors4 = EDIDDescriptorsType.Undefined;
+            if (Data[111] == 0x00)
+                Table.Descriptors4 = EDIDDescriptorsType.Undefined;
             else
             {
-                Array.Copy(BaseByteData, 108, DsecriptorTable, 0, 18);
-                EDIDTable.Descriptors4 = DecodeDisplayDescriptor(DsecriptorTable);
+                Array.Copy(Data, 108, DsecriptorTable, 0, 18);
+                Table.Descriptors4 = DecodeDisplayDescriptor(DsecriptorTable);
             }
 
             //126 EDID_Ex_Block_Count
-            EDIDTable.ExBlockCount = BaseByteData[126];
+            Table.ExBlockCount = Data[126];
 
             //127 Checksum
             byte checksum = 0x00;
             for (int i = 0; i < 128; i++)
             {
-                checksum += BaseByteData[i];
+                checksum += Data[i];
             }
             if (checksum != 0x00)
                 return DecodeError.ChecksumError;
             else
-                EDIDTable.Checksum = BaseByteData[127];
+                Table.Checksum = Data[127];
 
             return DecodeError.Success;
         }
@@ -938,29 +943,29 @@ namespace EDIDApp
             switch (Type)
             {
                 case EDIDDescriptorsType.MainTiming:
-                    Notes += OutputNotesDetailedTiming(EDIDTable.MainTiming);
+                    Notes += OutputNotesDetailedTiming(Table.MainTiming);
                     break;
 
                 case EDIDDescriptorsType.SecondMainTiming:
-                    Notes += OutputNotesDetailedTiming(EDIDTable.SecondMainTiming);
+                    Notes += OutputNotesDetailedTiming(Table.SecondMainTiming);
                     break;
 
                 case EDIDDescriptorsType.ProductSN:
                     Notes += OutputNotesLineString(list_offset, "Monitor Serial Number:", 0);
-                    Notes += OutputNotesLineString(list_offset, "{0}", 0, EDIDTable.SN);
+                    Notes += OutputNotesLineString(list_offset, "{0}", 0, Table.SN);
                     break;
 
                 case EDIDDescriptorsType.ProductName:
                     Notes += OutputNotesLineString(list_offset, "Monitor Name:", 0);
-                    Notes += OutputNotesLineString(list_offset, "{0}", 0, EDIDTable.Name);
+                    Notes += OutputNotesLineString(list_offset, "{0}", 0, Table.Name);
                     break;
 
                 case EDIDDescriptorsType.RangeLimits:
                     Notes += OutputNotesLineString(list_offset, "Monitor Range Limits:", 0);
-                    Notes += OutputNotesLineString(list_offset, "Vertical Freq: {0} - {1} Hz", 0, EDIDTable.Limits.VerticalMin, EDIDTable.Limits.VerticalMax);
-                    Notes += OutputNotesLineString(list_offset, "Horizontal Freq: {0} - {1} KHz", 0, EDIDTable.Limits.HorizontalMin, EDIDTable.Limits.HorizontalMax);
-                    Notes += OutputNotesLineString(list_offset, "Pixel Clock: {0} MHz", 0, EDIDTable.Limits.PixelClkMax);
-                    Notes += OutputNotesLineString(list_offset, "VideoTimingType: {0}", 0, EDIDTable.Limits.VideoTiming.ToString());
+                    Notes += OutputNotesLineString(list_offset, "Vertical Freq: {0} - {1} Hz", 0, Table.Limits.VerticalMin, Table.Limits.VerticalMax);
+                    Notes += OutputNotesLineString(list_offset, "Horizontal Freq: {0} - {1} KHz", 0, Table.Limits.HorizontalMin, Table.Limits.HorizontalMax);
+                    Notes += OutputNotesLineString(list_offset, "Pixel Clock: {0} MHz", 0, Table.Limits.PixelClkMax);
+                    Notes += OutputNotesLineString(list_offset, "VideoTimingType: {0}", 0, Table.Limits.VideoTiming.ToString());
                     break;
 
                 default:
@@ -977,73 +982,82 @@ namespace EDIDApp
             int i;
             string NoteEDID = "\r\nBlock Type: Externded Display Identification Data\r\n";
 
-            NoteEDID += OutputNotesEDIDList(BaseByteData);
-            NoteEDID += OutputNotesLineString("(08-09) ID Manufacturer Name:", ValueOffset, EDIDTable.IDManufacturerName);
-            NoteEDID += OutputNotesLineString("(10-11) Product ID Code:", ValueOffset, string.Format("{0:X}", EDIDTable.IDProductCode));
-            if (EDIDTable.IDSerialNumber == null)
+            NoteEDID += OutputNotesEDIDList(Data);
+            NoteEDID += OutputNotesLineString("(08-09) ID Manufacturer Name:", ValueOffset, Table.IDManufacturerName);
+            NoteEDID += OutputNotesLineString("(10-11) Product ID Code:", ValueOffset, string.Format("{0:X}", Table.IDProductCode));
+            if (Table.IDSerialNumber == null)
                 NoteEDID += OutputNotesLineString("(12-15) ID Serial Number:", ValueOffset, "not used");
             else
-                NoteEDID += OutputNotesLineString("(12-15) ID Serial Number:", ValueOffset, EDIDTable.IDSerialNumber);
-            NoteEDID += OutputNotesLineString("(16) Week of Manufacture:", ValueOffset, EDIDTable.Week);
-            NoteEDID += OutputNotesLineString("(17) Yaer of Manufacture:", ValueOffset, EDIDTable.Year);
+                NoteEDID += OutputNotesLineString("(12-15) ID Serial Number:", ValueOffset, Table.IDSerialNumber);
+            NoteEDID += OutputNotesLineString("(16) Week of Manufacture:", ValueOffset, Table.Week);
+            NoteEDID += OutputNotesLineString("(17) Yaer of Manufacture:", ValueOffset, Table.Year);
             NoteEDID += OutputNotesLineString("(18) EDID Version Number:", ValueOffset, "1");
-            NoteEDID += OutputNotesLineString("(19) EDID Revision Number:", ValueOffset, (3 + EDIDTable.Version));
-            NoteEDID += OutputNotesLineString("(20) Video Input Definition:", ValueOffset, EDIDTable.Basic.Video_definition);
-            if (EDIDTable.Version == EDIDversion.V14)
-                NoteEDID += OutputNotesLineString("     ", 0, EDIDTable.Basic.DigitalStandard.ToString(), "  ", EDIDTable.Basic.DigitalColorDepth.ToString());
+            NoteEDID += OutputNotesLineString("(19) EDID Revision Number:", ValueOffset, (3 + Table.Version));
+            NoteEDID += OutputNotesLineString("(20) Video Input Definition:", ValueOffset, Table.Basic.Video_definition);
+            if (Table.Version == EDIDversion.V14)
+                NoteEDID += OutputNotesLineString("     ", 0, Table.Basic.DigitalStandard.ToString(), "  ", Table.Basic.DigitalColorDepth.ToString());
 
-            NoteEDID += OutputNotesLineString("(21) ScreenSize Horizontal:", ValueOffset, EDIDTable.Basic.ScreenSize.Hsize, " cm");
-            NoteEDID += OutputNotesLineString("(22) ScreenSize Vertical:", ValueOffset, EDIDTable.Basic.ScreenSize.Vsize, " cm");
-            NoteEDID += OutputNotesLineString("(23) Display Gamma:", ValueOffset, EDIDTable.Basic.Gamma);
+            NoteEDID += OutputNotesLineString("(21) ScreenSize Horizontal:", ValueOffset, Table.Basic.ScreenSize.Hsize, " cm");
+            NoteEDID += OutputNotesLineString("(22) ScreenSize Vertical:", ValueOffset, Table.Basic.ScreenSize.Vsize, " cm");
+            NoteEDID += OutputNotesLineString("(23) Display Gamma:", ValueOffset, Table.Basic.Gamma);
             NoteEDID += OutputNotesLineString("(24) Power Management and Supported Feature(s):", 0);
-            NoteEDID += OutputNotesLineString("     ", 0,
-                GetSupportString("Standby Mode/", EDIDTable.Basic.FeatureSupport.StandbyMode),
-                GetSupportString("Suspend Mode/", EDIDTable.Basic.FeatureSupport.SuspendMode),
-                GetSupportString("Very Low Power/", EDIDTable.Basic.FeatureSupport.VeryLowPowerMode),
-                EDIDTable.Basic.FeatureSupport.DisplayColorType, "/",
-                GetSupportString("sRGBStandard/", EDIDTable.Basic.FeatureSupport.sRGBStandard),
-                GetSupportString("PreferredTimingMode/", EDIDTable.Basic.FeatureSupport.PreferredTimingMode),
-                GetSupportString("PreferredTimingMode/", EDIDTable.Basic.FeatureSupport.GTFstandard));
-
+            if (Table.Version == EDIDversion.V13)
+                NoteEDID += OutputNotesLineString("     ", 0,
+                    GetSupportString("Standby Mode/ ", Table.Basic.FeatureSupport.StandbyMode),
+                    GetSupportString("Suspend Mode/ ", Table.Basic.FeatureSupport.SuspendMode),
+                    GetSupportString("Very Low Power/ ", Table.Basic.FeatureSupport.VeryLowPowerMode),
+                    Table.Basic.FeatureSupport.DisplayColorType, "/ ",
+                    GetSupportString("sRGB Standard/ ", Table.Basic.FeatureSupport.sRGBStandard),
+                    GetSupportString("Preferred Timing Mode/ ", Table.Basic.FeatureSupport.PreferredTimingMode),
+                    GetSupportString("GTF standard", Table.Basic.FeatureSupport.GTFstandard));
+            else
+                NoteEDID += OutputNotesLineString("     ", 0,
+                    GetSupportString("Standby Mode/ ", Table.Basic.FeatureSupport.StandbyMode),
+                    GetSupportString("Suspend Mode/ ", Table.Basic.FeatureSupport.SuspendMode),
+                    GetSupportString("Very Low Power/ ", Table.Basic.FeatureSupport.VeryLowPowerMode),
+                    Table.Basic.FeatureSupport.ColorEncodingFormat, "/ ",
+                    GetSupportString("sRGB Standard/ ", Table.Basic.FeatureSupport.sRGBStandard),
+                    GetSupportString("Preferred Timing Mode/ ", Table.Basic.FeatureSupport.PreferredTimingMode),
+                    GetSupportString("Continuous Frequency", Table.Basic.FeatureSupport.ContinuousFrequency));
             NoteEDID += OutputNotesLineString("(25-34) Panel Color:", 0);
-            NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red X - {0:0.000} Blue X - {1:0.000} Green X - {2:0.000} White X - {3:0.000}", 0, EDIDTable.PanelColor.RedX, EDIDTable.PanelColor.GreenX, EDIDTable.PanelColor.BlueX, EDIDTable.PanelColor.WhiteX);
-            NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red Y - {0:0.000} Blue Y - {1:0.000} Green Y - {2:0.000} White Y - {3:0.000}", 0, EDIDTable.PanelColor.RedY, EDIDTable.PanelColor.GreenY, EDIDTable.PanelColor.BlueY, EDIDTable.PanelColor.WhiteY);
+            NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red X - {0:0.000} Blue X - {1:0.000} Green X - {2:0.000} White X - {3:0.000}", 0, Table.PanelColor.RedX, Table.PanelColor.GreenX, Table.PanelColor.BlueX, Table.PanelColor.WhiteX);
+            NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red Y - {0:0.000} Blue Y - {1:0.000} Green Y - {2:0.000} White Y - {3:0.000}", 0, Table.PanelColor.RedY, Table.PanelColor.GreenY, Table.PanelColor.BlueY, Table.PanelColor.WhiteY);
 
             NoteEDID += OutputNotesListString("(35-37) Established Timing:", "(35-37) ".Length,
-                GetSupportString("720x400 @ 70Hz", EDIDTable.EstablishedTiming.Es720x400_70),
-                GetSupportString("720x400 @ 88Hz", EDIDTable.EstablishedTiming.Es720x400_88),
-                GetSupportString("640x480 @ 60Hz", EDIDTable.EstablishedTiming.Es640x480_60),
-                GetSupportString("640x480 @ 67Hz", EDIDTable.EstablishedTiming.Es640x480_67),
-                GetSupportString("640x480 @ 72Hz", EDIDTable.EstablishedTiming.Es640x480_72),
-                GetSupportString("640x480 @ 75Hz", EDIDTable.EstablishedTiming.Es640x480_75),
-                GetSupportString("800x600 @ 56Hz", EDIDTable.EstablishedTiming.Es800x600_56),
-                GetSupportString("800x600 @ 60Hz", EDIDTable.EstablishedTiming.Es800x600_60),
-                GetSupportString("800x600 @ 72Hz", EDIDTable.EstablishedTiming.Es800x600_72),
-                GetSupportString("800x600 @ 75Hz", EDIDTable.EstablishedTiming.Es800x600_75),
-                GetSupportString("832x624 @ 75Hz", EDIDTable.EstablishedTiming.Es832x624_75),
-                GetSupportString("1024x768 @ 87Hz", EDIDTable.EstablishedTiming.Es1024x768_87),
-                GetSupportString("1024x768 @ 60Hz", EDIDTable.EstablishedTiming.Es1024x768_60),
-                GetSupportString("1024x768 @ 70Hz", EDIDTable.EstablishedTiming.Es1024x768_70),
-                GetSupportString("1024x768 @ 75Hz", EDIDTable.EstablishedTiming.Es1024x768_75),
-                GetSupportString("1280x1024 @ 75Hz", EDIDTable.EstablishedTiming.Es1280x1024_75),
-                GetSupportString("1152x870 @ 75Hz", EDIDTable.EstablishedTiming.Es1152x870_75));
+                GetSupportString("720x400 @ 70Hz", Table.EstablishedTiming.Es720x400_70),
+                GetSupportString("720x400 @ 88Hz", Table.EstablishedTiming.Es720x400_88),
+                GetSupportString("640x480 @ 60Hz", Table.EstablishedTiming.Es640x480_60),
+                GetSupportString("640x480 @ 67Hz", Table.EstablishedTiming.Es640x480_67),
+                GetSupportString("640x480 @ 72Hz", Table.EstablishedTiming.Es640x480_72),
+                GetSupportString("640x480 @ 75Hz", Table.EstablishedTiming.Es640x480_75),
+                GetSupportString("800x600 @ 56Hz", Table.EstablishedTiming.Es800x600_56),
+                GetSupportString("800x600 @ 60Hz", Table.EstablishedTiming.Es800x600_60),
+                GetSupportString("800x600 @ 72Hz", Table.EstablishedTiming.Es800x600_72),
+                GetSupportString("800x600 @ 75Hz", Table.EstablishedTiming.Es800x600_75),
+                GetSupportString("832x624 @ 75Hz", Table.EstablishedTiming.Es832x624_75),
+                GetSupportString("1024x768 @ 87Hz", Table.EstablishedTiming.Es1024x768_87),
+                GetSupportString("1024x768 @ 60Hz", Table.EstablishedTiming.Es1024x768_60),
+                GetSupportString("1024x768 @ 70Hz", Table.EstablishedTiming.Es1024x768_70),
+                GetSupportString("1024x768 @ 75Hz", Table.EstablishedTiming.Es1024x768_75),
+                GetSupportString("1280x1024 @ 75Hz", Table.EstablishedTiming.Es1280x1024_75),
+                GetSupportString("1152x870 @ 75Hz", Table.EstablishedTiming.Es1152x870_75));
 
             NoteEDID += OutputNotesLineString("(38-53) Standard Timing:", 0);
             for (i = 0; i < 8; i++)
             {
-                if (EDIDTable.StandardTiming[i].TimingSupport == Support.supported)
-                    NoteEDID += OutputNotesLineString("", "(38-53) ".Length, EDIDTable.StandardTiming[i].TimingWidth, "x", EDIDTable.StandardTiming[i].TimingHeight, " @ ", EDIDTable.StandardTiming[i].TimingRate, "Hz");
+                if (Table.StandardTiming[i].TimingSupport == Support.supported)
+                    NoteEDID += OutputNotesLineString("", "(38-53) ".Length, Table.StandardTiming[i].TimingWidth, "x", Table.StandardTiming[i].TimingHeight, " @ ", Table.StandardTiming[i].TimingRate, "Hz");
             }
             NoteEDID += "______________________________________________________________________\r\n";
-            NoteEDID += "(54-71) Descriptor Block 1:\r\n" + OutputNotesDescriptorBlock(EDIDTable.Descriptors1);
+            NoteEDID += "(54-71) Descriptor Block 1:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors1);
             NoteEDID += "______________________________________________________________________\r\n";
-            NoteEDID += "(72-89) Descriptor Block 2:\r\n" + OutputNotesDescriptorBlock(EDIDTable.Descriptors2);
+            NoteEDID += "(72-89) Descriptor Block 2:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors2);
             NoteEDID += "______________________________________________________________________\r\n";
-            NoteEDID += "(90-107) Descriptor Block 3:\r\n" + OutputNotesDescriptorBlock(EDIDTable.Descriptors3);
+            NoteEDID += "(90-107) Descriptor Block 3:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors3);
             NoteEDID += "______________________________________________________________________\r\n";
-            NoteEDID += "(108-125) Descriptor Block 4:\r\n" + OutputNotesDescriptorBlock(EDIDTable.Descriptors4);
+            NoteEDID += "(108-125) Descriptor Block 4:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors4);
 
-            NoteEDID += OutputNotesLineString("(126) Extension EDID Block(s):", 0, EDIDTable.ExBlockCount);
+            NoteEDID += OutputNotesLineString("(126) Extension EDID Block(s):", 0, Table.ExBlockCount);
             NoteEDID += OutputNotesLineString("(127) CheckSum: OK", 0);
 
             return NoteEDID;
@@ -1120,9 +1134,44 @@ namespace EDIDApp
         public enum VideoCapabilityType
         {
             NoSupport,
-            AlwaysOverscanned,
-            AlwaysUnderscanned,
-            SupportBothOverAndUnder,
+            Always_Over_scanned,
+            Always_Under_scanned,
+            Support_Both_Over_And_Under,
+        }
+        public enum HDMIFRLType 
+        {
+            Nosupport_FRL,
+            _3G_3Lane,
+            _6G_3Lane,
+            _6G_4Lane,
+            _8G_4Lane,
+            _10G_4Lane,
+            _12G_4Lane,
+
+            Reserved,
+        }
+        public enum HDMIDSCMaxSlicesType
+        {
+            Nosupport_DSC_12a,
+            up_to_1_Slice_and_up_to_340M,
+            up_to_2_Slice_and_up_to_340M,
+            up_to_4_Slice_and_up_to_340M,
+            up_to_8_Slice_and_up_to_340M,
+            up_to_8_Slice_and_up_to_400M,
+            up_to_12_Slice_and_up_to_400M,
+            up_to_16_Slice_and_up_to_400M,
+            Reserved,
+        }
+        public enum HDMIDSCMaxFRLType
+        {
+            Nosupport,
+            _3G,
+            _6G_3Lane,
+            _6G_4Lane,
+            _8G,
+            _10G,
+            _12G,
+            Reserved,
         }
         public struct BlockAudio
         {
@@ -1170,6 +1219,34 @@ namespace EDIDApp
         }
         public struct VSBlockHDMILLC
         {
+            public byte PhyAddressA;
+            public byte PhyAddressB;
+            public byte PhyAddressC;
+            public byte PhyAddressD;
+            public Support ExtensionFields;
+            public Support AllFeature;
+            public Support DC_48bit;
+            public Support DC_36bit;
+            public Support DC_30bit;
+            public Support DC_Y444;
+            public Support DVI_Dual;
+            public uint MaxTMDSClk;
+            public Support EnableFlag;
+            public Support LatencyFieldsPresent;
+            public Support ILatencyFieldsPresent;
+            public Support HDMIVideoPresent;
+            public Support CN3;
+            public Support CN2;
+            public Support CN1;
+            public Support CN0;
+            public byte VideoLatency;
+            public byte AudioLatency;
+            public byte IVideoLatency;
+            public byte IAudioLatency;
+            public Support HDMI3DPresent;
+            public uint HDMIVICLength;
+            public uint HDMI3DLength;
+            public List<byte> HDMIVIC;
         }
         public struct VSBlockAMD
         {
@@ -1189,6 +1266,46 @@ namespace EDIDApp
         }
         public struct VSBlockHDMIForum
         {
+            public byte Version;
+
+            public uint MaxTMDSRate;
+
+            public Support SCDC_Present;
+            public Support RR_Capable;
+            public Support CABLE_STATUS;
+            public Support CCBPCI;
+            public Support LTE_340Mcsc_scramble;
+            public Support _3D_Independent_View;
+            public Support _3D_Dual_View;
+            public Support _3D_OSD_Disparity;
+
+            public Support UHD_VIC;
+            public Support DC_48bit_420;
+            public Support DC_36bit_420;
+            public Support DC_30bit_420;
+            public HDMIFRLType FRLRate;
+
+            public Support FAPA_start_location;
+            public Support ALLM;
+            public Support FVA;
+            public Support CNMVRR;
+            public Support CinemaVRR;
+            public Support M_Delta;
+
+            public uint VRRMin;
+            public uint VRRMax;
+
+            public Support DSC_10bpc;
+            public Support DSC_12bpc;
+            public Support DSC_16bpc;
+            public Support DSC_All_bpp;
+            public Support DSC_Native_42;
+            public Support DSC_1p2;
+
+            public HDMIDSCMaxSlicesType DSCMaxSlices;
+            public HDMIDSCMaxFRLType DSCMaxFRL;
+
+            public byte DSC_TotalChunkkBytes;
         }
         public struct ExBlockVideoCapability
         {
@@ -1225,7 +1342,6 @@ namespace EDIDApp
             public float Max_Frame_Avg_Lum_Data;
             public float Min_Luminance_Data;
         }
-
         public struct CEABlocksTable
         {
             public CEATagCodeType Block;
@@ -1262,9 +1378,9 @@ namespace EDIDApp
             public byte Checksum;
         };
 
-        public static CEATable EDIDTableCEA;
-        public static byte[] CEAByteData;
-        static string[] VICcode = {
+        internal CEATable Table;
+        internal byte[] Data;
+        string[] VICcode = {
                                     "No VIC",
                                     "640x480p@59.94Hz/60Hz 4:3",
                                     "720x480p@59.94Hz/60Hz 4:3",
@@ -1397,6 +1513,7 @@ namespace EDIDApp
                                     "5120x2160p@59.94Hz/60Hz64:27",
                                     "5120x2160p@100Hz64:27", // VIC 127 ,CTA-861-G
         };
+        string[] HDMIVICcode = { "", "3840x2160p@29.97Hz/30Hz", "3840x2160p@25Hz", "3840x2160p@23.98Hz/24Hz", "4096x2160p@23.98Hz/24Hz" };
         private BlockAudio DecodeCEAAudioBlock(byte[] Data, int index)
         {
             BlockAudio Audio = new BlockAudio();
@@ -1459,16 +1576,16 @@ namespace EDIDApp
             switch (Block.Block)
             {
                 case CEATagCodeType.Audio:
-                    EDIDTableCEA.BlockAudio = new List<BlockAudio>();
+                    Table.BlockAudio = new List<BlockAudio>();
 
                     for (i = 0; i < Block.BlockPayload / 3; i++)
                     {
-                        EDIDTableCEA.BlockAudio.Add(DecodeCEAAudioBlock(BlockData, i * 3));
+                        Table.BlockAudio.Add(DecodeCEAAudioBlock(BlockData, i * 3));
                     }
                     break;
 
                 case CEATagCodeType.Video:
-                    EDIDTableCEA.BlockVideoVIC = new List<BlockVideoVIC>();
+                    Table.BlockVideoVIC = new List<BlockVideoVIC>();
                     BlockVideoVIC VIC = new BlockVideoVIC();
 
                     for (i = 0; i < Block.BlockPayload; i++)
@@ -1483,7 +1600,7 @@ namespace EDIDApp
                             VIC.NativeCode = Support.unsupported;
                             VIC.VIC = BlockData[i];
                         }
-                        EDIDTableCEA.BlockVideoVIC.Add(VIC);
+                        Table.BlockVideoVIC.Add(VIC);
                     }
                     break;
 
@@ -1493,34 +1610,149 @@ namespace EDIDApp
                     {
                         case 0x000C03:
                             Block.Block = CEATagCodeType.VS_HDMI_LLC;
+                            Table.BlockHDMILLC.PhyAddressA = (byte)((BlockData[3] & 0xF0) >> 4);
+                            Table.BlockHDMILLC.PhyAddressB = (byte)(BlockData[3] & 0x0F);
+                            Table.BlockHDMILLC.PhyAddressC = (byte)((BlockData[4] & 0xF0) >> 4);
+                            Table.BlockHDMILLC.PhyAddressD = (byte)(BlockData[4] & 0x0F);
+                            if (Block.BlockPayload >= 5)
+                            {
+                                Table.BlockHDMILLC.ExtensionFields = Support.supported;
+                                Table.BlockHDMILLC.AllFeature = GetByteBitSupport(BlockData[5] , 7);
+                                Table.BlockHDMILLC.DC_48bit = GetByteBitSupport(BlockData[5], 6);
+                                Table.BlockHDMILLC.DC_36bit = GetByteBitSupport(BlockData[5], 5);
+                                Table.BlockHDMILLC.DC_30bit = GetByteBitSupport(BlockData[5], 4);
+                                Table.BlockHDMILLC.DC_Y444 = GetByteBitSupport(BlockData[5], 3);
+                                Table.BlockHDMILLC.DVI_Dual = GetByteBitSupport(BlockData[5], 0);
+                                if (Block.BlockPayload >= 6)
+                                    Table.BlockHDMILLC.MaxTMDSClk = (uint)(BlockData[6] * 5);
+                                if (Block.BlockPayload >= 7)
+                                {
+                                    Table.BlockHDMILLC.EnableFlag = Support.supported;
+                                    Table.BlockHDMILLC.LatencyFieldsPresent = GetByteBitSupport(BlockData[7], 7);
+                                    Table.BlockHDMILLC.ILatencyFieldsPresent = GetByteBitSupport(BlockData[7], 6);
+                                    Table.BlockHDMILLC.HDMIVideoPresent = GetByteBitSupport(BlockData[7], 5);
+                                    Table.BlockHDMILLC.CN3 = GetByteBitSupport(BlockData[7], 3);
+                                    Table.BlockHDMILLC.CN2 = GetByteBitSupport(BlockData[7], 2);
+                                    Table.BlockHDMILLC.CN1 = GetByteBitSupport(BlockData[7], 1);
+                                    Table.BlockHDMILLC.CN0 = GetByteBitSupport(BlockData[7], 0);
+
+                                    i = 8;
+                                    if (Table.BlockHDMILLC.LatencyFieldsPresent == Support.supported)
+                                    {
+                                        Table.BlockHDMILLC.VideoLatency = BlockData[i];
+                                        Table.BlockHDMILLC.AudioLatency = BlockData[i + 1];
+                                        i += 2;
+                                    }
+                                    if (Table.BlockHDMILLC.ILatencyFieldsPresent == Support.supported)
+                                    {
+                                        Table.BlockHDMILLC.IVideoLatency = BlockData[i];
+                                        Table.BlockHDMILLC.IAudioLatency = BlockData[i + 1];
+                                        i += 2;
+                                    }
+                                    if (Table.BlockHDMILLC.HDMIVideoPresent == Support.supported)
+                                    {
+                                        Table.BlockHDMILLC.HDMI3DPresent = GetByteBitSupport(BlockData[i], 7);
+                                        Table.BlockHDMILLC.HDMIVICLength = (uint)((BlockData[i + 1] & 0xE0) >> 5);
+                                        Table.BlockHDMILLC.HDMI3DLength = (uint)(BlockData[i + 1] & 0x1F);
+                                        i += 2;
+                                    }
+                                    if (Table.BlockHDMILLC.HDMIVICLength != 0)
+                                    {
+                                        int j;
+                                        Table.BlockHDMILLC.HDMIVIC = new List<byte>();
+
+                                        for (j = 0; j < Table.BlockHDMILLC.HDMIVICLength; j++)
+                                        {
+                                            Table.BlockHDMILLC.HDMIVIC.Add(BlockData[i + j]);
+                                        }
+                                    }
+                                }
+                                else
+                                    Table.BlockHDMILLC.EnableFlag = Support.unsupported;
+                            }
+                            else
+                                Table.BlockHDMILLC.ExtensionFields = Support.unsupported;
                             break;
                         case 0x00001A:
                             Block.Block = CEATagCodeType.VS_AMD;
-                            EDIDTableCEA.BlockAMD.Version = BlockData[3];
-                            if ((EDIDTableCEA.BlockAMD.Version >= 1) && (Block.BlockPayload >= 8))
+                            Table.BlockAMD.Version = BlockData[3];
+                            if ((Table.BlockAMD.Version >= 1) && (Block.BlockPayload >= 8))
                             {
-                                EDIDTableCEA.BlockAMD.FreeSync = GetByteBitSupport(BlockData[4], 0);
-                                EDIDTableCEA.BlockAMD.NativeColorSpaceSet = GetByteBitSupport(BlockData[4], 1);
-                                EDIDTableCEA.BlockAMD.LocalDimmingControl = GetByteBitSupport(BlockData[4], 2);
-                                EDIDTableCEA.BlockAMD.MinRefreshRate = BlockData[5];
-                                EDIDTableCEA.BlockAMD.MaxRefreshRate = BlockData[6];
-                                EDIDTableCEA.BlockAMD.MCCSVCPCode = BlockData[7];
+                                Table.BlockAMD.FreeSync = GetByteBitSupport(BlockData[4], 0);
+                                Table.BlockAMD.NativeColorSpaceSet = GetByteBitSupport(BlockData[4], 1);
+                                Table.BlockAMD.LocalDimmingControl = GetByteBitSupport(BlockData[4], 2);
+                                Table.BlockAMD.MinRefreshRate = BlockData[5];
+                                Table.BlockAMD.MaxRefreshRate = BlockData[6];
+                                Table.BlockAMD.MCCSVCPCode = BlockData[7];
                             }
-                            if ((EDIDTableCEA.BlockAMD.Version >= 2) && (Block.BlockPayload >= 13))
+                            if ((Table.BlockAMD.Version >= 2) && (Block.BlockPayload >= 13))
                             {
-                                EDIDTableCEA.BlockAMD.Gamma22EOTF = GetByteBitSupport(BlockData[8], 2);
-                                EDIDTableCEA.BlockAMD.MaxBrightness_MaxBL = (float)(50 * Math.Pow(2, (double)(BlockData[9]) / 32));
-                                EDIDTableCEA.BlockAMD.MinBrightness_MaxBL = EDIDTableCEA.BlockAMD.MaxBrightness_MaxBL * (float)(Math.Pow((double)BlockData[10] / 255, 2) / 100);
-                                EDIDTableCEA.BlockAMD.MaxBrightness_MinBL = (float)(50 * Math.Pow(2, (double)(BlockData[11]) / 32));
-                                EDIDTableCEA.BlockAMD.MinBrightness_MinBL = EDIDTableCEA.BlockAMD.MaxBrightness_MinBL * (float)(Math.Pow((double)BlockData[12] / 255, 2) / 100);
+                                Table.BlockAMD.Gamma22EOTF = GetByteBitSupport(BlockData[8], 2);
+                                Table.BlockAMD.MaxBrightness_MaxBL = (float)(50 * Math.Pow(2, (double)(BlockData[9]) / 32));
+                                Table.BlockAMD.MinBrightness_MaxBL = Table.BlockAMD.MaxBrightness_MaxBL * (float)(Math.Pow((double)BlockData[10] / 255, 2) / 100);
+                                Table.BlockAMD.MaxBrightness_MinBL = (float)(50 * Math.Pow(2, (double)(BlockData[11]) / 32));
+                                Table.BlockAMD.MinBrightness_MinBL = Table.BlockAMD.MaxBrightness_MinBL * (float)(Math.Pow((double)BlockData[12] / 255, 2) / 100);
                             }
-                            if ((EDIDTableCEA.BlockAMD.Version >= 3) && (Block.BlockPayload >= 18))
+                            if ((Table.BlockAMD.Version >= 3) && (Block.BlockPayload >= 18))
                             {
-                                EDIDTableCEA.BlockAMD.MaxRefreshRate255 = (uint)(BlockData[13] + (BlockData[14] & 0x03 << 8));
+                                Table.BlockAMD.MaxRefreshRate255 = (uint)(BlockData[13] + (BlockData[14] & 0x03 << 8));
                             }
                             break;
                         case 0xC45DD8:
                             Block.Block = CEATagCodeType.VS_HDMI_Forum;
+                            Table.BlockHDMIForum.Version = BlockData[3];
+                            Table.BlockHDMIForum.MaxTMDSRate = (uint)(BlockData[4] * 5);
+                            Table.BlockHDMIForum.SCDC_Present = GetByteBitSupport(BlockData[5], 7);
+                            Table.BlockHDMIForum.RR_Capable = GetByteBitSupport(BlockData[5], 6);
+                            Table.BlockHDMIForum.CABLE_STATUS = GetByteBitSupport(BlockData[5], 5);
+                            Table.BlockHDMIForum.CCBPCI = GetByteBitSupport(BlockData[5], 4);
+                            Table.BlockHDMIForum.LTE_340Mcsc_scramble = GetByteBitSupport(BlockData[5], 3);
+                            Table.BlockHDMIForum._3D_Independent_View = GetByteBitSupport(BlockData[5], 2);
+                            Table.BlockHDMIForum._3D_Dual_View = GetByteBitSupport(BlockData[5], 1);
+                            Table.BlockHDMIForum._3D_OSD_Disparity = GetByteBitSupport(BlockData[5], 0);
+
+                            Table.BlockHDMIForum.UHD_VIC = GetByteBitSupport(BlockData[6], 3);
+                            Table.BlockHDMIForum.DC_48bit_420 = GetByteBitSupport(BlockData[6], 2);
+                            Table.BlockHDMIForum.DC_36bit_420 = GetByteBitSupport(BlockData[6], 1);
+                            Table.BlockHDMIForum.DC_30bit_420 = GetByteBitSupport(BlockData[6], 0);
+                            Table.BlockHDMIForum.FRLRate = (HDMIFRLType)((BlockData[6] & 0xF0) >> 4);
+
+                            if (Block.BlockPayload >= 8)
+                            {
+                                Table.BlockHDMIForum.FAPA_start_location = GetByteBitSupport(BlockData[7], 0);
+                                Table.BlockHDMIForum.ALLM = GetByteBitSupport(BlockData[7], 1);
+                                Table.BlockHDMIForum.FVA = GetByteBitSupport(BlockData[7], 2);
+                                Table.BlockHDMIForum.CNMVRR = GetByteBitSupport(BlockData[7], 3);
+                                Table.BlockHDMIForum.CinemaVRR = GetByteBitSupport(BlockData[7], 4);
+                                Table.BlockHDMIForum.M_Delta = GetByteBitSupport(BlockData[7], 5);
+                            }
+                            if (Block.BlockPayload >= 9)
+                            {
+                                //?BlockData[8]
+                            }
+                            if (Block.BlockPayload >= 10)
+                            {
+                                //?BlockData[9]
+                            }
+                            if ((Block.BlockPayload >= 11) && (Table.BlockHDMIForum.FRLRate != HDMIFRLType.Nosupport_FRL))
+                            {
+                                Table.BlockHDMIForum.DSC_10bpc = GetByteBitSupport(BlockData[10], 0);
+                                Table.BlockHDMIForum.DSC_12bpc = GetByteBitSupport(BlockData[10], 1);
+                                Table.BlockHDMIForum.DSC_16bpc = GetByteBitSupport(BlockData[10], 2);
+                                Table.BlockHDMIForum.DSC_All_bpp = GetByteBitSupport(BlockData[10], 3);
+
+                                Table.BlockHDMIForum.DSC_Native_42 = GetByteBitSupport(BlockData[10], 6);
+                                Table.BlockHDMIForum.DSC_1p2 = GetByteBitSupport(BlockData[10], 7);
+                                if (Block.BlockPayload >= 12)
+                                {
+                                    Table.BlockHDMIForum.DSCMaxSlices = (HDMIDSCMaxSlicesType)(BlockData[10] & 0x0F);
+                                    Table.BlockHDMIForum.DSCMaxFRL = (HDMIDSCMaxFRLType)((BlockData[10] & 0xF0) >> 4);
+                                }
+                                if (Block.BlockPayload >= 12)
+                                {
+                                    Table.BlockHDMIForum.DSC_TotalChunkkBytes = (byte)(BlockData[11] & 0x3F);
+                                }
+                            }
                             break;
                         default:
                             Block.UnknowIEEEID = VSDB_IEEEID;
@@ -1530,7 +1762,7 @@ namespace EDIDApp
                     break;
 
                 case CEATagCodeType.SpeakerAllocation:
-                    EDIDTableCEA.BlockSpeaker = new List<BlockSpeaker>();
+                    Table.BlockSpeaker = new List<BlockSpeaker>();
                     BlockSpeaker Speaker = new BlockSpeaker();
 
                     for (i = 0; i < Block.BlockPayload / 3; i++)
@@ -1547,7 +1779,7 @@ namespace EDIDApp
                         Speaker.TpC = GetByteBitSupport(BlockData[i * 3 + 1], 1);
                         Speaker.TpFL_TpFH = GetByteBitSupport(BlockData[i * 3 + 1], 0);
 
-                        EDIDTableCEA.BlockSpeaker.Add(Speaker);
+                        Table.BlockSpeaker.Add(Speaker);
                     }
                     break;
 
@@ -1563,11 +1795,11 @@ namespace EDIDApp
                     switch (Block.Block)
                     {
                         case CEATagCodeType.Ex_Video_Capability:
-                            EDIDTableCEA.BlockVideoCapability.QY = GetByteBitSupport(BlockExData[0], 7);
-                            EDIDTableCEA.BlockVideoCapability.QS = GetByteBitSupport(BlockExData[0], 6);
-                            EDIDTableCEA.BlockVideoCapability.PT = (VideoCapabilityType)((BlockExData[0] & 0x30) >> 4);
-                            EDIDTableCEA.BlockVideoCapability.IT = (VideoCapabilityType)((BlockExData[0] & 0x0C) >> 2);
-                            EDIDTableCEA.BlockVideoCapability.CE = (VideoCapabilityType)(BlockExData[0] & 0x03);
+                            Table.BlockVideoCapability.QY = GetByteBitSupport(BlockExData[0], 7);
+                            Table.BlockVideoCapability.QS = GetByteBitSupport(BlockExData[0], 6);
+                            Table.BlockVideoCapability.PT = (VideoCapabilityType)((BlockExData[0] & 0x30) >> 4);
+                            Table.BlockVideoCapability.IT = (VideoCapabilityType)((BlockExData[0] & 0x0C) >> 2);
+                            Table.BlockVideoCapability.CE = (VideoCapabilityType)(BlockExData[0] & 0x03);
                             break;
 
                         case CEATagCodeType.Ex_VS_Video_Capability:
@@ -1597,33 +1829,33 @@ namespace EDIDApp
                             break;
 
                         case CEATagCodeType.Ex_Colorimetry:
-                            EDIDTableCEA.BlockColorimetry.BT2020_RGB = GetByteBitSupport(BlockExData[0], 7);
-                            EDIDTableCEA.BlockColorimetry.BT2020_YCC = GetByteBitSupport(BlockExData[0], 6);
-                            EDIDTableCEA.BlockColorimetry.BT2020_cYCC = GetByteBitSupport(BlockExData[0], 5);
-                            EDIDTableCEA.BlockColorimetry.opRGB = GetByteBitSupport(BlockExData[0], 4);
-                            EDIDTableCEA.BlockColorimetry.opYCC601 = GetByteBitSupport(BlockExData[0], 3);
-                            EDIDTableCEA.BlockColorimetry.sYCC601 = GetByteBitSupport(BlockExData[0], 2);
-                            EDIDTableCEA.BlockColorimetry.xvYCC709 = GetByteBitSupport(BlockExData[0], 1);
-                            EDIDTableCEA.BlockColorimetry.xvYCC601 = GetByteBitSupport(BlockExData[0], 0);
-                            EDIDTableCEA.BlockColorimetry.DCI_P3 = GetByteBitSupport(BlockExData[1], 7);
-                            EDIDTableCEA.BlockColorimetry.MD3 = GetByteBitSupport(BlockExData[0], 3);
-                            EDIDTableCEA.BlockColorimetry.MD2 = GetByteBitSupport(BlockExData[0], 2);
-                            EDIDTableCEA.BlockColorimetry.MD1 = GetByteBitSupport(BlockExData[0], 1);
-                            EDIDTableCEA.BlockColorimetry.MD0 = GetByteBitSupport(BlockExData[0], 0);
+                            Table.BlockColorimetry.BT2020_RGB = GetByteBitSupport(BlockExData[0], 7);
+                            Table.BlockColorimetry.BT2020_YCC = GetByteBitSupport(BlockExData[0], 6);
+                            Table.BlockColorimetry.BT2020_cYCC = GetByteBitSupport(BlockExData[0], 5);
+                            Table.BlockColorimetry.opRGB = GetByteBitSupport(BlockExData[0], 4);
+                            Table.BlockColorimetry.opYCC601 = GetByteBitSupport(BlockExData[0], 3);
+                            Table.BlockColorimetry.sYCC601 = GetByteBitSupport(BlockExData[0], 2);
+                            Table.BlockColorimetry.xvYCC709 = GetByteBitSupport(BlockExData[0], 1);
+                            Table.BlockColorimetry.xvYCC601 = GetByteBitSupport(BlockExData[0], 0);
+                            Table.BlockColorimetry.DCI_P3 = GetByteBitSupport(BlockExData[1], 7);
+                            Table.BlockColorimetry.MD3 = GetByteBitSupport(BlockExData[0], 3);
+                            Table.BlockColorimetry.MD2 = GetByteBitSupport(BlockExData[0], 2);
+                            Table.BlockColorimetry.MD1 = GetByteBitSupport(BlockExData[0], 1);
+                            Table.BlockColorimetry.MD0 = GetByteBitSupport(BlockExData[0], 0);
                             break;
 
                         case CEATagCodeType.Ex_HDR_Static_Matadata:
-                            EDIDTableCEA.BlockHDRStatic.Gamma_SDR = GetByteBitSupport(BlockExData[0], 0);
-                            EDIDTableCEA.BlockHDRStatic.Gamma_HDR = GetByteBitSupport(BlockExData[0], 1);
-                            EDIDTableCEA.BlockHDRStatic.SMPTE_ST_2084 = GetByteBitSupport(BlockExData[0], 2);
-                            EDIDTableCEA.BlockHDRStatic.HLG = GetByteBitSupport(BlockExData[0], 3);
-                            EDIDTableCEA.BlockHDRStatic.Static_Metadata_Type1 = GetByteBitSupport(BlockExData[1], 0);
+                            Table.BlockHDRStatic.Gamma_SDR = GetByteBitSupport(BlockExData[0], 0);
+                            Table.BlockHDRStatic.Gamma_HDR = GetByteBitSupport(BlockExData[0], 1);
+                            Table.BlockHDRStatic.SMPTE_ST_2084 = GetByteBitSupport(BlockExData[0], 2);
+                            Table.BlockHDRStatic.HLG = GetByteBitSupport(BlockExData[0], 3);
+                            Table.BlockHDRStatic.Static_Metadata_Type1 = GetByteBitSupport(BlockExData[1], 0);
                             if (Block.BlockPayload >= 4)
-                                EDIDTableCEA.BlockHDRStatic.Max_Luminance_Data = (float)(50 * Math.Pow(2, (double)(BlockExData[2]) / 32));
+                                Table.BlockHDRStatic.Max_Luminance_Data = (float)(50 * Math.Pow(2, (double)(BlockExData[2]) / 32));
                             if (Block.BlockPayload >= 5)
-                                EDIDTableCEA.BlockHDRStatic.Max_Frame_Avg_Lum_Data = (float)(50 * Math.Pow(2, (double)(BlockExData[3]) / 32));
+                                Table.BlockHDRStatic.Max_Frame_Avg_Lum_Data = (float)(50 * Math.Pow(2, (double)(BlockExData[3]) / 32));
                             if (Block.BlockPayload >= 6)
-                                EDIDTableCEA.BlockHDRStatic.Min_Luminance_Data = EDIDTableCEA.BlockHDRStatic.Max_Luminance_Data * (float)(Math.Pow((double)BlockExData[4] / 255, 2) / 100);
+                                Table.BlockHDRStatic.Min_Luminance_Data = Table.BlockHDRStatic.Max_Luminance_Data * (float)(Math.Pow((double)BlockExData[4] / 255, 2) / 100);
                             break;
 
                         case CEATagCodeType.Ex_HDR_Dynamic_Matadata:
@@ -1636,15 +1868,15 @@ namespace EDIDApp
                             break;
 
                         case CEATagCodeType.Ex_YCbCr420CapabilityMap:
-                            EDIDTableCEA.BlockYCbCr420VIC = new List<BlockVideoVIC>();
+                            Table.BlockYCbCr420VIC = new List<BlockVideoVIC>();
                             for (i = 0; i < Block.BlockPayload - 1; i++)
                             {
                                 for (int j = 0; j < 8; j++)
                                 {
                                     if (GetByteBit(BlockExData[i], (byte)j) == 1)
                                     {
-                                        if((i * 8 + j) < EDIDTableCEA.BlockVideoVIC.Count)
-                                            EDIDTableCEA.BlockYCbCr420VIC.Add(EDIDTableCEA.BlockVideoVIC[i * 8 + j]);
+                                        if((i * 8 + j) < Table.BlockVideoVIC.Count)
+                                            Table.BlockYCbCr420VIC.Add(Table.BlockVideoVIC[i * 8 + j]);
                                     }
                                 }
                             }
@@ -1686,49 +1918,50 @@ namespace EDIDApp
         }
         internal DecodeError DecodeCEABlock()
         {
+            Table = new CEATable();
             //01 Revision Number
-            EDIDTableCEA.Version = CEAByteData[1];
-            Console.WriteLine("CEA Version: {0}", EDIDTableCEA.Version);
-            if (EDIDTableCEA.Version != 0x03)
+            Table.Version = Data[1];
+            Console.WriteLine("CEA Version: {0}", Table.Version);
+            if (Table.Version != 0x03)
                 return DecodeError.CEAVersionError;
 
             //02 
-            EDIDTableCEA.DetailedTimingStart = CEAByteData[2];
+            Table.DetailedTimingStart = Data[2];
 
             //03
-            EDIDTableCEA.UnderscranITFormatByDefault = GetByteBitSupport(CEAByteData[3], 7);
-            EDIDTableCEA.Audio = GetByteBitSupport(CEAByteData[3], 6);
-            EDIDTableCEA.YCbCr444 = GetByteBitSupport(CEAByteData[3], 5);
-            EDIDTableCEA.YCbCr422 = GetByteBitSupport(CEAByteData[3], 4);
-            EDIDTableCEA.NativeVideoFormatNumber = (byte)(CEAByteData[3] & 0x0F);
+            Table.UnderscranITFormatByDefault = GetByteBitSupport(Data[3], 7);
+            Table.Audio = GetByteBitSupport(Data[3], 6);
+            Table.YCbCr444 = GetByteBitSupport(Data[3], 5);
+            Table.YCbCr422 = GetByteBitSupport(Data[3], 4);
+            Table.NativeVideoFormatNumber = (byte)(Data[3] & 0x0F);
 
             //04-... CEA Data Blocks
-            if (EDIDTableCEA.DetailedTimingStart != 4)
+            if (Table.DetailedTimingStart != 4)
             {
                 int blockindex = 4;
                 int blocknumber = 0;
-                EDIDTableCEA.CEABlocksList = new List<CEABlocksTable>();
+                Table.CEABlocksList = new List<CEABlocksTable>();
 
-                while (blockindex < EDIDTableCEA.DetailedTimingStart)
+                while (blockindex < Table.DetailedTimingStart)
                 {
-                    EDIDTableCEA.CEABlocksList.Add(DecodeCEADataBlocks(CEAByteData, blockindex));
+                    Table.CEABlocksList.Add(DecodeCEADataBlocks(Data, blockindex));
 
-                    blockindex += EDIDTableCEA.CEABlocksList[blocknumber].BlockPayload + 1;//Block Data length + Tag Code
+                    blockindex += Table.CEABlocksList[blocknumber].BlockPayload + 1;//Block Data length + Tag Code
                     blocknumber++;
                 }
             }
 
             //Detailed Timing Blocks
-            if (EDIDTableCEA.DetailedTimingStart != 0)
+            if (Table.DetailedTimingStart != 0)
             {
-                int DetailedTimingindex = EDIDTableCEA.DetailedTimingStart;
+                int DetailedTimingindex = Table.DetailedTimingStart;
                 byte[] TimingByte = new byte[18];
-                EDIDTableCEA.CEATimingList = new List<EDIDDetailedTimingTable>();
+                Table.CEATimingList = new List<EDIDDetailedTimingTable>();
 
-                while (CEAByteData[DetailedTimingindex] != 0x00 && (DetailedTimingindex + 18) < 127)
+                while (Data[DetailedTimingindex] != 0x00 && (DetailedTimingindex + 18) < 127)
                 {
-                    Array.Copy(CEAByteData, DetailedTimingindex, TimingByte, 0, 18);
-                    EDIDTableCEA.CEATimingList.Add(DecodeDetailedTimingData(TimingByte));
+                    Array.Copy(Data, DetailedTimingindex, TimingByte, 0, 18);
+                    Table.CEATimingList.Add(DecodeDetailedTimingData(TimingByte));
 
                     DetailedTimingindex += 18;
                 }
@@ -1738,26 +1971,26 @@ namespace EDIDApp
             byte checksum = 0x00;
             for (int i = 0; i < 128; i++)
             {
-                checksum += CEAByteData[i];
+                checksum += Data[i];
             }
             if (checksum != 0x00)
                 return DecodeError.CEAChecksumError;
             else
-                EDIDTableCEA.Checksum = CEAByteData[127];
+                Table.Checksum = Data[127];
 
             return DecodeError.Success;
         }
         //厂内格式输出
-        private string OutputNotesCEABlocks(CEABlocksTable Table)
+        private string OutputNotesCEABlocks(CEABlocksTable BlocksTable)
         {
             string Notes = "";
             int list_offset = 8;
 
-            switch (Table.Block)
+            switch (BlocksTable.Block)
             {
                 case CEATagCodeType.Audio:
-                    Notes += OutputNotesLineString("Audio Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
-                    foreach (BlockAudio Audio in EDIDTableCEA.BlockAudio)
+                    Notes += OutputNotesLineString("Audio Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    foreach (BlockAudio Audio in Table.BlockAudio)
                     {
                         Notes += OutputNotesLineString(list_offset, "Audio Format: {0}, Channel Number: {1}", 0, Audio.Type, Audio.Channels);
                         Notes += OutputNotesLineString(list_offset, "Sampling: Frequency: {0}{1}{2}{3}{4}{5}{6}", 0,
@@ -1778,15 +2011,15 @@ namespace EDIDApp
                     }
                     break;
                 case CEATagCodeType.Video:
-                    Notes += OutputNotesLineString("Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
-                    foreach (BlockVideoVIC VIC in EDIDTableCEA.BlockVideoVIC)
+                    Notes += OutputNotesLineString("Video Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    foreach (BlockVideoVIC VIC in Table.BlockVideoVIC)
                     {
                         Notes += OutputNotesLineString(list_offset, "{0} {1} ", 0, VICcode[VIC.VIC], GetSupportString("Native", VIC.NativeCode));
                     }
                     break;
                 case CEATagCodeType.SpeakerAllocation:
-                    Notes += OutputNotesLineString("Speaker Allocation Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
-                    foreach (BlockSpeaker Speaker in EDIDTableCEA.BlockSpeaker)
+                    Notes += OutputNotesLineString("Speaker Allocation Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    foreach (BlockSpeaker Speaker in Table.BlockSpeaker)
                     {
                         Notes += OutputNotesLineString(list_offset, "{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}", 0,
                             GetSupportString("Front Left/Right Wide,", Speaker.FLW_FRW),
@@ -1803,144 +2036,219 @@ namespace EDIDApp
                     }
                     break;
                 case CEATagCodeType.VESADisplayTransferCharacteristic:
-                    Notes += OutputNotesLineString("Display Transfer Characteristic Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("Display Transfer Characteristic Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
 
                 /* Vendor-Specific Data Block */
                 case CEATagCodeType.VendorSpecific:
-                    Notes += OutputNotesLineString("unknow Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
-                    Notes += OutputNotesLineString(list_offset, "IEEE ID: {0:X6}", 0, Table.UnknowIEEEID); 
+                    Notes += OutputNotesLineString("unknow Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    Notes += OutputNotesLineString(list_offset, "IEEE ID: {0:X6}", 0, BlocksTable.UnknowIEEEID);
                     break;
                 case CEATagCodeType.VS_HDMI_LLC:
-                    Notes += OutputNotesLineString("HDMI-LLC Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("HDMI-LLC Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    Notes += OutputNotesLineString(list_offset, "Physical Address: 0x{0:X}{1:X}{2:X}{3:X}", 0, Table.BlockHDMILLC.PhyAddressA, Table.BlockHDMILLC.PhyAddressB, Table.BlockHDMILLC.PhyAddressC, Table.BlockHDMILLC.PhyAddressD);
+                    if (Table.BlockHDMILLC.ExtensionFields == Support.supported)
+                    {
+                        Notes += OutputNotesLineString(list_offset, "{0}{1}{2}{3}{4}{5}", 0,
+                            GetSupportString("Support All Feature,", Table.BlockHDMILLC.AllFeature),
+                            GetSupportString("DC 48bit,", Table.BlockHDMILLC.DC_48bit),
+                            GetSupportString("DC 36bit,", Table.BlockHDMILLC.DC_36bit),
+                            GetSupportString("DC 30bit,", Table.BlockHDMILLC.DC_30bit),
+                            GetSupportString("DC Y444,", Table.BlockHDMILLC.DC_Y444),
+                            GetSupportString("DC Dual,", Table.BlockHDMILLC.DVI_Dual));
+                        Notes += OutputNotesLineString(list_offset, "Max TMDS Clock: {0}MHz", 0, Table.BlockHDMILLC.MaxTMDSClk);
+                    }
+                    if (Table.BlockHDMILLC.EnableFlag == Support.supported)
+                    {
+                        if (Table.BlockHDMILLC.LatencyFieldsPresent == Support.supported)
+                        {
+                            Notes += OutputNotesLineString(list_offset, "Video Latency: {0}", 0, Table.BlockHDMILLC.VideoLatency);
+                            Notes += OutputNotesLineString(list_offset, "Audio Latency: {0}", 0, Table.BlockHDMILLC.AudioLatency);
+                        }
+                        if (Table.BlockHDMILLC.ILatencyFieldsPresent == Support.supported)
+                        {
+                            Notes += OutputNotesLineString(list_offset, "I Video Latency: {0}", 0, Table.BlockHDMILLC.IVideoLatency);
+                            Notes += OutputNotesLineString(list_offset, "I Audio Latency: {0}", 0, Table.BlockHDMILLC.IAudioLatency);
+                        }
+                        if (Table.BlockHDMILLC.HDMIVideoPresent == Support.supported)
+                        {
+                            if (Table.BlockHDMILLC.HDMI3DPresent == Support.supported)
+                                Notes += OutputNotesLineString(list_offset, "Support 3D present,", 0);
+                            if (Table.BlockHDMILLC.HDMIVICLength > 0)
+                            {
+                                Notes += OutputNotesLineString(list_offset, "HDMI VIC:", 0);
+                                foreach (byte VIC in Table.BlockHDMILLC.HDMIVIC)
+                                {
+                                    Notes += OutputNotesLineString(list_offset, "{0}", 0, HDMIVICcode[VIC]);
+                                }
+                            }
+                        }
+                    }
                     break;
                 case CEATagCodeType.VS_AMD:
-                    Notes += OutputNotesLineString("AMD Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
-                    Notes += OutputNotesLineString(list_offset, "Version: {0}", 0, EDIDTableCEA.BlockAMD.Version);
+                    Notes += OutputNotesLineString("AMD Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    Notes += OutputNotesLineString(list_offset, "Version: {0}", 0, Table.BlockAMD.Version);
                     Notes += OutputNotesLineString(list_offset, "{0}{1}{2}{3}", 0, 
-                        GetSupportString("FreeSync Supported, ", EDIDTableCEA.BlockAMD.FreeSync),
-                        GetSupportString("Native Color Space Set Supported, ", EDIDTableCEA.BlockAMD.NativeColorSpaceSet),
-                        GetSupportString("Local Dimming Control Supported, ", EDIDTableCEA.BlockAMD.LocalDimmingControl),
-                        GetSupportString("Camma 2.2 EOTF Supported, ", EDIDTableCEA.BlockAMD.Gamma22EOTF)
+                        GetSupportString("FreeSync Supported, ", Table.BlockAMD.FreeSync),
+                        GetSupportString("Native Color Space Set Supported, ", Table.BlockAMD.NativeColorSpaceSet),
+                        GetSupportString("Local Dimming Control Supported, ", Table.BlockAMD.LocalDimmingControl),
+                        GetSupportString("Camma 2.2 EOTF Supported, ", Table.BlockAMD.Gamma22EOTF)
                         );
-                    Notes += OutputNotesLineString(list_offset, "Min Refresh Rate: {0}Hz", 0, EDIDTableCEA.BlockAMD.MinRefreshRate);
-                    Notes += OutputNotesLineString(list_offset, "Max Refresh Rate: {0}Hz", 0, EDIDTableCEA.BlockAMD.MaxRefreshRate);
-                    Notes += OutputNotesLineString(list_offset, "MCCS VCP Code: 0x{0:X2}", 0, EDIDTableCEA.BlockAMD.MCCSVCPCode);
-                    if (EDIDTableCEA.BlockAMD.Version >= 2)
+                    Notes += OutputNotesLineString(list_offset, "Min Refresh Rate: {0}Hz", 0, Table.BlockAMD.MinRefreshRate);
+                    Notes += OutputNotesLineString(list_offset, "Max Refresh Rate: {0}Hz", 0, Table.BlockAMD.MaxRefreshRate);
+                    Notes += OutputNotesLineString(list_offset, "MCCS VCP Code: 0x{0:X2}", 0, Table.BlockAMD.MCCSVCPCode);
+                    if (Table.BlockAMD.Version >= 2)
                     {
-                        Notes += OutputNotesLineString(list_offset, "Maximum luminance (Max Backlight): {0:0.000} cd/m2", 0, EDIDTableCEA.BlockAMD.MaxBrightness_MaxBL);
-                        Notes += OutputNotesLineString(list_offset, "Minimum luminance (Max Backlight): {0:0.00000} cd/m2", 0, EDIDTableCEA.BlockAMD.MinBrightness_MaxBL);
-                        Notes += OutputNotesLineString(list_offset, "Maximum luminance (Min Backlight): {0:0.000} cd/m2", 0, EDIDTableCEA.BlockAMD.MaxBrightness_MinBL);
-                        Notes += OutputNotesLineString(list_offset, "Minimum luminance (Min Backlight): {0:0.00000} cd/m2", 0, EDIDTableCEA.BlockAMD.MinBrightness_MinBL);
+                        Notes += OutputNotesLineString(list_offset, "Maximum luminance (Max Backlight): {0:0.000} cd/m2", 0, Table.BlockAMD.MaxBrightness_MaxBL);
+                        Notes += OutputNotesLineString(list_offset, "Minimum luminance (Max Backlight): {0:0.00000} cd/m2", 0, Table.BlockAMD.MinBrightness_MaxBL);
+                        Notes += OutputNotesLineString(list_offset, "Maximum luminance (Min Backlight): {0:0.000} cd/m2", 0, Table.BlockAMD.MaxBrightness_MinBL);
+                        Notes += OutputNotesLineString(list_offset, "Minimum luminance (Min Backlight): {0:0.00000} cd/m2", 0, Table.BlockAMD.MinBrightness_MinBL);
                     }
-                    if (EDIDTableCEA.BlockAMD.Version >= 3)
+                    if (Table.BlockAMD.Version >= 3)
                     {
-                        Notes += OutputNotesLineString(list_offset, "Version 3 Max Refresh Rate: {0}Hz", 0, EDIDTableCEA.BlockAMD.MaxRefreshRate255);
+                        Notes += OutputNotesLineString(list_offset, "Version 3 Max Refresh Rate: {0}Hz", 0, Table.BlockAMD.MaxRefreshRate255);
                     }
                     break;
                 case CEATagCodeType.VS_HDMI_Forum:
-                    Notes += OutputNotesLineString("HDMI-forum Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("HDMI-forum Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    Notes += OutputNotesLineString(list_offset, "Version: {0}", 0, Table.BlockHDMIForum.Version);
+                    Notes += OutputNotesLineString(list_offset, "Max TMDS Rate: {0} MHz", 0, Table.BlockHDMIForum.MaxTMDSRate);
+                    Notes += OutputNotesLineString(list_offset, "Support:{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}{11}{12}{13}{14}{15}{16}{17}", 0,
+                        GetSupportString("3D OSD Disparity,", Table.BlockHDMIForum._3D_OSD_Disparity),
+                        GetSupportString("3D Dual View,", Table.BlockHDMIForum._3D_Dual_View),
+                        GetSupportString("3D Independent View,", Table.BlockHDMIForum._3D_Independent_View),
+                        GetSupportString("LTE 340Mcsc scramble,", Table.BlockHDMIForum.LTE_340Mcsc_scramble),
+                        GetSupportString("CCBPCI,", Table.BlockHDMIForum.CCBPCI),
+                        GetSupportString("CABLE STSTUS,", Table.BlockHDMIForum.CABLE_STATUS),
+                        GetSupportString("RR Cabpable,", Table.BlockHDMIForum.RR_Capable),
+                        GetSupportString("SCDC Present,", Table.BlockHDMIForum.SCDC_Present),
+                        GetSupportString("DC 30bit 420,", Table.BlockHDMIForum.DC_30bit_420),
+                        GetSupportString("DC 36bit 420,", Table.BlockHDMIForum.DC_36bit_420),
+                        GetSupportString("DC 48bit 420,", Table.BlockHDMIForum.DC_48bit_420),
+                        GetSupportString("UHD VIC,", Table.BlockHDMIForum.UHD_VIC),
+                        GetSupportString("FAPA start location,", Table.BlockHDMIForum.FAPA_start_location),
+                        GetSupportString("ALLM,", Table.BlockHDMIForum.ALLM),
+                        GetSupportString("FVA,", Table.BlockHDMIForum.FVA),
+                        GetSupportString("CNMVRR,", Table.BlockHDMIForum.CNMVRR),
+                        GetSupportString("CinemaVRR,", Table.BlockHDMIForum.CinemaVRR),
+                        GetSupportString("MDelta,", Table.BlockHDMIForum.M_Delta));
+                    Notes += OutputNotesLineString(list_offset, "Max FRL Rate: {0}", 0, Table.BlockHDMIForum.FRLRate);
+                    if ((Table.BlockHDMIForum.VRRMin != 0) || (Table.BlockHDMIForum.VRRMax != 0))
+                        Notes += OutputNotesLineString(list_offset, "VRRMin: {0} VRRMax: {1}", 0, Table.BlockHDMIForum.VRRMin, Table.BlockHDMIForum.VRRMax);
+                    if (Table.BlockHDMIForum.FRLRate != HDMIFRLType.Nosupport_FRL)
+                    {
+                        Notes += OutputNotesLineString(list_offset, "DSC Support:{0}{1}{2}{3}{4}{5}", 0,
+                            GetSupportString("10bpc,", Table.BlockHDMIForum.DSC_10bpc),
+                            GetSupportString("12bpc,", Table.BlockHDMIForum.DSC_12bpc),
+                            GetSupportString("16bpc,", Table.BlockHDMIForum.DSC_16bpc),
+                            GetSupportString("All bpp,", Table.BlockHDMIForum.DSC_All_bpp),
+                            GetSupportString("Native 42,", Table.BlockHDMIForum.DSC_Native_42),
+                            GetSupportString("1p2,", Table.BlockHDMIForum.DSC_1p2));
+                        Notes += OutputNotesLineString(list_offset, "DSC MaxSlices: {0}", 0, Table.BlockHDMIForum.DSCMaxSlices);
+                        Notes += OutputNotesLineString(list_offset, "DSC Max FRL Rate: {0}", 0, Table.BlockHDMIForum.DSCMaxFRL);
+                        Notes += OutputNotesLineString(list_offset, "DSC TotalChunkkBytes: {0}", 0, Table.BlockHDMIForum.DSC_TotalChunkkBytes);
+                    }
                     break;
 
                 /* Extended */
                 case CEATagCodeType.Extended:
-                    Notes += OutputNotesLineString("unknow Extended Tag Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
-                    Notes += OutputNotesLineString("Extended Tag Code: {0:X2}", 0, Table.UnknowExtendedCode);
+                    Notes += OutputNotesLineString("unknow Extended Tag Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    Notes += OutputNotesLineString("Extended Tag Code: {0:X2}", 0, BlocksTable.UnknowExtendedCode);
                     break;
                 case CEATagCodeType.Ex_Video_Capability:
-                    Notes += OutputNotesLineString("Video Capability Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
-                    Notes += OutputNotesLineString(list_offset, "CE: {0}", 0, EDIDTableCEA.BlockVideoCapability.CE);
-                    Notes += OutputNotesLineString(list_offset, "IT: {0}", 0, EDIDTableCEA.BlockVideoCapability.IT);
-                    Notes += OutputNotesLineString(list_offset, "PT: {0}", 0, EDIDTableCEA.BlockVideoCapability.PT);
-                    Notes += OutputNotesLineString(list_offset, "RGB Quantization Range: {0}", 0, EDIDTableCEA.BlockVideoCapability.QS == Support.supported ? "Selectable (via AVI Q)" : "No Data");
-                    Notes += OutputNotesLineString(list_offset, "YCC Quantization Range: {0}", 0, EDIDTableCEA.BlockVideoCapability.QY == Support.supported ? "Selectable (via AVI YQ)" : "No Data");
+                    Notes += OutputNotesLineString("Video Capability Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    Notes += OutputNotesLineString(list_offset, "CE: {0}", 0, Table.BlockVideoCapability.CE);
+                    Notes += OutputNotesLineString(list_offset, "IT: {0}", 0, Table.BlockVideoCapability.IT);
+                    Notes += OutputNotesLineString(list_offset, "PT: {0}", 0, Table.BlockVideoCapability.PT);
+                    Notes += OutputNotesLineString(list_offset, "RGB Quantization Range: {0}", 0, Table.BlockVideoCapability.QS == Support.supported ? "Selectable (via AVI Q)" : "No Data");
+                    Notes += OutputNotesLineString(list_offset, "YCC Quantization Range: {0}", 0, Table.BlockVideoCapability.QY == Support.supported ? "Selectable (via AVI YQ)" : "No Data");
                     break;
                 case CEATagCodeType.Ex_VESA_Display_Device:
-                    Notes += OutputNotesLineString("Display Device Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("Display Device Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_VESA_Video_Timing:
-                    Notes += OutputNotesLineString("Video Timing Block Extension, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("Video Timing Block Extension, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_HDMI_Video:
-                    Notes += OutputNotesLineString("HDMI Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("HDMI Video Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_Colorimetry:
-                    Notes += OutputNotesLineString("Colorimetry Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("Colorimetry Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     Notes += OutputNotesLineString(list_offset, "{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}{11}{12}", 0,
-                        GetSupportString("BT.2020 RGB,", EDIDTableCEA.BlockColorimetry.BT2020_RGB),
-                        GetSupportString("BT.2020 YCC,", EDIDTableCEA.BlockColorimetry.BT2020_YCC),
-                        GetSupportString("BT.2020 cYCC,", EDIDTableCEA.BlockColorimetry.BT2020_cYCC),
-                        GetSupportString("Adobe RGB,", EDIDTableCEA.BlockColorimetry.opRGB),
-                        GetSupportString("Adobe YCC-601,", EDIDTableCEA.BlockColorimetry.opYCC601),
-                        GetSupportString("sYCC-601,", EDIDTableCEA.BlockColorimetry.sYCC601),
-                        GetSupportString("xvYCC-709,", EDIDTableCEA.BlockColorimetry.xvYCC709),
-                        GetSupportString("xvYCC-601,", EDIDTableCEA.BlockColorimetry.xvYCC601),
-                        GetSupportString("DCI-P3,", EDIDTableCEA.BlockColorimetry.DCI_P3),
-                        GetSupportString("MD3,", EDIDTableCEA.BlockColorimetry.MD3),
-                        GetSupportString("MD2,", EDIDTableCEA.BlockColorimetry.MD2),
-                        GetSupportString("MD1,", EDIDTableCEA.BlockColorimetry.MD1),
-                        GetSupportString("MD0,", EDIDTableCEA.BlockColorimetry.MD0));
+                        GetSupportString("BT.2020 RGB,", Table.BlockColorimetry.BT2020_RGB),
+                        GetSupportString("BT.2020 YCC,", Table.BlockColorimetry.BT2020_YCC),
+                        GetSupportString("BT.2020 cYCC,", Table.BlockColorimetry.BT2020_cYCC),
+                        GetSupportString("Adobe RGB,", Table.BlockColorimetry.opRGB),
+                        GetSupportString("Adobe YCC-601,", Table.BlockColorimetry.opYCC601),
+                        GetSupportString("sYCC-601,", Table.BlockColorimetry.sYCC601),
+                        GetSupportString("xvYCC-709,", Table.BlockColorimetry.xvYCC709),
+                        GetSupportString("xvYCC-601,", Table.BlockColorimetry.xvYCC601),
+                        GetSupportString("DCI-P3,", Table.BlockColorimetry.DCI_P3),
+                        GetSupportString("MD3,", Table.BlockColorimetry.MD3),
+                        GetSupportString("MD2,", Table.BlockColorimetry.MD2),
+                        GetSupportString("MD1,", Table.BlockColorimetry.MD1),
+                        GetSupportString("MD0,", Table.BlockColorimetry.MD0));
                     break;
                 case CEATagCodeType.Ex_HDR_Static_Matadata:
-                    Notes += OutputNotesLineString("HDR Static Matadata Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("HDR Static Matadata Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     Notes += OutputNotesLineString(list_offset, "{0}{1}{2}{3}{4}", 0,
-                        GetSupportString("Gamma-SDR,", EDIDTableCEA.BlockHDRStatic.Gamma_SDR),
-                        GetSupportString("Gamma-HDR,", EDIDTableCEA.BlockHDRStatic.Gamma_HDR),
-                        GetSupportString("EOTF SMPTE ST 2084,", EDIDTableCEA.BlockHDRStatic.SMPTE_ST_2084),
-                        GetSupportString("EOTF HLG,", EDIDTableCEA.BlockHDRStatic.HLG),
-                        GetSupportString("Static MetaData Type 1,", EDIDTableCEA.BlockHDRStatic.Static_Metadata_Type1));
-                    if (EDIDTableCEA.BlockHDRStatic.Max_Luminance_Data != 0)
-                        Notes += OutputNotesLineString(list_offset, "Desired Content Max Luminance: {0:0.000} cd/m2", 0, EDIDTableCEA.BlockHDRStatic.Max_Luminance_Data);
-                    if (EDIDTableCEA.BlockHDRStatic.Max_Frame_Avg_Lum_Data != 0)
-                        Notes += OutputNotesLineString(list_offset, "Desired Content Max Frame-average Luminance: {0:0.000} cd/m2", 0, EDIDTableCEA.BlockHDRStatic.Max_Frame_Avg_Lum_Data);
-                    if (EDIDTableCEA.BlockHDRStatic.Min_Luminance_Data != 0)
-                        Notes += OutputNotesLineString(list_offset, "Desired Content Min Luminance: {0:0.00000} cd/m2", 0, EDIDTableCEA.BlockHDRStatic.Min_Luminance_Data);
+                        GetSupportString("Gamma-SDR,", Table.BlockHDRStatic.Gamma_SDR),
+                        GetSupportString("Gamma-HDR,", Table.BlockHDRStatic.Gamma_HDR),
+                        GetSupportString("EOTF SMPTE ST 2084,", Table.BlockHDRStatic.SMPTE_ST_2084),
+                        GetSupportString("EOTF HLG,", Table.BlockHDRStatic.HLG),
+                        GetSupportString("Static MetaData Type 1,", Table.BlockHDRStatic.Static_Metadata_Type1));
+                    if (Table.BlockHDRStatic.Max_Luminance_Data != 0)
+                        Notes += OutputNotesLineString(list_offset, "Desired Content Max Luminance: {0:0.000} cd/m2", 0, Table.BlockHDRStatic.Max_Luminance_Data);
+                    if (Table.BlockHDRStatic.Max_Frame_Avg_Lum_Data != 0)
+                        Notes += OutputNotesLineString(list_offset, "Desired Content Max Frame-average Luminance: {0:0.000} cd/m2", 0, Table.BlockHDRStatic.Max_Frame_Avg_Lum_Data);
+                    if (Table.BlockHDRStatic.Min_Luminance_Data != 0)
+                        Notes += OutputNotesLineString(list_offset, "Desired Content Min Luminance: {0:0.00000} cd/m2", 0, Table.BlockHDRStatic.Min_Luminance_Data);
                     break;
                 case CEATagCodeType.Ex_HDR_Dynamic_Matadata:
-                    Notes += OutputNotesLineString("HDR Dynamic Matadata Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("HDR Dynamic Matadata Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_Video_Format_Preference:
-                    Notes += OutputNotesLineString("Video Format Preference Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("Video Format Preference Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_YCbCr420Video:
-                    Notes += OutputNotesLineString("YCBCR 4:2:0 Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("YCBCR 4:2:0 Video Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_YCbCr420CapabilityMap:
-                    Notes += OutputNotesLineString("YCBCR 4:2:0 Capability Map Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
-                    foreach (BlockVideoVIC VIC in EDIDTableCEA.BlockYCbCr420VIC)
+                    Notes += OutputNotesLineString("YCBCR 4:2:0 Capability Map Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    foreach (BlockVideoVIC VIC in Table.BlockYCbCr420VIC)
                     {
                         Notes += OutputNotesLineString(list_offset, "{0}", 0, VICcode[VIC.VIC]);
                     }
                     break;
                 case CEATagCodeType.Ex_CEA_Miscellaneous_Audio_Fields:
-                    Notes += OutputNotesLineString("CTA Miscellaneous Audio Fields, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("CTA Miscellaneous Audio Fields, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_VS_Audio:
-                    Notes += OutputNotesLineString("Vendor-Specific Audio Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("Vendor-Specific Audio Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_HDMI_Audio:
-                    Notes += OutputNotesLineString("HDMI Audio Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("HDMI Audio Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_Room_Configuration:
-                    Notes += OutputNotesLineString("Room Configuration Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("Room Configuration Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_Speaker_Location:
-                    Notes += OutputNotesLineString("Speaker Location Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("Speaker Location Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_Inframe:
-                    Notes += OutputNotesLineString("InfoFrame Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("InfoFrame Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
 
                 /* Vendor-Specific Video Data Block */
                 case CEATagCodeType.Ex_VS_Video_Capability:
-                    Notes += OutputNotesLineString("unknow Vendor-Specific Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
-                    Notes += OutputNotesLineString(list_offset, "IEEE ID: {0:X6}", 0, Table.UnknowIEEEID);
+                    Notes += OutputNotesLineString("unknow Vendor-Specific Video Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    Notes += OutputNotesLineString(list_offset, "IEEE ID: {0:X6}", 0, BlocksTable.UnknowIEEEID);
                     break;
                 case CEATagCodeType.Ex_VS_Dolby_Version:
-                    Notes += OutputNotesLineString("Dolby Version Vendor-Specific Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("Dolby Version Vendor-Specific Video Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 case CEATagCodeType.Ex_VS_HDR10Plus:
-                    Notes += OutputNotesLineString("HDR10+ Vendor-Specific Video Data Block, Number of Data Byte to Follow: {0}", 0, Table.BlockPayload);
+                    Notes += OutputNotesLineString("HDR10+ Vendor-Specific Video Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
                 default:
                     break;
@@ -1953,26 +2261,26 @@ namespace EDIDApp
         {
             int i;
             string NoteEDID = "\r\nBlock Type: CTA Extension Data(CTA-861-G)\r\n";
-            NoteEDID += OutputNotesEDIDList(CEAByteData);
-            NoteEDID += OutputNotesLineString("(01) CEA Version: {0}", 0, EDIDTableCEA.Version);
+            NoteEDID += OutputNotesEDIDList(Data);
+            NoteEDID += OutputNotesLineString("(01) CEA Version: {0}", 0, Table.Version);
             NoteEDID += OutputNotesListString("(02) General Info:", 8,
-                GetSupportString("Support Underscran", EDIDTableCEA.UnderscranITFormatByDefault),
-                GetSupportString("Support Audio", EDIDTableCEA.Audio),
-                GetSupportString("Support YCbCr 4:4:4", EDIDTableCEA.YCbCr444),
-                GetSupportString("Support YCbCr 4:2:2", EDIDTableCEA.YCbCr422),
-                "Native Format: " + EDIDTableCEA.NativeVideoFormatNumber.ToString()
+                GetSupportString("Support Underscran", Table.UnderscranITFormatByDefault),
+                GetSupportString("Support Audio", Table.Audio),
+                GetSupportString("Support YCbCr 4:4:4", Table.YCbCr444),
+                GetSupportString("Support YCbCr 4:2:2", Table.YCbCr422),
+                "Native Format: " + Table.NativeVideoFormatNumber.ToString()
                 );
-            NoteEDID += OutputNotesLineString("(03) Detailed Timing Start: {0}", 0, EDIDTableCEA.DetailedTimingStart);
+            NoteEDID += OutputNotesLineString("(03) Detailed Timing Start: {0}", 0, Table.DetailedTimingStart);
 
             i = 4;
-            foreach (CEABlocksTable Table in EDIDTableCEA.CEABlocksList)
+            foreach (CEABlocksTable Table in Table.CEABlocksList)
             {
                 NoteEDID += "(" + string.Format("{0:D2}", i) + "-" + string.Format("{0:D2}", i + Table.BlockPayload) + ") " + OutputNotesCEABlocks(Table);
                 i += Table.BlockPayload + 1;
             }
 
             int TimingNumber = 0;
-            foreach (EDIDDetailedTimingTable Timing in EDIDTableCEA.CEATimingList)
+            foreach (EDIDDetailedTimingTable Timing in Table.CEATimingList)
             {
                 TimingNumber++;
                 NoteEDID += "______________________________________________________________________\r\n";
@@ -1995,10 +2303,12 @@ namespace EDIDApp
         {
 
         };
-        public static DisplayIDTable EDIDTableDisplayID;
-        public static byte[] DisplayIDByteData;
+        internal DisplayIDTable EDIDTableDisplayID;
+        internal byte[] DisplayIDByteData;
         internal DecodeError DecodeDisplayIDBlock()
         {
+            EDIDTableDisplayID = new DisplayIDTable();
+
             return DecodeError.Success;
         }
         internal string OutputNotesEDIDDisplay()
@@ -2010,10 +2320,15 @@ namespace EDIDApp
     }
     internal class EDID : EDIDCommon
     {
-        protected string EDIDText = "";
+        public string EDIDText = "";
         public byte[] EDIDByteData;
         public uint EDIDDataLength;
+
         private DecodeError Error;
+
+        EDIDBase EDIDBase = new EDIDBase();
+        EDIDCEA EDIDCEA = new EDIDCEA();
+        EDIDDisplayID EDIDDisplayID = new EDIDDisplayID();
 
         private void MatchOriginalTextEDID(string Text)//standard format
         {
@@ -2077,19 +2392,18 @@ namespace EDIDApp
             EDIDByteData = new byte[EDIDDataLength];
             FormatStringToByte();
 
-            EDIDBase EDIDBase = new EDIDBase();
-            EDIDBase.BaseByteData = new byte[128];
-            Array.Copy(EDIDByteData, 0, EDIDBase.BaseByteData, 0, 128);
+            
+            EDIDBase.Data = new byte[128];
+            Array.Copy(EDIDByteData, 0, EDIDBase.Data, 0, 128);
 
             Error = EDIDBase.DecodeBaseBlock();
-            if(Error != DecodeError.Success)
+            if (Error != DecodeError.Success)
                 return Error;
 
             if (EDIDDataLength >= 256)
             {
-                EDIDCEA EDIDCEA = new EDIDCEA();
-                EDIDCEA.CEAByteData = new byte[128];
-                Array.Copy(EDIDByteData, 128, EDIDCEA.CEAByteData, 0, 128);
+                EDIDCEA.Data = new byte[128];
+                Array.Copy(EDIDByteData, 128, EDIDCEA.Data, 0, 128);
 
                 Error = EDIDCEA.DecodeCEABlock();
                 if (Error != DecodeError.Success)
@@ -2097,7 +2411,6 @@ namespace EDIDApp
             }
             if (EDIDDataLength >= 384)
             {
-                EDIDDisplayID EDIDDisplayID = new EDIDDisplayID();
                 EDIDDisplayID.DisplayIDByteData = new byte[128];
                 Array.Copy(EDIDByteData, 128, EDIDDisplayID.DisplayIDByteData, 0, 128);
 
@@ -2119,18 +2432,14 @@ namespace EDIDApp
             {
                 if (EDIDDataLength >= 128)
                 {
-                    EDIDBase EDIDBase = new EDIDBase();
                     NoteEDID += EDIDBase.OutputNotesEDIDBase();
                 }
                 if (EDIDDataLength >= 256)
                 {
-                    EDIDCEA EDIDCEA = new EDIDCEA();
                     NoteEDID += EDIDCEA.OutputNotesEDIDCEA();
                 }
-
                 if (EDIDDataLength >= 384)
                 {
-                    EDIDDisplayID EDIDDisplayID = new EDIDDisplayID();
                     NoteEDID += EDIDDisplayID.OutputNotesEDIDDisplay();
                 }
             }
