@@ -38,6 +38,8 @@
             this.uiTextBoxFile = new Sunny.UI.UITextBox();
             this.uiTabControlMenu1 = new Sunny.UI.UITabControlMenu();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.uiLabel1 = new Sunny.UI.UILabel();
+            this.uiTextBox1 = new Sunny.UI.UITextBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.tabPage4 = new System.Windows.Forms.TabPage();
@@ -47,6 +49,7 @@
             this.uiRadioButtonGroup1 = new Sunny.UI.UIRadioButtonGroup();
             this.uiCheckBox1 = new Sunny.UI.UICheckBox();
             this.uiTabControlMenu1.SuspendLayout();
+            this.tabPage1.SuspendLayout();
             this.SuspendLayout();
             // 
             // openFileDialog1
@@ -158,11 +161,43 @@
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage1.Controls.Add(this.uiLabel1);
+            this.tabPage1.Controls.Add(this.uiTextBox1);
             this.tabPage1.Location = new System.Drawing.Point(151, 0);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Size = new System.Drawing.Size(391, 378);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "General Info";
+            // 
+            // uiLabel1
+            // 
+            this.uiLabel1.Font = new System.Drawing.Font("微软雅黑", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiLabel1.Location = new System.Drawing.Point(14, 32);
+            this.uiLabel1.Name = "uiLabel1";
+            this.uiLabel1.Size = new System.Drawing.Size(178, 23);
+            this.uiLabel1.Style = Sunny.UI.UIStyle.Custom;
+            this.uiLabel1.StyleCustomMode = true;
+            this.uiLabel1.TabIndex = 1;
+            this.uiLabel1.Text = "Manufacturer Name:";
+            this.uiLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // uiTextBox1
+            // 
+            this.uiTextBox1.ButtonSymbol = 61761;
+            this.uiTextBox1.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.uiTextBox1.Font = new System.Drawing.Font("微软雅黑", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.uiTextBox1.Location = new System.Drawing.Point(226, 21);
+            this.uiTextBox1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.uiTextBox1.Maximum = 2147483647D;
+            this.uiTextBox1.Minimum = -2147483648D;
+            this.uiTextBox1.MinimumSize = new System.Drawing.Size(1, 16);
+            this.uiTextBox1.Name = "uiTextBox1";
+            this.uiTextBox1.RectSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
+            this.uiTextBox1.Size = new System.Drawing.Size(150, 34);
+            this.uiTextBox1.StyleCustomMode = true;
+            this.uiTextBox1.TabIndex = 0;
+            this.uiTextBox1.TabStop = false;
+            this.uiTextBox1.TextAlignment = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // tabPage2
             // 
@@ -290,6 +325,7 @@
             this.TitleHeight = 31;
             this.Load += new System.EventHandler(this.Form1_Load);
             this.uiTabControlMenu1.ResumeLayout(false);
+            this.tabPage1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -311,6 +347,8 @@
         private System.Windows.Forms.TabPage tabPage7;
         private Sunny.UI.UIRadioButtonGroup uiRadioButtonGroup1;
         private Sunny.UI.UICheckBox uiCheckBox1;
+        private Sunny.UI.UITextBox uiTextBox1;
+        private Sunny.UI.UILabel uiLabel1;
     }
 }
 

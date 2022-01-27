@@ -20,7 +20,8 @@ namespace WindowsFormsApp_BOE_Tool
     public partial class Form1 : UIForm
     {
         Sunny.UI.UITextBox[] EDIDTextBox = new Sunny.UI.UITextBox[128];
-        EDID WindowsFormsEDID = new EDID();
+        EDID FormEDID = new EDID();
+        EDIDTable EDIDInfo = new EDIDTable();
 
         public Form1()
         {
@@ -130,21 +131,20 @@ namespace WindowsFormsApp_BOE_Tool
                     }
                 }
 
-                EDIDCommon.DecodeError DecodeResult;
-                DecodeResult = WindowsFormsEDID.Decode(UnicodeText);
+                EDIDInfo = FormEDID.Decode(UnicodeText);
 
-                if (DecodeResult == EDIDCommon.DecodeError.Success)
+                if (EDIDInfo.Error == DecodeError.Success)
                 {
                     uiRadioButtonGroup1.Items.Clear();
-                    if (WindowsFormsEDID.EDIDDataLength == 384)
+                    if (EDIDInfo.Length == 384)
                     {
                         uiRadioButtonGroup1.Items.AddRange(new object[] { "Base", "CEA", "DisplayID" });
                     }
-                    if (WindowsFormsEDID.EDIDDataLength == 256)
+                    if (EDIDInfo.Length == 256)
                     {
                         uiRadioButtonGroup1.Items.AddRange(new object[] { "Base", "CEA" });
                     }
-                    if (WindowsFormsEDID.EDIDDataLength == 128)
+                    if (EDIDInfo.Length == 128)
                     {
                         uiRadioButtonGroup1.Items.AddRange(new object[] { "Base" });
                     }
@@ -152,10 +152,14 @@ namespace WindowsFormsApp_BOE_Tool
                     uiRadioButtonGroup1.SelectedIndex = 0;
                     for (int i = 0; i < 128; i++)
                     {
-                        EDIDTextBox[i].Text = string.Format("{0:X2}", WindowsFormsEDID.EDIDByteData[i]);
+                        EDIDTextBox[i].Text = string.Format("{0:X2}", EDIDInfo.Data[i]);
                     }
+
+                    // 引用举例
+                    uiTextBox1.Text = EDIDInfo.Base.IDManufacturerName;
                 }
-                MessageBox.Show(DecodeResult.ToString(), "EDID解析");
+                else
+                    MessageBox.Show(EDIDInfo.Error.ToString(), "EDID解析错误");
 
                 //窗体关闭时，获取文件夹对话框的路径写入配置文件中
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
@@ -174,10 +178,11 @@ namespace WindowsFormsApp_BOE_Tool
 
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
+                EDID FormEDID = new EDID();
                 if (uiCheckBox1.Checked == true)
-                    WindowsFormsEDID.OutputNotesEDIDText(saveFileDialog1.FileName);
+                    FormEDID.OutputNotesEDIDText(EDIDInfo, saveFileDialog1.FileName);
                 else
-                    WindowsFormsEDID.Output0xEDIDText(saveFileDialog1.FileName);
+                    FormEDID.Output0xEDIDText(EDIDInfo, saveFileDialog1.FileName);
 
                 //窗体关闭时，获取文件夹对话框的路径写入配置文件中
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
@@ -200,21 +205,21 @@ namespace WindowsFormsApp_BOE_Tool
             {
                 for (int i = 0; i < 128; i++)
                 {
-                    EDIDTextBox[i].Text = string.Format("{0:X2}", WindowsFormsEDID.EDIDByteData[i]);
+                    EDIDTextBox[i].Text = string.Format("{0:X2}", EDIDInfo.Data[i]);
                 }
             }
-            else if ((index == 1) && (WindowsFormsEDID.EDIDDataLength >= 128))
+            else if ((index == 1) && (EDIDInfo.Length >= 128))
             {
                 for (int i = 0; i < 128; i++)
                 {
-                    EDIDTextBox[i].Text = string.Format("{0:X2}", WindowsFormsEDID.EDIDByteData[128 + i]);
+                    EDIDTextBox[i].Text = string.Format("{0:X2}", EDIDInfo.Data[128 + i]);
                 }
             }
-            else if ((index == 2) && (WindowsFormsEDID.EDIDDataLength >= 256))
+            else if ((index == 2) && (EDIDInfo.Length >= 256))
             {
                 for (int i = 0; i < 128; i++)
                 {
-                    EDIDTextBox[i].Text = string.Format("{0:X2}", WindowsFormsEDID.EDIDByteData[256 + i]);
+                    EDIDTextBox[i].Text = string.Format("{0:X2}", EDIDInfo.Data[256 + i]);
                 }
             }
         }
