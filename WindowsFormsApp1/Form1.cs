@@ -109,7 +109,7 @@ namespace WindowsFormsApp_BOE_Tool
         {
             openFileDialog1.InitialDirectory = "@" + System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             openFileDialog1.RestoreDirectory = false;
-            openFileDialog1.Filter = "txt files (*.txt)|*.txt";
+            openFileDialog1.Filter = "txt files (.txt)|*.txt";
             openFileDialog1.FilterIndex = 1;
             openFileDialog1.FileName = "";
 
@@ -171,7 +171,7 @@ namespace WindowsFormsApp_BOE_Tool
         {
             saveFileDialog1.InitialDirectory = "@" + ConfigurationManager.AppSettings["EDIDFilePath"];
             saveFileDialog1.RestoreDirectory= false;
-            saveFileDialog1.Filter = ".txt文件(*.txt)|*.txt |.h文件（.h）|*.h";
+            saveFileDialog1.Filter = ".txt文件(.txt)|*.txt |.h文件（.h）|*.h";
             saveFileDialog1.FilterIndex = 1;
             saveFileDialog1.FileName = "EDID_test";
             saveFileDialog1.AddExtension = true;
