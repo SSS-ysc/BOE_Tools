@@ -27,7 +27,12 @@ namespace EDIDApp
         ChecksumError,
 
         CEAVersionError,
-        CEAChecksumError
+        CEAChecksumError,
+
+        DisplayIDVersionError,
+        DisplayIDSizeError,
+        DisplayIDTypeError,
+        DisplayIDChecksumError,
     };
     enum DecompileError
     {
@@ -36,7 +41,7 @@ namespace EDIDApp
         VersionError,
     }
     enum BlockTagType
-    { 
+    {
         Base,
         CEA,
         DisplayID,
@@ -84,16 +89,16 @@ namespace EDIDApp
     }
     struct EDIDDetailedTimingTable
     {
-        public uint PixelClk;
+        public uint PixelClk; //Hz
 
-        public uint HFrequency;
+        public uint HFrequency; //Hz
         public ushort HAdressable;
         public ushort HBlanking;
         public ushort HSyncFront;
         public ushort HSyncWidth;
         public byte HBorder;
 
-        public float VFrequency;
+        public float VFrequency; //Hz
         public ushort VAdressable;
         public ushort VBlanking;
         public ushort VSyncFront;
@@ -243,7 +248,7 @@ namespace EDIDApp
 
             Notes += "\r\n";
 
-            Notes = Notes.Replace("_"," ");//替换某些枚举成员名称的 _ 符号
+            Notes = Notes.Replace("_", " ");//替换某些枚举成员名称的 _ 符号
 
             return Notes;
         }
@@ -641,7 +646,6 @@ namespace EDIDApp
             {
                 case 0xFF:
                     Table.SN = Encoding.ASCII.GetString(Data, 5, 13);
-                    Console.WriteLine("SN :{0}", Table.SN);
                     return EDIDDescriptorsType.ProductSN;
                 case 0xFE:
                     Console.WriteLine("AlphanumericData : Unresolved");
@@ -655,17 +659,9 @@ namespace EDIDApp
                     Table.Limits.HorizontalMax = (ushort)(Data[8] + (Table.Limits.HorizontalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
                     Table.Limits.PixelClkMax = (ushort)(Data[9] * 10);
                     Table.Limits.VideoTiming = (VideoTimingType)(Data[10]);
-                    Console.WriteLine("RangeLimits : V {0}-{1}Hz, H {2}-{3}KHz, PixelClkMax {4}MHz, VideoTiming {5}",
-                        Table.Limits.VerticalMin,
-                        Table.Limits.VerticalMax,
-                        Table.Limits.HorizontalMin,
-                        Table.Limits.HorizontalMax,
-                        Table.Limits.PixelClkMax,
-                        Table.Limits.VideoTiming);
                     return EDIDDescriptorsType.RangeLimits;
                 case 0xFC:
                     Table.Name = Encoding.ASCII.GetString(Data, 5, 13);
-                    Console.WriteLine("Name :{0}", Table.Name);
                     return EDIDDescriptorsType.ProductName;
                 case 0xFB:
                     Console.WriteLine("ColorData : Unresolved");
@@ -700,8 +696,6 @@ namespace EDIDApp
                     Table.Version = EDIDversion.V13;
                 else
                     Table.Version = EDIDversion.V14;
-
-                Console.WriteLine("EDID Version: {0}", Table.Version);
             }
             else
                 return DecodeError.VersionError;
@@ -713,11 +707,9 @@ namespace EDIDApp
             ID_Data[1] = (byte)(((Data[8] & 0x03) << 3) + (Data[9] >> 5) + 0x40);
             ID_Data[2] = (byte)((Data[9] & 0x1F) + 0x40);
             Table.IDManufacturerName = Encoding.ASCII.GetString(ID_Data);
-            Console.WriteLine("Manufacturer Name: {0}", Table.IDManufacturerName);
 
             //10-11 EDID_IDProductCode
             Table.IDProductCode = (uint)(Data[10] + (Data[11] << 8));
-            Console.WriteLine("ID Product: {0}", string.Format("{0:X}", Table.IDProductCode));
 
             //12-15 EDID_IDSerialNumber
             if (((Data[12] == 0x01) && (Data[13] == 0x01) && (Data[14] == 0x01) && (Data[15] == 0x01))
@@ -725,7 +717,6 @@ namespace EDIDApp
                 )
             {
                 Table.IDSerialNumber = null;
-                Console.WriteLine("ID Serial Number: not used");
             }
             else
             {
@@ -733,37 +724,29 @@ namespace EDIDApp
                 {
                     Table.IDSerialNumber += string.Format("{0:X2}", Data[15 - i]);
                 }
-                Console.WriteLine("ID Serial Number: {0}", Table.IDSerialNumber);
             }
 
             //16-17 EDID_Week EDID_Year EDID_Model_Year
             if (Data[16] <= 54)
             {
                 Table.Week = Data[16];
-                Console.WriteLine("Week: {0}", Table.Week);
                 Table.Year = (ushort)(Data[17] + 1990);
-                Console.WriteLine("Year: {0}", Table.Year);
             }
             else if ((Table.Version == EDIDversion.V14) && (Data[16] == 0xFF))
             {
                 Table.ModelYear = (ushort)(Data[17] + 1990);
-                Console.WriteLine("Week: not used");
-                Console.WriteLine("Model Year: {0}", Table.ModelYear);
             }
 
             //20-24 EDID_Basic
             //20
             Table.Basic.Video_definition = (EDIDVideoStandard)((Data[20] & 0x80) >> 7);
-            Console.WriteLine("Video Standard: {0}", Table.Basic.Video_definition);
             if (Table.Version == EDIDversion.V14)
             {
                 if (Table.Basic.Video_definition == EDIDVideoStandard.Digital)//EDID1.4 Digital
                 {
                     Table.Basic.DigitalColorDepth = (EDIDColorBitDepth)((Data[20] & 0x70) >> 4);
-                    Console.WriteLine("Color Bit Depth: {0}", Table.Basic.DigitalColorDepth);
 
                     Table.Basic.DigitalStandard = (EDIDDigitalVideoStandard)(Data[20] & 0x0F);
-                    Console.WriteLine("Digital Standard: {0}", Table.Basic.DigitalStandard);
                 }
             }
             else
@@ -784,19 +767,16 @@ namespace EDIDApp
                 Table.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_HV;
                 Table.Basic.ScreenSize.Hsize = Data[21];
                 Table.Basic.ScreenSize.Vsize = Data[22];
-                Console.WriteLine("Screen Size: {0}, H: {1} cm, V: {2} cm", Table.Basic.ScreenSize.Type, Table.Basic.ScreenSize.Hsize, Table.Basic.ScreenSize.Vsize);
             }
             else if (Data[22] == 0x00)
             {
                 Table.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_Ratio;
                 Table.Basic.ScreenSize.Ratio = Data[21];   // ?
-                Console.WriteLine("Screen Size: {0}, Ratio: {1}", Table.Basic.ScreenSize.Type, Table.Basic.ScreenSize.Ratio);
             }
             else if (Data[21] == 0x00)
             {
                 Table.Basic.ScreenSize.Type = ScreenSizeType.ScreenSize_Ratio;
                 Table.Basic.ScreenSize.Ratio = Data[22];   // ?
-                Console.WriteLine("Screen Size: {0}, Ratio: {1}", Table.Basic.ScreenSize.Type, Table.Basic.ScreenSize.Ratio);
             }
             else
             {
@@ -804,7 +784,6 @@ namespace EDIDApp
             }
             //23
             Table.Basic.Gamma = (float)Data[23] / 100 + 1;
-            Console.WriteLine("Gamma: {0} ", Table.Basic.Gamma);
             //24
             Table.Basic.FeatureSupport.StandbyMode = GetByteBitSupport(Data[24], 7);
             Table.Basic.FeatureSupport.SuspendMode = GetByteBitSupport(Data[24], 6);
@@ -815,27 +794,12 @@ namespace EDIDApp
             {
                 Table.Basic.FeatureSupport.DisplayColorType = (ColorType)((Data[24] & 0x18) >> 3);
                 Table.Basic.FeatureSupport.GTFstandard = GetByteBitSupport(Data[24], 0);
-                Console.WriteLine("StandbyMode: {0}, SuspendMode: {1}, LowPowerMode: {2}, DisplayColorType: {3}, sRGBStandard: {4}, PreferredTimingMode: {5}, GTFstandard: {6}",
-                    Table.Basic.FeatureSupport.StandbyMode,
-                    Table.Basic.FeatureSupport.SuspendMode,
-                    Table.Basic.FeatureSupport.VeryLowPowerMode,
-                    Table.Basic.FeatureSupport.DisplayColorType,
-                    Table.Basic.FeatureSupport.sRGBStandard,
-                    Table.Basic.FeatureSupport.PreferredTimingMode,
-                    Table.Basic.FeatureSupport.GTFstandard);
             }
             else
             {
                 Table.Basic.FeatureSupport.ColorEncodingFormat = (ColorEncoding)((Data[24] & 0x18) >> 3);
                 Table.Basic.FeatureSupport.ContinuousFrequency = GetByteBitSupport(Data[24], 0);
-                Console.WriteLine("StandbyMode: {0}, SuspendMode: {1}, LowPowerMode: {2}, ColorEncodingFormat: {3}, sRGBStandard: {4}, PreferredTimingMode: {5}, ContinuousFrequency: {6}",
-                    Table.Basic.FeatureSupport.StandbyMode,
-                    Table.Basic.FeatureSupport.SuspendMode,
-                    Table.Basic.FeatureSupport.VeryLowPowerMode,
-                    Table.Basic.FeatureSupport.ColorEncodingFormat,
-                    Table.Basic.FeatureSupport.sRGBStandard,
-                    Table.Basic.FeatureSupport.PreferredTimingMode,
-                    Table.Basic.FeatureSupport.ContinuousFrequency);
+
             }
 
             //25-34 EDID_Color
@@ -847,16 +811,6 @@ namespace EDIDApp
             Table.PanelColor.BlueY = GetEDIDColorxy((uint)(GetByteBit(Data[26], 5)) * 2 + (uint)(GetByteBit(Data[26], 4)) + ((uint)Data[32] << 2));
             Table.PanelColor.WhiteX = GetEDIDColorxy((uint)(GetByteBit(Data[26], 3)) * 2 + (uint)(GetByteBit(Data[26], 2)) + ((uint)Data[33] << 2));
             Table.PanelColor.WhiteY = GetEDIDColorxy((uint)(GetByteBit(Data[26], 1)) * 2 + (uint)(GetByteBit(Data[26], 0)) + ((uint)Data[34] << 2));
-            Console.WriteLine("Color.Red X: {0} Y: {1}, Color.Green X: {2} Y: {3}, Color.Blue X: {4} Y: {5}, Color.White X: {6} Y: {7}",
-                Table.PanelColor.RedX,
-                Table.PanelColor.RedY,
-                Table.PanelColor.GreenX,
-                Table.PanelColor.GreenY,
-                Table.PanelColor.BlueX,
-                Table.PanelColor.BlueY,
-                Table.PanelColor.WhiteX,
-                Table.PanelColor.WhiteY
-                );
 
             //35-37 EDID_Established_Timing
             Table.EstablishedTiming.Es720x400_70 = GetByteBitSupport(Data[35], 7);
@@ -884,8 +838,6 @@ namespace EDIDApp
             for (int i = 0; i < 8; i++)
             {
                 Table.StandardTiming[i] = DecodeStandardTimingData(Data[38 + i * 2], Data[39 + i * 2]);
-                if (Table.StandardTiming[i].TimingSupport == Support.supported)
-                    Console.WriteLine("Standard Timing : {0}x{1} Rate:{2}", Table.StandardTiming[i].TimingWidth, Table.StandardTiming[i].TimingHeight, Table.StandardTiming[i].TimingRate);
             }
 
             byte[] DsecriptorTable = new byte[18];
@@ -944,7 +896,6 @@ namespace EDIDApp
 
             return DecompileError.Success;
         }
-        //厂内格式输出
         private string OutputNotesDescriptorBlock(EDIDDescriptorsType Type)
         {
             string Notes = "\r\n";
@@ -982,8 +933,6 @@ namespace EDIDApp
                     Notes += OutputNotesLineString(list_offset, Type.ToString(), 0);
                     break;
             }
-
-            Notes += "\r\n";
             return Notes;
         }
         internal string OutputNotesEDIDBase()
@@ -1574,16 +1523,16 @@ namespace EDIDApp
             }
             return Audio;
         }
-        private CEABlocksTable DecodeCEADataBlocks(byte[] CEAData, int index)
+        private CEABlocksTable DecodeCEADataBlock(int index)
         {
             int i;
             CEABlocksTable Block = new CEABlocksTable();
 
-            Block.BlockPayload = (int)CEAData[index] & 0x1F;
-            Block.Block = (CEATagType)((CEAData[index] & 0xE0) >> 5);
+            Block.BlockPayload = (int)Data[index] & 0x1F;
+            Block.Block = (CEATagType)((Data[index] & 0xE0) >> 5);
 
             byte[] BlockData = new byte[Block.BlockPayload];
-            Array.Copy(CEAData, index + 1, BlockData, 0, Block.BlockPayload);
+            Array.Copy(Data, index + 1, BlockData, 0, Block.BlockPayload);
 
             switch (Block.Block)
             {
@@ -1629,7 +1578,7 @@ namespace EDIDApp
                             if (Block.BlockPayload >= 5)
                             {
                                 Table.BlockHDMILLC.ExtensionFields = Support.supported;
-                                Table.BlockHDMILLC.AllFeature = GetByteBitSupport(BlockData[5] , 7);
+                                Table.BlockHDMILLC.AllFeature = GetByteBitSupport(BlockData[5], 7);
                                 Table.BlockHDMILLC.DC_48bit = GetByteBitSupport(BlockData[5], 6);
                                 Table.BlockHDMILLC.DC_36bit = GetByteBitSupport(BlockData[5], 5);
                                 Table.BlockHDMILLC.DC_30bit = GetByteBitSupport(BlockData[5], 4);
@@ -1802,7 +1751,7 @@ namespace EDIDApp
                     Block.Block = (CEATagType)(BlockData[0] + CEATagType.Ex_Video_Capability);
                     //复制有效数据
                     byte[] BlockExData = new byte[Block.BlockPayload - 1];
-                    Array.Copy(CEAData, index + 2, BlockExData, 0, Block.BlockPayload - 1);
+                    Array.Copy(Data, index + 2, BlockExData, 0, Block.BlockPayload - 1);
 
                     switch (Block.Block)
                     {
@@ -1887,7 +1836,7 @@ namespace EDIDApp
                                 {
                                     if (GetByteBit(BlockExData[i], (byte)j) == 1)
                                     {
-                                        if((i * 8 + j) < Table.BlockVideoVIC.Count)
+                                        if ((i * 8 + j) < Table.BlockVideoVIC.Count)
                                             Table.BlockYCbCr420VIC.Add(Table.BlockVideoVIC[i * 8 + j]);
                                     }
                                 }
@@ -1925,7 +1874,6 @@ namespace EDIDApp
                 default:
                     break;
             }
-            Console.WriteLine("Decode {0} , BlockPayload: {1} ", Block.Block.ToString(), Block.BlockPayload);
             return Block;
         }
         internal DecodeError DecodeCEABlock()
@@ -1933,7 +1881,6 @@ namespace EDIDApp
             Table = new CEATable();
             //01 Revision Number
             Table.Version = Data[1];
-            Console.WriteLine("CEA Version: {0}", Table.Version);
             if (Table.Version != 0x03)
                 return DecodeError.CEAVersionError;
 
@@ -1956,7 +1903,7 @@ namespace EDIDApp
 
                 while (blockindex < Table.DetailedTimingStart)
                 {
-                    Table.CEABlocksList.Add(DecodeCEADataBlocks(Data, blockindex));
+                    Table.CEABlocksList.Add(DecodeCEADataBlock(blockindex));
 
                     blockindex += Table.CEABlocksList[blocknumber].BlockPayload + 1;//Block Data length + Tag Code
                     blocknumber++;
@@ -1997,7 +1944,6 @@ namespace EDIDApp
 
             return DecompileError.Success;
         }
-        //厂内格式输出
         private string OutputNotesCEABlocks(CEABlocksTable BlocksTable)
         {
             string Notes = "";
@@ -2105,7 +2051,7 @@ namespace EDIDApp
                 case CEATagType.VS_AMD:
                     Notes += OutputNotesLineString("AMD Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     Notes += OutputNotesLineString(list_offset, "Version: {0}", 0, Table.BlockAMD.Version);
-                    Notes += OutputNotesLineString(list_offset, "{0}{1}{2}{3}", 0, 
+                    Notes += OutputNotesLineString(list_offset, "{0}{1}{2}{3}", 0,
                         GetSupportString("FreeSync Supported, ", Table.BlockAMD.FreeSync),
                         GetSupportString("Native Color Space Set Supported, ", Table.BlockAMD.NativeColorSpaceSet),
                         GetSupportString("Local Dimming Control Supported, ", Table.BlockAMD.LocalDimmingControl),
@@ -2326,7 +2272,9 @@ namespace EDIDApp
         public byte ExCount;
         public List<DisplayIDBlocksTable> DisplayIDBlocksList;
 
-        public List<TypeIDetailTiming> TypeIDetailTimingList;
+        public List<TypeIDetailedTiming> TypeIDetailTimingList;
+
+        public byte Checksum;
     };
     enum ProductType
     {
@@ -2361,25 +2309,192 @@ namespace EDIDApp
 
         CEA_Reserved,
     }
+    enum _3DStereoType
+    {
+        no_stereo,
+        stereo,
+        mono_or_stereo,
+        Reserved,
+    }
+    enum AspectRatioType
+    { 
+        _1_1,
+        _5_4,
+        _4_3,
+        _15_9,
+        _16_9,
+        _16_10,
+        _64_27,
+        _256_135,
+        No_defined,
+        Reserved,
+    }
     struct DisplayIDBlocksTable
     {
         public DisplayIDTagType Block;
         public byte BlockRevision;
         public int BlockPayload;
     }
-    struct TypeIDetailTiming
-    { 
-    
+    struct TypeIDetailedTiming
+    {
+        public uint PixelClk; //Hz
+        public Support Preferred;
+        public HVSyncType HSync;
+        public HVSyncType VSync;
+        public _3DStereoType Stereo;
+        public InterfaceType Interface;
+        public AspectRatioType Ratio;
+
+        public uint HFrequency; //Hz
+        public uint HAdressable;
+        public uint HBlanking;
+        public uint HSyncFront;
+        public uint HSyncWidth;
+
+        public float VFrequency; //Hz
+        public uint VAdressable;
+        public uint VBlanking;
+        public uint VSyncFront;
+        public uint VSyncWidth;
     }
     #endregion
     internal class EDIDDisplayID : EDIDCommon
     {
         internal DisplayIDTable Table;
         internal byte[] Data;
+        int i;
+        private DisplayIDBlocksTable DecodeDisplayIDDataBlock(int index)
+        {
+            DisplayIDBlocksTable Block = new DisplayIDBlocksTable();
+            Block.Block = (DisplayIDTagType)Data[index];
+            Block.BlockRevision = Data[index + 1];
+            Block.BlockPayload = Data[index + 2];
+            byte[] BlockData = new byte[Block.BlockPayload];
+            Array.Copy(Data, index + 3, BlockData, 0, Block.BlockPayload);
+
+            switch (Block.Block)
+            {
+                case DisplayIDTagType.ProductIdentification:
+                    break;
+                case DisplayIDTagType.DisplayParameters:
+                    break;
+                case DisplayIDTagType.Color:
+                    break;
+                case DisplayIDTagType.TypeI:
+                    Table.TypeIDetailTimingList = new List<TypeIDetailedTiming>();
+                    for (i = 0; i < Block.BlockPayload / 0x14; i++)
+                    {
+                        TypeIDetailedTiming Timing = new TypeIDetailedTiming();
+                        Timing.PixelClk = (uint)(BlockData[i * 0x14] + (BlockData[i * 0x14 + 1] << 8) + (BlockData[i * 0x14 + 2] << 16) + 1) * 10000;
+                        Timing.Preferred = GetByteBitSupport(BlockData[i * 0x14 + 3], 7);
+                        Timing.Stereo = (_3DStereoType)((BlockData[i * 0x14 + 3] & 0x60) >> 5);
+                        Timing.Interface = (InterfaceType)GetByteBit(BlockData[i * 0x14 + 3], 4);
+                        Timing.Ratio = (AspectRatioType)(BlockData[i * 0x14 + 3] & 0x0F);
+
+                        Timing.HAdressable = (uint)(BlockData[i * 0x14 + 4] + (BlockData[i * 0x14 + 5] << 8) + 1);
+                        Timing.HBlanking = (uint)(BlockData[i * 0x14 + 6] + (BlockData[i * 0x14 + 7] << 8) + 1);
+                        Timing.HSyncFront = (uint)(BlockData[i * 0x14 + 8] + ((BlockData[i * 0x14 + 9] & 0x7F) << 8) + 1);
+                        Timing.HSync = (HVSyncType)GetByteBit(BlockData[i * 0x14 + 9], 7);
+                        Timing.HSyncWidth = (uint)(BlockData[i * 0x14 + 10] + (BlockData[i * 0x14 + 11] << 8) + 1);
+
+                        Timing.VAdressable = (uint)(BlockData[i * 0x14 + 12] + (BlockData[i * 0x14 + 13] << 8) + 1);
+                        Timing.VBlanking = (uint)(BlockData[i * 0x14 + 14] + (BlockData[i * 0x14 + 15] << 8) + 1);
+                        Timing.VSyncFront = (uint)(BlockData[i * 0x14 + 16] + ((BlockData[i * 0x14 + 17] & 0x7F) << 8) + 1);
+                        Timing.VSync = (HVSyncType)GetByteBit(BlockData[i * 0x14 + 17], 7);
+                        Timing.VSyncWidth = (uint)(BlockData[i * 0x14 + 18] + (BlockData[i * 0x14 + 19] << 8) + 1);
+
+                        if ((Timing.PixelClk != 0) && (Timing.HAdressable != 0) && (Timing.VAdressable != 0))
+                        {
+                            Timing.HFrequency = (uint)(Timing.PixelClk / (Timing.HAdressable + Timing.HBlanking));
+                            Timing.VFrequency = (float)Timing.HFrequency / (Timing.VAdressable + Timing.VBlanking);
+                        }
+
+                        Table.TypeIDetailTimingList.Add(Timing);
+                    }
+                    break;
+                case DisplayIDTagType.TypeII:
+                    break;
+                case DisplayIDTagType.TypeIII:
+                    break;
+                case DisplayIDTagType.TypeIV:
+                    break;
+                case DisplayIDTagType.VESATiming:
+                    break;
+                case DisplayIDTagType.CEATiming:
+                    break;
+                case DisplayIDTagType.RangeLimits:
+                    break;
+                case DisplayIDTagType.SN:
+                    break;
+                case DisplayIDTagType.ASCII:
+                    break;
+                case DisplayIDTagType.DisplayDevice:
+                    break;
+                case DisplayIDTagType.InterfacePowerSequencing:
+                    break;
+                case DisplayIDTagType.TransferCharacteristics:
+                    break;
+                case DisplayIDTagType.DisplayInterface:
+                    break;
+                case DisplayIDTagType.StereoDisplayInterface:
+                    break;
+                case DisplayIDTagType.TypeIII_11h:
+                    break;
+                case DisplayIDTagType.TypeIII_12h:
+                    break;
+                case DisplayIDTagType.TypeII_13h:
+                    break;
+                case DisplayIDTagType.VS:
+                    break;
+                case DisplayIDTagType.CEA_Reserved:
+                    break;
+                
+                case DisplayIDTagType.Reserved:
+                default:
+                    break;
+            }
+            return Block;
+        }
         internal DecodeError DecodeDisplayIDBlock()
         {
             Table = new DisplayIDTable();
 
+            Table.Version = Data[1];
+            if (Table.Version != 0x12)
+                return DecodeError.DisplayIDVersionError;
+
+            Table.SectionSize = Data[2];
+
+            Table.Type = (ProductType)Data[3];
+            if(Table.Type != ProductType.Extension)
+                return DecodeError.DisplayIDTypeError;
+
+            Table.ExCount = Data[4]; // Not use in Ex type
+
+            int blockIndex = 5;
+            if (Data[blockIndex + 2] != 0x00)
+            {
+                Table.DisplayIDBlocksList = new List<DisplayIDBlocksTable>();
+                int blocknumber = 0;
+                while ((Data[blockIndex + 2] != 0x00) && (blockIndex < Table.SectionSize - 4)) // BlockPayload != 0
+                {
+                    Console.WriteLine("{0}", blockIndex);
+                    Table.DisplayIDBlocksList.Add(DecodeDisplayIDDataBlock(blockIndex));
+
+                    blockIndex += Table.DisplayIDBlocksList[blocknumber].BlockPayload + 3;//Block Data length + Tag Code + Revision + Payload
+                    blocknumber++;
+                }
+            }
+
+            byte checksum = 0x00;
+            for (int i = 0; i < 128; i++)
+            {
+                checksum += Data[i];
+            }
+            if (checksum != 0x00)
+                return DecodeError.DisplayIDChecksumError;
+            else
+                Table.Checksum = Data[127];
             return DecodeError.Success;
         }
         internal DecompileError DecompileDisplayIDBlock()
@@ -2387,11 +2502,136 @@ namespace EDIDApp
 
             return DecompileError.Success;
         }
+        private string OutputNotesDisplayIDBlocks(DisplayIDBlocksTable BlocksTable)
+        {
+            string Notes = "";
+            int list_offset = 8;
+            int list_offset2 = 50;
+            switch (BlocksTable.Block)
+            {
+                case DisplayIDTagType.ProductIdentification:
+                    Notes += OutputNotesLineString("Product Identification Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.DisplayParameters:
+                    Notes += OutputNotesLineString("Display Parameters Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.Color:
+                    Notes += OutputNotesLineString("Color Characteristics, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.TypeI:
+                    string[] DetailTimingHSyncType = { "Horizontal Polarity (-),", "Horizontal Polarity (+),", "" };
+                    string[] DetailTimingVSyncType = { "Vertical Polarity (-)", "Vertical Polarity (+)", "" };
+                    string[] DetailTimingRatioType = { "1:1", "5:4", "4:3", "15:9", "16:9", "16:10", "64:27", "256:135", "No define", "Reserved" };
+                    i = 0;
+                    Notes += OutputNotesLineString("Type I Timing - Detail, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    foreach (TypeIDetailedTiming Timing in Table.TypeIDetailTimingList)
+                    {
+                        Notes += "\r\n";
+                        Notes += OutputNotesLineString("Timing {0}:", 0, i + 1);
+                        Notes += OutputNotesLineString(list_offset, "{0}x{1}@{2:.00}Hz   Pixel Clock: {3:.00} MHz", 0, Timing.HAdressable, Timing.VAdressable, Timing.VFrequency, (float)Timing.PixelClk / 1000000);
+                        Notes += OutputNotesListsString("Ratio: {0}", list_offset, DetailTimingRatioType[(int)Timing.Ratio], "{0}", list_offset2, GetSupportString("Preferred", Timing.Preferred));
+                        Notes += OutputNotesListsString("Refreshed Mode: {0}", list_offset, Timing.Interface, "Normal Display: {0}", list_offset2, Timing.Stereo);
+                        Notes += "\r\n";
+                        Notes += OutputNotesLineString(list_offset, "Horizontal:", 0);
+                        Notes += OutputNotesListsString("Active Time: {0} pixels", list_offset, Timing.HAdressable, "Blanking Time: {0} pixels", list_offset2, Timing.HBlanking);
+                        Notes += OutputNotesListsString("Sync Offset: {0} pixels", list_offset, Timing.HSyncFront, "Sync Pulse Width: {0} pixels", list_offset2, Timing.HSyncWidth);
+                        Notes += OutputNotesLineString(list_offset2, "Frequency: {0:.00} Khz", 0, (float)Timing.HFrequency / 1000);
+                        Notes += OutputNotesLineString(list_offset, "Vertical:", 0);
+                        Notes += OutputNotesListsString("Active Time: {0} Lines", list_offset, Timing.VAdressable, "Blanking Time: {0} Lines", list_offset2, Timing.VBlanking);
+                        Notes += OutputNotesListsString("Sync Offset: {0} Lines", list_offset, Timing.VSyncFront, "Sync Pulse Width: {0} Lines", list_offset2, Timing.VSyncWidth);
+                        Notes += OutputNotesLineString(list_offset2, "Frequency: {0:.00} Hz", 0, Timing.VFrequency);
+                        Notes += OutputNotesLineString(list_offset, "{0}{1}", 0,DetailTimingHSyncType[(int)Timing.HSync],DetailTimingVSyncType[(int)Timing.VSync]);
+                        i++;
+                    }
+                    break;
+                case DisplayIDTagType.TypeII:
+                    Notes += OutputNotesLineString("Type II Timing - Detail, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.TypeIII:
+                    Notes += OutputNotesLineString("Type III Timing - Short, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.TypeIV:
+                    Notes += OutputNotesLineString("Type IV Timing–DMT ID Code, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.VESATiming:
+                    Notes += OutputNotesLineString("VESA Timing Standard, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.CEATiming:
+                    Notes += OutputNotesLineString("CEA Timing Standard, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.RangeLimits:
+                    Notes += OutputNotesLineString("Video Timing Range Limits, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.SN:
+                    Notes += OutputNotesLineString("Product Serial Number, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.ASCII:
+                    Notes += OutputNotesLineString("General Purpose ASCII String, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.DisplayDevice:
+                    Notes += OutputNotesLineString("Display Device Data, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.InterfacePowerSequencing:
+                    Notes += OutputNotesLineString("Interface Power Sequencing Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.TransferCharacteristics:
+                    Notes += OutputNotesLineString("Transfer Characteristics Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.DisplayInterface:
+                    Notes += OutputNotesLineString("Display Interface Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.StereoDisplayInterface:
+                    Notes += OutputNotesLineString("Stereo Display Interface Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.TypeIII_11h:
+                    Notes += OutputNotesLineString("Type III Timing - Short, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.TypeIII_12h:
+                    Notes += OutputNotesLineString("Type III Timing - Short, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.TypeII_13h:
+                    Notes += OutputNotesLineString("Type II Timing - Detailed, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.VS:
+                    Notes += OutputNotesLineString("Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.CEA_Reserved:
+                    Notes += OutputNotesLineString("CEA-defined Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+
+                case DisplayIDTagType.Reserved:
+                default:
+                    Notes += OutputNotesLineString("Unknow Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;          
+            }
+
+            Notes += "\r\n";
+            return Notes;
+        }
         internal string OutputNotesEDIDDisplay()
         {
             string NoteEDID = "\r\nBlock Type: Display Identification Data\r\n";
 
             NoteEDID += OutputNotesEDIDList(Data);
+            NoteEDID += OutputNotesLineString("(01) Version:      0x{0:X2}", 0, Table.Version);
+            NoteEDID += OutputNotesLineString("(02) Section Size: {0}", 0, Table.SectionSize);
+            NoteEDID += OutputNotesLineString("(03) Type:         {0}", 0, Table.Type);
+            NoteEDID += OutputNotesLineString("(04) Ex Count:     {0}", 0, Table.ExCount);
+
+            int i = 5;
+            foreach (DisplayIDBlocksTable Table in Table.DisplayIDBlocksList)
+            {
+                NoteEDID += "______________________________________________________________________\r\n";
+                NoteEDID += "(" + string.Format("{0:D2}", i) + "-" + string.Format("{0:D2}", i + Table.BlockPayload + 2) + ") " + OutputNotesDisplayIDBlocks(Table);
+                i += Table.BlockPayload + 3;
+            }
+
+            if (i != 127)
+            {
+                NoteEDID += "(" + string.Format("{0:D2}", i.ToString()) + "-" + 126.ToString() + ") No data";
+            }
+            NoteEDID += OutputNotesLineString("\r\n(127) CheckSum: OK", 0);
+
             return NoteEDID;
         }
     }
