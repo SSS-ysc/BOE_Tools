@@ -83,9 +83,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CA210Ctrl.cs" />
     <Compile Include="EDID.cs" />
-    <Compile Include="DDCCI.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -38,6 +38,7 @@ namespace EDIDApp
     {
         NoDecompile,
         Success,
+
         VersionError,
     }
     enum BlockTagType
@@ -386,10 +387,7 @@ namespace EDIDApp
         public EDIDEstablishedTimings EstablishedTiming;
         public EDIDStandardTiming[] StandardTiming;
 
-        public EDIDDescriptorsType Descriptors1;
-        public EDIDDescriptorsType Descriptors2;
-        public EDIDDescriptorsType Descriptors3;
-        public EDIDDescriptorsType Descriptors4;
+        public EDIDDescriptorsType[] Descriptors;
 
         public EDIDDetailedTimingTable MainTiming;
         public EDIDDetailedTimingTable SecondMainTiming;
@@ -520,9 +518,14 @@ namespace EDIDApp
     {
         public EDIDVideoStandard Video_definition;
 
-        public byte AnalogSignalLevelStandard; //(EDID1.3 VGA)
+        public byte AnalogSignalLevelStandard; //(Analog)
         public byte AnalogVideoSetup;
-        public byte AnalogSyncInputsSupported;
+        public byte AnalogSeparateSyncSupport;
+        public byte AnalogCompositeSyncSupport;
+        public byte AnalogSOGSupport;
+        public byte AnalogSerrationOnVsync;
+
+        public byte DigitalDFP1X; //EDID 1.3 Digital
 
         public EDIDColorBitDepth DigitalColorDepth; //(EDID1.4 HDMI)
         public EDIDDigitalVideoStandard DigitalStandard;
@@ -636,7 +639,7 @@ namespace EDIDApp
         }
         private EDIDDescriptorsType DecodeDisplayDescriptor(byte[] Data)
         {
-            if ((Data[0] != 0x00) && (Data[1] != 0x00) && (Data[2] != 0x00))
+            if (!((Data[0] == 0) && (Data[1] == 0) && (Data[2] == 0)))
             {
                 Table.SecondMainTiming = DecodeDetailedTimingData(Data);
                 return EDIDDescriptorsType.SecondMainTiming;
@@ -740,25 +743,25 @@ namespace EDIDApp
             //20-24 EDID_Basic
             //20
             Table.Basic.Video_definition = (EDIDVideoStandard)((Data[20] & 0x80) >> 7);
-            if (Table.Version == EDIDversion.V14)
+            if (Table.Basic.Video_definition == EDIDVideoStandard.Analog)
             {
-                if (Table.Basic.Video_definition == EDIDVideoStandard.Digital)//EDID1.4 Digital
-                {
-                    Table.Basic.DigitalColorDepth = (EDIDColorBitDepth)((Data[20] & 0x70) >> 4);
-
-                    Table.Basic.DigitalStandard = (EDIDDigitalVideoStandard)(Data[20] & 0x0F);
-                }
+                Table.Basic.AnalogSignalLevelStandard = (byte)((Data[20] & 0x60) >> 5);
+                Table.Basic.AnalogVideoSetup = (byte)((Data[20] & 0x10) >> 4);
+                Table.Basic.AnalogSeparateSyncSupport = (byte)((Data[20] & 0x08) >> 3);
+                Table.Basic.AnalogCompositeSyncSupport = (byte)((Data[20] & 0x04) >> 2);
+                Table.Basic.AnalogSOGSupport = (byte)((Data[20] & 0x02) >> 1);
+                Table.Basic.AnalogSerrationOnVsync = (byte)((Data[20] & 0x01));
             }
             else
             {
-                if (Table.Basic.Video_definition == EDIDVideoStandard.Digital)//EDID1.3 Digital
+                if (Table.Version == EDIDversion.V14)
                 {
+                    Table.Basic.DigitalColorDepth = (EDIDColorBitDepth)((Data[20] & 0x70) >> 4);
+                    Table.Basic.DigitalStandard = (EDIDDigitalVideoStandard)(Data[20] & 0x0F);
                 }
                 else
                 {
-                    Table.Basic.AnalogSignalLevelStandard = (byte)((Data[20] & 0x60) >> 5);//?
-                    Table.Basic.AnalogVideoSetup = (byte)((Data[20] & 0x10) >> 4);//?
-                    Table.Basic.DigitalColorDepth = (EDIDColorBitDepth)(Data[20] & 0x0F);//?
+                    Table.Basic.DigitalDFP1X = (byte)((Data[20] & 0x01));
                 }
             }
             //21-22
@@ -797,9 +800,16 @@ namespace EDIDApp
             }
             else
             {
-                Table.Basic.FeatureSupport.ColorEncodingFormat = (ColorEncoding)((Data[24] & 0x18) >> 3);
-                Table.Basic.FeatureSupport.ContinuousFrequency = GetByteBitSupport(Data[24], 0);
-
+                if(Table.Basic.Video_definition == EDIDVideoStandard.Analog)
+                {
+                    Table.Basic.FeatureSupport.DisplayColorType = (ColorType)((Data[24] & 0x18) >> 3);
+                    Table.Basic.FeatureSupport.GTFstandard = GetByteBitSupport(Data[24], 0);
+                }
+                else
+                {
+                    Table.Basic.FeatureSupport.ColorEncodingFormat = (ColorEncoding)((Data[24] & 0x18) >> 3);
+                    Table.Basic.FeatureSupport.ContinuousFrequency = GetByteBitSupport(Data[24], 0);
+                }
             }
 
             //25-34 EDID_Color
@@ -840,39 +850,40 @@ namespace EDIDApp
                 Table.StandardTiming[i] = DecodeStandardTimingData(Data[38 + i * 2], Data[39 + i * 2]);
             }
 
+            Table.Descriptors = new EDIDDescriptorsType[4];
             byte[] DsecriptorTable = new byte[18];
             //54-71 EDID_Main_Timing (Display Dsecriptor 1)
             if (Data[54] == 0x00)
                 return DecodeError.NoMainTimingError;
-            Table.Descriptors1 = EDIDDescriptorsType.MainTiming;
+            Table.Descriptors[0] = EDIDDescriptorsType.MainTiming;
             Array.Copy(Data, 54, DsecriptorTable, 0, 18);
             Table.MainTiming = DecodeDetailedTimingData(DsecriptorTable);
 
             //72-89 Detailed Timing / Display Dsecriptor 2
             if (Data[75] == 0x00)
-                Table.Descriptors2 = EDIDDescriptorsType.Undefined;
+                Table.Descriptors[1] = EDIDDescriptorsType.Undefined;
             else
             {
                 Array.Copy(Data, 72, DsecriptorTable, 0, 18);
-                Table.Descriptors2 = DecodeDisplayDescriptor(DsecriptorTable);
+                Table.Descriptors[1] = DecodeDisplayDescriptor(DsecriptorTable);
             }
 
             //90-107 Detailed Timing / Display Dsecriptor 3
             if (Data[93] == 0x00)
-                Table.Descriptors3 = EDIDDescriptorsType.Undefined;
+                Table.Descriptors[2] = EDIDDescriptorsType.Undefined;
             else
             {
                 Array.Copy(Data, 90, DsecriptorTable, 0, 18);
-                Table.Descriptors3 = DecodeDisplayDescriptor(DsecriptorTable);
+                Table.Descriptors[2] = DecodeDisplayDescriptor(DsecriptorTable);
             }
 
             //108-125 Detailed Timing / Display Dsecriptor 4
             if (Data[111] == 0x00)
-                Table.Descriptors4 = EDIDDescriptorsType.Undefined;
+                Table.Descriptors[3] = EDIDDescriptorsType.Undefined;
             else
             {
                 Array.Copy(Data, 108, DsecriptorTable, 0, 18);
-                Table.Descriptors4 = DecodeDisplayDescriptor(DsecriptorTable);
+                Table.Descriptors[3] = DecodeDisplayDescriptor(DsecriptorTable);
             }
 
             //126 EDID_Ex_Block_Count
@@ -893,6 +904,57 @@ namespace EDIDApp
         }
         internal DecompileError DecompileBaseBlock()
         {
+            Data = new byte[128];
+            if (Table.Version == EDIDversion.V13)
+            {
+                Data[18] = 0x01;
+                Data[19] = 0x03;
+            }
+            else if (Table.Version == EDIDversion.V14)
+            {
+                Data[18] = 0x01;
+                Data[19] = 0x04;
+            }
+            else
+                return DecompileError.VersionError;
+
+            Data[0] = 0x00;
+            Data[1] = 0xFF;
+            Data[2] = 0xFF;
+            Data[3] = 0xFF;
+            Data[4] = 0xFF;
+            Data[5] = 0xFF;
+            Data[6] = 0xFF;
+            Data[7] = 0x00;
+            if (Table.IDManufacturerName != null)
+            {
+                int a = (int)Table.IDManufacturerName[0];
+                int b = (int)Table.IDManufacturerName[1];
+                int c = (int)Table.IDManufacturerName[2];
+                Data[8] = (byte)(((a & 0x1F) << 2) + ((b & 0x18) >> 3));
+                Data[9] = (byte)(((b & 0x07) << 5) + (c & 0x1F));
+            }
+
+            Data[10] = (byte)Table.IDProductCode;
+            Data[11] = (byte)(Table.IDProductCode >> 8);
+
+            Data[12] = Convert.ToByte(Table.IDSerialNumber.Substring(6, 2), 16);
+            Data[13] = Convert.ToByte(Table.IDSerialNumber.Substring(4, 2), 16);
+            Data[14] = Convert.ToByte(Table.IDSerialNumber.Substring(2, 2), 16);
+            Data[15] = Convert.ToByte(Table.IDSerialNumber.Substring(0, 2), 16);
+
+            if (Table.ModelYear == 0)
+            {
+                Data[16] = (byte)Table.Week;
+                Data[17] = (byte)(Table.Year - 1990);
+            }
+            else
+            {
+                Data[16] = 0xFF;
+                Data[17] = (byte)(Table.ModelYear - 1990);
+            }
+           
+
 
             return DecompileError.Success;
         }
@@ -1008,13 +1070,13 @@ namespace EDIDApp
                     NoteEDID += OutputNotesLineString("", "(38-53) ".Length, Table.StandardTiming[i].TimingWidth, "x", Table.StandardTiming[i].TimingHeight, " @ ", Table.StandardTiming[i].TimingRate, "Hz");
             }
             NoteEDID += "______________________________________________________________________\r\n";
-            NoteEDID += "(54-71) Descriptor Block 1:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors1);
+            NoteEDID += "(54-71) Descriptor Block 1:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors[0]);
             NoteEDID += "______________________________________________________________________\r\n";
-            NoteEDID += "(72-89) Descriptor Block 2:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors2);
+            NoteEDID += "(72-89) Descriptor Block 2:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors[1]);
             NoteEDID += "______________________________________________________________________\r\n";
-            NoteEDID += "(90-107) Descriptor Block 3:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors3);
+            NoteEDID += "(90-107) Descriptor Block 3:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors[2]);
             NoteEDID += "______________________________________________________________________\r\n";
-            NoteEDID += "(108-125) Descriptor Block 4:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors4);
+            NoteEDID += "(108-125) Descriptor Block 4:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors[3]);
 
             NoteEDID += OutputNotesLineString("(126) Extension EDID Block(s):", 0, Table.ExBlockCount);
             NoteEDID += OutputNotesLineString("(127) CheckSum: OK", 0);
@@ -1050,6 +1112,32 @@ namespace EDIDApp
 
         public List<EDIDDetailedTimingTable> CEATimingList;
         public byte Checksum;
+        public bool IsDataBlockInList(CEATagType tagtype)
+        {
+            foreach (CEABlocksTable cealist in CEABlocksList)
+            {
+                if (tagtype == cealist.Block)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public byte DataBlockIndex(CEATagType tagtype)
+        {
+            if(CEABlocksList.Count == 0)
+            {
+                return 255;
+            }
+            for(byte i=0;i<CEABlocksList.Count;i++)
+            {
+                if(tagtype == CEABlocksList[i].Block)
+                {
+                    return i;
+                }
+            }
+            return 255;
+        }
     };
     enum CEATagType
     {
@@ -1115,7 +1203,20 @@ namespace EDIDApp
     }
     enum AudioFormatExType
     {
-        Reserved,
+        Reserved1,
+        Reserved2,
+        Reserved3,
+        Reserved4,
+        MPEG4_HE_AAC,
+        MPEG4_HE_AAC_V2,
+        MPEG4_HE_AAC_LC,
+        DRA,
+        MPEG4_HE_AAC_Surround,
+        Reserved5,
+        MPEG4_HE_AAC_LC_Surround,
+        MPEG_H_3D_Audio,
+        AC_4,
+        LPCM_3D_Audio,
     }
     enum VideoCapabilityType
     {
@@ -1473,6 +1574,35 @@ namespace EDIDApp
                                     "5120x2160p@50Hz64:27",
                                     "5120x2160p@59.94Hz/60Hz64:27",
                                     "5120x2160p@100Hz64:27", // VIC 127 ,CTA-861-G
+
+                                    "Forbidden",
+                                    "5120x2160p@119.88Hz/120Hz64:27",// VIC 193
+                                    "7680x4320p@23.98Hz/24Hz16:9",
+                                    "7680x4320p@25Hz16:9",
+                                    "7680x4320p@29.97Hz/30Hz16:9",
+                                    "7680x4320p@47.95Hz/48Hz16:9",
+                                    "7680x4320p@50Hz16:9",
+                                    "7680x4320p@59.94Hz/60Hz16:9",
+                                    "7680x4320p@100Hz16:9",
+                                    "7680x4320p@119.88Hz/120Hz16:9",
+                                    "7680x4320p@23.98Hz/24Hz64:27",
+                                    "7680x4320p@25Hz64:27",
+                                    "7680x4320p@29.97Hz/30Hz64:27",
+                                    "7680x4320p@47.95Hz/48Hz64:27",
+                                    "7680x4320p@50Hz64:27",
+                                    "7680x4320p@59.94Hz/60Hz64:27",
+                                    "7680x4320p@100Hz64:27",
+                                    "7680x4320p@119.88Hz/120Hz64:27",
+                                    "10240x4320p@23.98Hz/24Hz64:27",
+                                    "10240x4320p@25Hz64:27",
+                                    "10240x4320p@29.97Hz/30Hz64:27",
+                                    "10240x4320p@47.95Hz/48Hz64:27",
+                                    "10240x4320p@50Hz64:27",
+                                    "10240x4320p@59.94Hz/60Hz64:27",
+                                    "10240x4320p@100Hz64:27",
+                                    "10240x4320p@119.88Hz/120Hz64:27",
+                                    "4096x2160p@100Hz256:135",
+                                    "4096x2160p@119.88Hz/120Hz256:135",
         };
         string[] HDMIVICcode = { "", "3840x2160p@29.97Hz/30Hz", "3840x2160p@25Hz", "3840x2160p@23.98Hz/24Hz", "4096x2160p@23.98Hz/24Hz" };
         private BlockAudio DecodeCEAAudioBlock(byte[] Data, int index)
@@ -1480,7 +1610,7 @@ namespace EDIDApp
             BlockAudio Audio = new BlockAudio();
 
             Audio.Type = (AudioFormatType)(byte)(Data[index] >> 3);
-
+            Audio.Channels = (byte)(Data[index] & 0x07);
             Audio.Freq192Khz = GetByteBitSupport(Data[index + 1], 6);
             Audio.Freq176_4Khz = GetByteBitSupport(Data[index + 1], 5);
             Audio.Freq96Khz = GetByteBitSupport(Data[index + 1], 4);
@@ -1559,7 +1689,10 @@ namespace EDIDApp
                         else
                         {
                             VIC.NativeCode = Support.unsupported;
-                            VIC.VIC = BlockData[i];
+                            if (BlockData[i] > 127)
+                                VIC.VIC = (byte)(BlockData[i] - 64);
+                            else
+                                VIC.VIC = BlockData[i];
                         }
                         Table.BlockVideoVIC.Add(VIC);
                     }
@@ -1717,7 +1850,6 @@ namespace EDIDApp
                             break;
                         default:
                             Block.UnknowIEEEID = VSDB_IEEEID;
-                            Console.WriteLine("unknow VSDB !!!!!!!!!!!!!!!!");
                             break;
                     }
                     break;
@@ -1775,7 +1907,6 @@ namespace EDIDApp
                                     break;
                                 default:
                                     Block.UnknowIEEEID = VSVDB_IEEEID;
-                                    Console.WriteLine("unknow VSVDB !!!!!!!!!!!!!!!!");
                                     break;
                             }
                             break;
@@ -1864,7 +1995,6 @@ namespace EDIDApp
                         default:
                             Block.Block = CEATagType.Extended;
                             Block.UnknowExtendedCode = BlockData[0];
-                            Console.WriteLine("unknow Extended Tag code !!!!!!!!!!!!!!!!");
                             break;
                     }
                     break;
@@ -1941,6 +2071,7 @@ namespace EDIDApp
         }
         internal DecompileError DecompileCEABlock()
         {
+            Data = new byte[0];
 
             return DecompileError.Success;
         }
@@ -2499,7 +2630,7 @@ namespace EDIDApp
         }
         internal DecompileError DecompileDisplayIDBlock()
         {
-
+            Data = new byte[0];
             return DecompileError.Success;
         }
         private string OutputNotesDisplayIDBlocks(DisplayIDBlocksTable BlocksTable)

@@ -52,57 +52,8 @@ namespace WindowsFormsApp_BOE_Tool
                 EDIDTextBox[i].TabStop = false;
                 EDIDTextBox[i].Text = "";
                 EDIDTextBox[i].TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
-                EDIDTextBox[i].KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBox_KeyPress_Check);
+                EDIDTextBox[i].ReadOnly = true;
                 Controls.Add(EDIDTextBox[i]);
-            }
-        }
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            //timer1.Start();
-        }
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-            //labelTime.Text = System.DateTime.Now.ToString();
-        }
-        private void CA_Connect_Click(object sender, EventArgs e)
-        {
-            if (CA.ca210Connect(0) == true)
-            {
-                CA.ca210SetSyncMode(0);
-                CA.ca210SetSpeed(1);
-
-                CA.ca210ZeroCal();
-            }
-        }
-        private void CA_Measure_Click(object sender, EventArgs e)
-        {
-            CA210DataStruct BOECA210;
-
-            BOECA210 = CA.ca210Measure();
-        }
-        private void DDCCI_Write_Click(object sender, EventArgs e)
-        {
-            //int a;
-
-            //if (int.TryParse(textBox1.Text, out a) == true)//字符转int
-            {
-             //   byte[] byte_buffer = new byte[] { 0x85, 0x03, 0xFB, 0x10, 0x00, (byte)a };
- 
-             //   DDCCI.BOEDCCCI_Write(byte_buffer);
-            }
-        }
-        private void DDCCI_Read_Click(object sender, EventArgs e)
-        {
-            byte[] return_buffer = new byte[10];
-            byte[] byte_buffer = new byte[] { 0x83, 0x01, 0xFB, 0x10};
-            byte i;
-
-            DDCCI.BOEDCCCI_Read(byte_buffer, return_buffer);
-
-            //label4.Text = "Read:";
-            for (i=0; i < 10; i++)
-            {
-            //    label4.Text += Convert.ToString(return_buffer[i], 16) + " ";
             }
         }
         private void Open_File_Click(object sender, EventArgs e)
@@ -154,13 +105,13 @@ namespace WindowsFormsApp_BOE_Tool
                     {
                         EDIDTextBox[i].Text = string.Format("{0:X2}", EDIDInfo.Data[i]);
                     }
-
-                    // 引用举例
-                    uiTextBox1.Text = EDIDInfo.Base.IDManufacturerName;
+                    uiRadioButtonGroup1.Visible = true;
                 }
                 else
+                {
+                    uiRadioButtonGroup1.Visible = false;
                     MessageBox.Show(EDIDInfo.Error.ToString(), "EDID解析错误");
-
+                }
                 //窗体关闭时，获取文件夹对话框的路径写入配置文件中
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 config.AppSettings.Settings["EDIDFilePath"].Value = filePath;
@@ -190,15 +141,6 @@ namespace WindowsFormsApp_BOE_Tool
                 config.Save(ConfigurationSaveMode.Modified);
             }
         }
-        private void TextBox_KeyPress_Check(object sender, KeyPressEventArgs e)
-        {
-            if (!char.IsLower(e.KeyChar) && !char.IsUpper(e.KeyChar) && !char.IsNumber(e.KeyChar) && !(e.KeyChar == '\b'))
-            {
-                //对系统表示事件已处理，及跳过该事件
-                e.Handled = true;
-            }
-        }
-
         private void uiRadioButtonGroup1_ValueChanged(object sender, int index, string text)
         {
             if (index == 0)
@@ -222,6 +164,12 @@ namespace WindowsFormsApp_BOE_Tool
                     EDIDTextBox[i].Text = string.Format("{0:X2}", EDIDInfo.Data[256 + i]);
                 }
             }
+        }
+
+        private void uiSymbolButton1_Click(object sender, EventArgs e)
+        {
+            EDID FormEDID = new EDID();
+            FormEDID.Decompile(EDIDInfo);
         }
     }
 }

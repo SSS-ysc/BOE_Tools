@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace WindowsFormsApp_BOE_Tool
+namespace DDC
 {
     internal static class DDCCI
     {
@@ -21,7 +21,6 @@ namespace WindowsFormsApp_BOE_Tool
 
         [System.Runtime.InteropServices.DllImport("kernel32.dll")]
         static extern uint GetTickCount();
-
 
         public static void Waitor(uint ms)
         {
