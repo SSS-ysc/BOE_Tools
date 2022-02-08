@@ -7,14 +7,14 @@
     <framework targetVersion="4.7.2" profile="Full" supportedRuntime="4.0.30319" />
   </compatibleFrameworks>
   <dependency>
-    <dependentAssembly dependencyType="install" codebase="BOE_MNT_Tools.exe.manifest" size="6674">
+    <dependentAssembly dependencyType="install" codebase="BOE_MNT_Tools.exe.manifest" size="6675">
       <assemblyIdentity name="BOE_MNT_Tools.exe" version="1.0.0.0" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="msil" type="win32" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>lyqRCQRSb9+rvZ6FB2KMRn+OJleY1V3X5TKhmPLCBkU=</dsig:DigestValue>
+        <dsig:DigestValue>3NYTS74bVg7c6Yn/ij0xgf693v/W4TZ2kg/PyXLNkgc=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
