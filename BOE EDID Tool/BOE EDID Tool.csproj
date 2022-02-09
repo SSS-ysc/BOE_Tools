@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{F1A8A728-E999-4741-B43A-AC96E2A5D5F3}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>WindowsFormsApp_BOE_Tool</RootNamespace>
-    <AssemblyName>BOE_MNT_Tools</AssemblyName>
+    <RootNamespace>BOE_Tool</RootNamespace>
+    <AssemblyName>BOE EDID Tool</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

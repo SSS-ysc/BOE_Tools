@@ -5,7 +5,7 @@ using System.Text;
 using System.Windows.Forms;
 using EDIDApp;
 
-namespace WindowsFormsApp_BOE_Tool
+namespace BOE_Tool
 {
     public partial class Form1 : Form
     {

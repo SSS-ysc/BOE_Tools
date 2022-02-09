@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace WindowsFormsApp_BOE_Tool
+namespace BOE_Tool
 {
     internal static class Program
     {

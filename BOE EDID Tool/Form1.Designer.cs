@@ -1,4 +1,4 @@
-﻿namespace WindowsFormsApp_BOE_Tool
+﻿namespace BOE_Tool
 {
     partial class Form1
     {
