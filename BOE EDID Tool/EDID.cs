@@ -238,6 +238,41 @@ namespace EDIDApp
         {
             byte[] Data = new byte[18];
 
+            Data[0] = (byte)((Timing.PixelClk / 10000) & 0xFF);
+            Data[1] = (byte)(((Timing.PixelClk / 10000) & 0xFF00) >> 8);
+            Data[2] = (byte)(Timing.HAdressable & 0xFF);
+            Data[3] = (byte)(Timing.HBlanking & 0xFF);
+            Data[4] = (byte)(((Timing.HAdressable & 0xF00) >> 4) + ((Timing.HBlanking & 0xF00) >> 8));
+            Data[5] = (byte)(Timing.VAdressable & 0xFF);
+            Data[6] = (byte)(Timing.VBlanking & 0xFF);
+            Data[7] = (byte)(((Timing.VAdressable & 0xF00) >> 4) + ((Timing.VBlanking & 0xF00) >> 8));
+            Data[8] = (byte)(Timing.HSyncFront & 0xFF);
+            Data[9] = (byte)(Timing.HSyncWidth & 0xFF);
+            Data[10] = (byte)(((Timing.VSyncFront & 0x0F) << 4) + (Timing.VSyncWidth & 0x0F));
+            Data[11] = (byte)(((Timing.HSyncFront & 0x300) >> 2) + ((Timing.HSyncWidth & 0x300) >> 4) + ((Timing.VSyncFront & 0x30) >> 2) + ((Timing.VSyncWidth & 0x30) >> 4));
+            Data[12] = (byte)(Timing.VideoSizeH & 0xFF);
+            Data[13] = (byte)(Timing.VideoSizeV & 0xFF);
+            Data[14] = (byte)(((Timing.VideoSizeH & 0xF00) >> 4) + ((Timing.VideoSizeV & 0xF00) >> 8));
+            Data[15] = (byte)(Timing.HBorder);
+            Data[16] = (byte)(Timing.VBorder);
+            Data[17] = SetByteBitSupport(Data[17], 7, (Support)Timing.Interface);
+            Data[17] |= (byte)((byte)(Timing.StereoFormat) << 5);
+            Data[17] |= (byte)((byte)(Timing.SyncType) << 3);
+            if (Timing.SyncType < SyncType.Digital_Composite)
+            {
+                Data[17] |= SetByteBitSupport(Data[17], 1, (Support)Timing.AnalogSync);
+                Data[17] |= SetByteBitSupport(Data[17], 2, (Support)Timing.Serrations);
+            }
+            else if (Timing.SyncType == SyncType.Digital_Composite)
+            {
+                Data[17] |= SetByteBitSupport(Data[17], 1, (Support)Timing.HSync);
+                Data[17] |= SetByteBitSupport(Data[17], 2, (Support)Timing.Serrations);
+            }
+            else if (Timing.SyncType == SyncType.Digital_Separate)
+            {
+                Data[17] |= SetByteBitSupport(Data[17], 1, (Support)Timing.HSync);
+                Data[17] |= SetByteBitSupport(Data[17], 2, (Support)Timing.VSync);
+            }
             return Data;
         }
         protected string OutputNotesLineString(string Notes, int ValueOffset, params object[] Value)
@@ -680,6 +715,7 @@ namespace EDIDApp
                     Table.Limits.HorizontalMax = (ushort)(Data[8] + (Table.Limits.HorizontalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
                     Table.Limits.PixelClkMax = (ushort)(Data[9] * 10);
                     Table.Limits.VideoTiming = (VideoTimingType)(Data[10]);
+
                     return EDIDDescriptorsType.RangeLimits;
                 case 0xFC:
                     Table.Name = Encoding.ASCII.GetString(Data, 5, 13);
@@ -970,12 +1006,16 @@ namespace EDIDApp
         }
         private (byte, byte) DecompileStandardTimingData(EDIDStandardTiming StandardTimingTable)
         {
-            byte Data0 = 0, Data1 = 0;
+            byte Data0 = 0x00, Data1 = 0x00;
             if (StandardTimingTable.TimingSupport == Support.supported)
             {
-                Data0 = (byte)(StandardTimingTable.TimingHeight / 8 - 31);
+                Data0 = (byte)(StandardTimingTable.TimingWidth / 8 - 31);
                 Data1 |= (byte)((byte)StandardTimingTable.TimingRatio << 6);
                 Data1 |= (byte)(StandardTimingTable.TimingRate - 60);
+            }
+            else
+            {
+                Data0 = 0x01; Data1 = 0x01;
             }
 
             return (Data0, Data1);
@@ -983,6 +1023,7 @@ namespace EDIDApp
         private byte[] DecompileDisplayDescriptor(EDIDDescriptorsType Type)
         {
             byte[] Data = new byte[18];
+            int i;
             switch (Type)
             {
                 case EDIDDescriptorsType.MainTiming:
@@ -992,22 +1033,67 @@ namespace EDIDApp
                     Data = DecompileDetailedTimingData(Table.SecondMainTiming);
                     break;
                 case EDIDDescriptorsType.ProductSN:
+                    i = 0;
+                    Data[3] = 0xFF;
+                    foreach (char c in Table.SN)
+                    {
+                        if (i < 13)
+                        {
+                            Data[5 + i] = (byte)c;
+                            i++;
+                        }
+                    }
                     break;
                 case EDIDDescriptorsType.AlphanumericData:
+                    Data[3] = 0xFE;
                     break;
                 case EDIDDescriptorsType.RangeLimits:
+                    Data[3] = 0xFD;
+                    Data[4] = (byte)((byte)(Table.Limits.VerticalOffest) + ((byte)(Table.Limits.HorizontalOffest) << 2));
+                    Data[5] = (byte)(Table.Limits.VerticalMin - (Table.Limits.VerticalOffest == LimitsHVOffsetsType.Max255Min255 ? 255 : 0));
+                    Data[6] = (byte)(Table.Limits.VerticalMax - (Table.Limits.VerticalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
+                    Data[7] = (byte)(Table.Limits.HorizontalMin - (Table.Limits.HorizontalOffest == LimitsHVOffsetsType.Max255Min255 ? 255 : 0));
+                    Data[8] = (byte)(Table.Limits.HorizontalMax - (Table.Limits.HorizontalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
+                    if(Table.Limits.PixelClkMax != 0)
+                        Data[9] = (byte)(Table.Limits.PixelClkMax / 10);
+                    Data[10] = (byte)Table.Limits.VideoTiming;
+                    if (Table.Limits.VideoTiming <= VideoTimingType.Range_Limits_Only)
+                    {
+                        Data[11] = 0x0A;
+                        Data[12] = 0x20;
+                        Data[13] = 0x20;
+                        Data[14] = 0x20;
+                        Data[15] = 0x20;
+                        Data[16] = 0x20;
+                        Data[17] = 0x20;
+                    }
                     break;
                 case EDIDDescriptorsType.ProductName:
+                    i = 0;
+                    Data[3] = 0xFC;
+                    foreach (char c in Table.Name)
+                    {
+                        if (i < 13)
+                        {
+                            Data[5 + i] = (byte)c;
+                            i++;
+                        }
+                    }
                     break;
                 case EDIDDescriptorsType.ColorData:
+                    Data[3] = 0xFB;
                     break;
                 case EDIDDescriptorsType.StandardTiming:
+                    Data[3] = 0xFA;
                     break;
                 case EDIDDescriptorsType.DCMdata:
+                    Data[3] = 0xF9;
                     break;
                 case EDIDDescriptorsType.CVT3ByteTiming:
+                    Data[3] = 0xF8;
                     break;
                 case EDIDDescriptorsType.EstablishedTiming:
+                    Data[3] = 0xF7;
                     break;
             }
             return Data;
@@ -1163,7 +1249,7 @@ namespace EDIDApp
                 Data[38 + i * 2 + 1] = DecompileStandardTimingData(Table.StandardTiming[i]).Item2;
             }
 
-            int index = 39;
+            int index = 54;
             foreach (EDIDDescriptorsType Type in Table.Descriptors)
             {
                 Array.Copy(DecompileDisplayDescriptor(Type), 0, Data, index, 18);
@@ -1177,7 +1263,7 @@ namespace EDIDApp
             {
                 checksum += Data[i];
             }
-            Data[127] = (byte)~checksum;
+            Data[127] = (byte)((byte)~checksum + 1);
 
             return DecompileError.Success;
         }
@@ -1392,6 +1478,17 @@ namespace EDIDApp
                 }
             }
             return 255;
+        }
+        public byte AllDataBlocksLength()
+        {
+            byte Length = 0;
+
+            foreach (CEABlocksTable cealist in CEABlocksList)
+            {
+                Length += (byte)(cealist.BlockPayload + 1);
+            }
+
+            return Length;
         }
     };
     enum CEATagType
@@ -2864,7 +2961,6 @@ namespace EDIDApp
                 int blocknumber = 0;
                 while ((Data[blockIndex + 2] != 0x00) && (blockIndex < Table.SectionSize - 4)) // BlockPayload != 0
                 {
-                    Console.WriteLine("{0}", blockIndex);
                     Table.DisplayIDBlocksList.Add(DecodeDisplayIDDataBlock(blockIndex));
 
                     blockIndex += Table.DisplayIDBlocksList[blocknumber].BlockPayload + 3;//Block Data length + Tag Code + Revision + Payload

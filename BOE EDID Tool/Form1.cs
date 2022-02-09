@@ -90,7 +90,16 @@ namespace BOE_Tool
         private void Decompile_Click(object sender, EventArgs e)
         {
             EDID FormEDID = new EDID();
-            FormEDID.Decompile(EDIDInfo);
+            byte[] Decompile;
+            Decompile = FormEDID.Decompile(EDIDInfo).Data;
+
+            int i = 0;
+            foreach (byte b in Decompile)
+            {
+                if(EDIDInfo.Data[i]!= Decompile[i])
+                    Console.WriteLine("{0}: {1:X2} ,{2:X2}", i, EDIDInfo.Data[i], Decompile[i]);
+                i++;
+            }
         }
     }
 }
