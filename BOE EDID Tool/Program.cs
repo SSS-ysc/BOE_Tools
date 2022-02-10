@@ -16,10 +16,6 @@ namespace BOE_Tool
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-
-            //Console.WriteLine("Size of int: {0}", sizeof(int));
-            //Console.ReadLine();
-
             Application.Run(new Form1());
         }
     }

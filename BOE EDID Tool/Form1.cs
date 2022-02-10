@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define debug
+
+using System;
 using System.Configuration;
 using System.IO;
 using System.Text;
@@ -15,12 +17,15 @@ namespace BOE_Tool
         public Form1()
         {
             InitializeComponent();
+#if debug
+            button3.Visible = true;
+#endif
         }
         private void Open_File_Click(object sender, EventArgs e)
         {
-            openFileDialog1.InitialDirectory = "@" + System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            openFileDialog1.InitialDirectory = "@" + Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             openFileDialog1.RestoreDirectory = false;
-            openFileDialog1.Filter = "txt files (.txt)|*.txt";
+            openFileDialog1.Filter = "txt files (*.txt)|*.txt;|dat files (*.dat)|*.dat;|h files (*.h)|*.h";
             openFileDialog1.FilterIndex = 1;
             openFileDialog1.FileName = "";
 
@@ -28,10 +33,9 @@ namespace BOE_Tool
             {
                 string filePath = openFileDialog1.FileName;
                 textBox1.Text = filePath;
-
                 button4.Text = "解析";
+                EDIDInfo.Error = DecodeError.NoDecode;
 
-                //窗体关闭时，获取文件夹对话框的路径写入配置文件中
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 config.AppSettings.Settings["EDIDFilePath"].Value = filePath;
                 config.Save(ConfigurationSaveMode.Modified);
@@ -39,6 +43,11 @@ namespace BOE_Tool
         }
         private void Decode_Click(object sender, EventArgs e)
         {
+            if (Path.GetFileName(textBox1.Text) == string.Empty)
+            {
+                MessageBox.Show("路径无效", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
             string UnicodeText = "";
             using (FileStream fsRead = new FileStream(textBox1.Text, FileMode.Open, FileAccess.Read))
             {
@@ -56,7 +65,7 @@ namespace BOE_Tool
 
             if (EDIDInfo.Error != DecodeError.Success)
             {
-                MessageBox.Show(EDIDInfo.Error.ToString(), "EDID解析错误");
+                MessageBox.Show(EDIDInfo.Error.ToString(), "解析错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             else
             {
@@ -65,11 +74,19 @@ namespace BOE_Tool
         }
         private void Save_File_Click(object sender, EventArgs e)
         {
-            saveFileDialog1.InitialDirectory = "@" + ConfigurationManager.AppSettings["EDIDFilePath"];
-            saveFileDialog1.RestoreDirectory = false;
-            saveFileDialog1.Filter = ".txt文件(.txt)|*.txt |.h文件（.h）|*.h";
+            if (EDIDInfo.Error != DecodeError.Success)
+            {
+                MessageBox.Show("未解析", "保存错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            saveFileDialog1.InitialDirectory = "@" + Path.GetDirectoryName(ConfigurationManager.AppSettings["EDIDFilePath"]);
+            saveFileDialog1.RestoreDirectory = true;
+            if (checkBox1.Checked == true)
+                saveFileDialog1.Filter = "txt files (*.txt)|*.txt";
+            else
+                saveFileDialog1.Filter = "txt files (*.txt)|*.txt;|h files (*.h)|*.h;|dat files (*.dat)|*.dat";
             saveFileDialog1.FilterIndex = 1;
-            saveFileDialog1.FileName = "EDID_test";
+            saveFileDialog1.FileName = Path.GetFileNameWithoutExtension(textBox1.Text) + "_Analysis";
             saveFileDialog1.AddExtension = true;
 
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
@@ -80,19 +97,18 @@ namespace BOE_Tool
                 else
                     FormEDID.Output0xEDIDText(EDIDInfo, saveFileDialog1.FileName);
 
-                //窗体关闭时，获取文件夹对话框的路径写入配置文件中
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 config.AppSettings.Settings["EDIDFilePath"].Value = saveFileDialog1.FileName;
                 config.Save(ConfigurationSaveMode.Modified);
             }
         }
-
         private void Decompile_Click(object sender, EventArgs e)
         {
             EDID FormEDID = new EDID();
             byte[] Decompile;
             Decompile = FormEDID.Decompile(EDIDInfo).Data;
 
+#if debug
             int i = 0;
             foreach (byte b in Decompile)
             {
@@ -100,6 +116,11 @@ namespace BOE_Tool
                     Console.WriteLine("{0}: {1:X2} ,{2:X2}", i, EDIDInfo.Data[i], Decompile[i]);
                 i++;
             }
+#endif
+        }
+        private void Help_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("可解析任意格式的EDID数据\n选中“厂内格式”可保存为解析后的文本文档，否则保存为十六进制格式", "帮助", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

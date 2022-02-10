@@ -37,6 +37,7 @@
             this.button3 = new System.Windows.Forms.Button();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.button4 = new System.Windows.Forms.Button();
+            this.button5 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // openFileDialog1
@@ -48,14 +49,14 @@
             this.textBox1.Location = new System.Drawing.Point(23, 21);
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
-            this.textBox1.Size = new System.Drawing.Size(350, 25);
+            this.textBox1.Size = new System.Drawing.Size(355, 28);
             this.textBox1.TabIndex = 0;
             this.textBox1.TabStop = false;
             this.textBox1.WordWrap = false;
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(382, 21);
+            this.button1.Location = new System.Drawing.Point(384, 21);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(96, 29);
             this.button1.TabIndex = 1;
@@ -65,9 +66,9 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(124, 66);
+            this.button2.Location = new System.Drawing.Point(125, 66);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(84, 29);
+            this.button2.Size = new System.Drawing.Size(96, 29);
             this.button2.TabIndex = 3;
             this.button2.Text = "保存";
             this.button2.UseVisualStyleBackColor = true;
@@ -75,12 +76,13 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(382, 66);
+            this.button3.Location = new System.Drawing.Point(335, 66);
             this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(96, 29);
+            this.button3.Size = new System.Drawing.Size(43, 29);
             this.button3.TabIndex = 5;
-            this.button3.Text = "反编译测试";
+            this.button3.Text = "反";
             this.button3.UseVisualStyleBackColor = true;
+            this.button3.Visible = false;
             this.button3.Click += new System.EventHandler(this.Decompile_Click);
             // 
             // checkBox1
@@ -88,9 +90,9 @@
             this.checkBox1.AutoSize = true;
             this.checkBox1.Checked = true;
             this.checkBox1.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox1.Location = new System.Drawing.Point(230, 72);
+            this.checkBox1.Location = new System.Drawing.Point(227, 70);
             this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(89, 19);
+            this.checkBox1.Size = new System.Drawing.Size(102, 22);
             this.checkBox1.TabIndex = 4;
             this.checkBox1.Text = "厂内格式";
             this.checkBox1.UseVisualStyleBackColor = true;
@@ -105,9 +107,20 @@
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.Decode_Click);
             // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(384, 66);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(96, 29);
+            this.button5.TabIndex = 6;
+            this.button5.Text = "帮助说明";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.Help_Click);
+            // 
             // Form1
             // 
-            this.ClientSize = new System.Drawing.Size(507, 119);
+            this.ClientSize = new System.Drawing.Size(498, 112);
+            this.Controls.Add(this.button5);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.button3);
@@ -133,6 +146,7 @@
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button button5;
     }
 }
 

@@ -40,6 +40,10 @@ namespace EDIDApp
         Success,
 
         VersionError,
+
+        CEAVersionError,
+
+        DisplayIDVersionError,
     }
     enum BlockTagType
     {
@@ -169,7 +173,7 @@ namespace EDIDApp
                 a |= (byte)(0x01 << X);
             }
             else
-            { 
+            {
                 a &= (byte)~(0x01 << X);
             }
 
@@ -425,6 +429,12 @@ namespace EDIDApp
             return Notes;
         }
     }
+    internal interface EDIDFunc
+    {
+        DecodeError Decode();
+        DecompileError Decompile();
+        string OutputNotes();
+    }
     /************************** Base Block *********************/
     #region
     struct BaseTable
@@ -635,7 +645,7 @@ namespace EDIDApp
         public VideoTimingType VideoTiming;
     };
     #endregion
-    internal class EDIDBase : EDIDCommon
+    internal class EDIDBase : EDIDCommon, EDIDFunc
     {
         internal BaseTable Table;
         internal byte[] Data;
@@ -734,7 +744,7 @@ namespace EDIDApp
                     return EDIDDescriptorsType.Undefined;
             }
         }
-        internal DecodeError DecodeBaseBlock()
+        public DecodeError Decode()
         {
             Table = new BaseTable();
             //00-07
@@ -907,31 +917,19 @@ namespace EDIDApp
             Array.Copy(Data, 54, DsecriptorTable, 0, 18);
             Table.MainTiming = DecodeDetailedTimingData(DsecriptorTable);
 
-            //72-89 Detailed Timing / Display Dsecriptor 2
-            if (Data[75] == 0x00)
-                Table.Descriptors[1] = EDIDDescriptorsType.Undefined;
-            else
+            //72-125 Detailed Timing / Display Dsecriptor 2 - 4
+            for (int i = 1; i < 4; i++)
             {
-                Array.Copy(Data, 72, DsecriptorTable, 0, 18);
-                Table.Descriptors[1] = DecodeDisplayDescriptor(DsecriptorTable);
-            }
-
-            //90-107 Detailed Timing / Display Dsecriptor 3
-            if (Data[93] == 0x00)
-                Table.Descriptors[2] = EDIDDescriptorsType.Undefined;
-            else
-            {
-                Array.Copy(Data, 90, DsecriptorTable, 0, 18);
-                Table.Descriptors[2] = DecodeDisplayDescriptor(DsecriptorTable);
-            }
-
-            //108-125 Detailed Timing / Display Dsecriptor 4
-            if (Data[111] == 0x00)
-                Table.Descriptors[3] = EDIDDescriptorsType.Undefined;
-            else
-            {
-                Array.Copy(Data, 108, DsecriptorTable, 0, 18);
-                Table.Descriptors[3] = DecodeDisplayDescriptor(DsecriptorTable);
+                if (Data[54 + i * 18 + 3] == 0x00)
+                    Table.Descriptors[i] = EDIDDescriptorsType.Undefined;
+                else
+                {
+                    Array.Copy(Data, 54 + i * 18, DsecriptorTable, 0, 18);
+                    Table.Descriptors[i] = DecodeDisplayDescriptor(DsecriptorTable);
+#if debug
+                    Console.WriteLine("Base Descriptors: {0}", Table.Descriptors[i]);
+#endif
+                }
             }
 
             //126 EDID_Ex_Block_Count
@@ -1054,7 +1052,7 @@ namespace EDIDApp
                     Data[6] = (byte)(Table.Limits.VerticalMax - (Table.Limits.VerticalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
                     Data[7] = (byte)(Table.Limits.HorizontalMin - (Table.Limits.HorizontalOffest == LimitsHVOffsetsType.Max255Min255 ? 255 : 0));
                     Data[8] = (byte)(Table.Limits.HorizontalMax - (Table.Limits.HorizontalOffest >= LimitsHVOffsetsType.Max255MinZero ? 255 : 0));
-                    if(Table.Limits.PixelClkMax != 0)
+                    if (Table.Limits.PixelClkMax != 0)
                         Data[9] = (byte)(Table.Limits.PixelClkMax / 10);
                     Data[10] = (byte)Table.Limits.VideoTiming;
                     if (Table.Limits.VideoTiming <= VideoTimingType.Range_Limits_Only)
@@ -1098,7 +1096,7 @@ namespace EDIDApp
             }
             return Data;
         }
-        internal DecompileError DecompileBaseBlock()
+        public DecompileError Decompile()
         {
             Data = new byte[128];
             if (Table.Version == EDIDversion.V13)
@@ -1161,7 +1159,7 @@ namespace EDIDApp
                 Data[20] = SetByteBitSupport(Data[20], 0, Table.Basic.AnalogSerrationOnVsync);
             }
             else
-            {                    
+            {
                 Data[20] = 0x80;
                 if (Table.Version == EDIDversion.V14)
                 {
@@ -1306,7 +1304,7 @@ namespace EDIDApp
             }
             return Notes;
         }
-        internal string OutputNotesEDIDBase()
+        public string OutputNotes()
         {
             int ValueOffset = 50;
             int i;
@@ -1327,7 +1325,7 @@ namespace EDIDApp
             if (Table.Basic.Video_definition == EDIDVideoStandard.Analog)
             {
                 string[] AnglogSignalLevel = { "0.700 : 0.300 : 1.000 V p-p", "0.714 : 0.286 : 1.000 V p-p", "1.000 : 0.400 : 1.400 V p-p", "0.700 : 0.000 : 0.700 V p-p" };
-                NoteEDID += OutputNotesLineString("     Signal Level: {0}\r\n     {1}{2}{3}{4}{5}", 0, 
+                NoteEDID += OutputNotesLineString("     Signal Level: {0}\r\n     {1}{2}{3}{4}{5}", 0,
                     AnglogSignalLevel[Table.Basic.AnalogSignalLevelStandard],
                     GetSupportString("Blank-to-Black setup/", Table.Basic.AnalogVideoSetup),
                     GetSupportString("Separate Sync H & V Signals/", Table.Basic.AnalogSeparateSyncSupport),
@@ -1466,13 +1464,13 @@ namespace EDIDApp
         }
         public byte DataBlockIndex(CEATagType tagtype)
         {
-            if(CEABlocksList.Count == 0)
+            if (CEABlocksList.Count == 0)
             {
                 return 255;
             }
-            for(byte i=0;i<CEABlocksList.Count;i++)
+            for (byte i = 0; i < CEABlocksList.Count; i++)
             {
-                if(tagtype == CEABlocksList[i].Block)
+                if (tagtype == CEABlocksList[i].Block)
                 {
                     return i;
                 }
@@ -1790,7 +1788,7 @@ namespace EDIDApp
         public int UnknowIEEEID;
     }
     #endregion
-    internal class EDIDCEA : EDIDCommon
+    internal class EDIDCEA : EDIDCommon, EDIDFunc
     {
         internal CEATable Table;
         internal byte[] Data;
@@ -2060,7 +2058,7 @@ namespace EDIDApp
                             Table.BlockHDMILLC.PhyAddressB = (byte)(BlockData[3] & 0x0F);
                             Table.BlockHDMILLC.PhyAddressC = (byte)((BlockData[4] & 0xF0) >> 4);
                             Table.BlockHDMILLC.PhyAddressD = (byte)(BlockData[4] & 0x0F);
-                            if (Block.BlockPayload >= 5)
+                            if (Block.BlockPayload > 5)
                             {
                                 Table.BlockHDMILLC.ExtensionFields = Support.supported;
                                 Table.BlockHDMILLC.AllFeature = GetByteBitSupport(BlockData[5], 7);
@@ -2069,9 +2067,9 @@ namespace EDIDApp
                                 Table.BlockHDMILLC.DC_30bit = GetByteBitSupport(BlockData[5], 4);
                                 Table.BlockHDMILLC.DC_Y444 = GetByteBitSupport(BlockData[5], 3);
                                 Table.BlockHDMILLC.DVI_Dual = GetByteBitSupport(BlockData[5], 0);
-                                if (Block.BlockPayload >= 6)
+                                if (Block.BlockPayload > 6)
                                     Table.BlockHDMILLC.MaxTMDSClk = (uint)(BlockData[6] * 5);
-                                if (Block.BlockPayload >= 7)
+                                if (Block.BlockPayload > 7)
                                 {
                                     Table.BlockHDMILLC.EnableFlag = Support.supported;
                                     Table.BlockHDMILLC.LatencyFieldsPresent = GetByteBitSupport(BlockData[7], 7);
@@ -2356,9 +2354,12 @@ namespace EDIDApp
                 default:
                     break;
             }
+#if debug
+            Console.WriteLine("CEA Block: {0}", Block.Block);
+#endif
             return Block;
         }
-        internal DecodeError DecodeCEABlock()
+        public DecodeError Decode()
         {
             Table = new CEATable();
             //01 Revision Number
@@ -2421,9 +2422,71 @@ namespace EDIDApp
 
             return DecodeError.Success;
         }
-        internal DecompileError DecompileCEABlock()
+        private byte[] DecompileCEADataBlock(CEABlocksTable Table)
         {
-            Data = new byte[0];
+            byte[] Data = new byte[Table.BlockPayload + 1];
+            switch (Table.Block)
+            {
+                case CEATagType.Audio:
+                    break;
+                case CEATagType.Video:
+                    break;
+                case CEATagType.SpeakerAllocation:
+                    break;
+                case CEATagType.VESADisplayTransferCharacteristic:
+                    break;
+
+                /* Vendor-Specific Data Block */
+                case CEATagType.VendorSpecific:
+                    break;
+
+                /* Extended */
+                case CEATagType.Extended:
+                    break;
+
+                /* Vendor-Specific Video Data Block */
+                case CEATagType.Ex_VS_Video_Capability:
+                    break;
+            }
+            return Data;        
+        }
+        public DecompileError Decompile()
+        {
+            Data = new byte[128];
+
+            Data[0] = 0x02;
+            Data[1] = Table.Version;
+            if (Table.Version != 0x03)
+                return DecompileError.CEAVersionError;
+
+            Data[2] = Table.DetailedTimingStart;
+
+            Data[3] = Table.NativeVideoFormatNumber;
+            Data[3] = SetByteBitSupport(Data[3], 7, Table.UnderscranITFormatByDefault);
+            Data[3] = SetByteBitSupport(Data[3], 6, Table.Audio);
+            Data[3] = SetByteBitSupport(Data[3], 5, Table.YCbCr444);
+            Data[3] = SetByteBitSupport(Data[3], 4, Table.YCbCr422);
+
+            int index = 4;
+            foreach (CEABlocksTable Table in Table.CEABlocksList)
+            {
+                byte[] BlockData = DecompileCEADataBlock(Table);
+                Array.Copy(BlockData, 0, Data, index, BlockData.Length);
+                index += BlockData.Length;
+            }
+
+            foreach (EDIDDetailedTimingTable Timing in Table.CEATimingList)
+            {
+                Array.Copy(DecompileDetailedTimingData(Timing), 0, Data, index, 18);
+                index += 18;
+            }
+
+            byte checksum = 0x00;
+            for (int i = 0; i < 127; i++)
+            {
+                checksum += Data[i];
+            }
+            Data[127] = (byte)((byte)~checksum + 1);
 
             return DecompileError.Success;
         }
@@ -2703,7 +2766,7 @@ namespace EDIDApp
             Notes += "\r\n";
             return Notes;
         }
-        internal string OutputNotesEDIDCEA()
+        public string OutputNotes()
         {
             int i;
             string NoteEDID = "\r\nBlock Type: CTA Extension Data(CTA-861-G)\r\n";
@@ -2800,7 +2863,7 @@ namespace EDIDApp
         Reserved,
     }
     enum AspectRatioType
-    { 
+    {
         _1_1,
         _5_4,
         _4_3,
@@ -2841,7 +2904,7 @@ namespace EDIDApp
         public uint VSyncWidth;
     }
     #endregion
-    internal class EDIDDisplayID : EDIDCommon
+    internal class EDIDDisplayID : EDIDCommon, EDIDFunc
     {
         internal DisplayIDTable Table;
         internal byte[] Data;
@@ -2931,14 +2994,17 @@ namespace EDIDApp
                     break;
                 case DisplayIDTagType.CEA_Reserved:
                     break;
-                
+
                 case DisplayIDTagType.Reserved:
                 default:
                     break;
             }
+#if debug
+            Console.WriteLine("DisplayID Block: {0}", Block.Block);
+#endif
             return Block;
         }
-        internal DecodeError DecodeDisplayIDBlock()
+        public DecodeError Decode()
         {
             Table = new DisplayIDTable();
 
@@ -2949,7 +3015,7 @@ namespace EDIDApp
             Table.SectionSize = Data[2];
 
             Table.Type = (ProductType)Data[3];
-            if(Table.Type != ProductType.Extension)
+            if (Table.Type != ProductType.Extension)
                 return DecodeError.DisplayIDTypeError;
 
             Table.ExCount = Data[4]; // Not use in Ex type
@@ -2979,7 +3045,7 @@ namespace EDIDApp
                 Table.Checksum = Data[127];
             return DecodeError.Success;
         }
-        internal DecompileError DecompileDisplayIDBlock()
+        public DecompileError Decompile()
         {
             Data = new byte[0];
             return DecompileError.Success;
@@ -3022,7 +3088,7 @@ namespace EDIDApp
                         Notes += OutputNotesListsString("Active Time: {0} Lines", list_offset, Timing.VAdressable, "Blanking Time: {0} Lines", list_offset2, Timing.VBlanking);
                         Notes += OutputNotesListsString("Sync Offset: {0} Lines", list_offset, Timing.VSyncFront, "Sync Pulse Width: {0} Lines", list_offset2, Timing.VSyncWidth);
                         Notes += OutputNotesLineString(list_offset2, "Frequency: {0:.00} Hz", 0, Timing.VFrequency);
-                        Notes += OutputNotesLineString(list_offset, "{0}{1}", 0,DetailTimingHSyncType[(int)Timing.HSync],DetailTimingVSyncType[(int)Timing.VSync]);
+                        Notes += OutputNotesLineString(list_offset, "{0}{1}", 0, DetailTimingHSyncType[(int)Timing.HSync], DetailTimingVSyncType[(int)Timing.VSync]);
                         i++;
                     }
                     break;
@@ -3084,13 +3150,13 @@ namespace EDIDApp
                 case DisplayIDTagType.Reserved:
                 default:
                     Notes += OutputNotesLineString("Unknow Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
-                    break;          
+                    break;
             }
 
             Notes += "\r\n";
             return Notes;
         }
-        internal string OutputNotesEDIDDisplay()
+        public string OutputNotes()
         {
             string NoteEDID = "\r\nBlock Type: Display Identification Data\r\n";
 
@@ -3142,7 +3208,6 @@ namespace EDIDApp
             byte[] Data = new byte[0];
 
             MatchCollection mcText1 = Regex.Matches(Text, @"\|  ([0-9]|[A-Z])([0-9]|[A-Z])  \w\w  \w\w  \w\w  \w\w  \w\w  \w\w  \w\w((  \w\w  \w\w)|\s)");//厂内格式
-
             foreach (Match m1 in mcText1)
             {
                 string data = m1.ToString();
@@ -3150,28 +3215,20 @@ namespace EDIDApp
 
                 foreach (Match m2 in mcText2)
                 {
-                    EDIDText += m2.ToString();
-                    EDIDText += " ";
+                    EDIDText += m2.ToString() + " ";
                     Length++;
                 }
             }
-            if (Length != 0)
-            {
-                Console.WriteLine(EDIDText);
-                Console.WriteLine("EDID Length: {0}", Length.ToString());
-            }
-            else
+
+            if (Length == 0)
             {
                 MatchCollection mcText = Regex.Matches(Text, @"([0-9]|[A-Z])([0-9]|[A-Z])");//0x.. format
 
                 foreach (Match m in mcText)
                 {
-                    EDIDText += m.ToString();
-                    EDIDText += " ";
+                    EDIDText += m.ToString() + " ";
                     Length++;
                 }
-                Console.WriteLine(EDIDText);
-                Console.WriteLine("EDID Length: {0}", Length.ToString());
             }
 
             if (Length != 0)
@@ -3185,12 +3242,16 @@ namespace EDIDApp
                     Data[i] = byte.Parse(m.ToString(), System.Globalization.NumberStyles.HexNumber);
                     i++;
                 }
+#if debug
+                Console.WriteLine(EDIDText);
+                Console.WriteLine("EDID Length: {0}", Length.ToString());
+#endif
             }
             return Data;
         }
         public EDIDTable Decode(string Text)
         {
-           return Decode(MatchOriginalText(Text));
+            return Decode(MatchOriginalText(Text));
         }
         public EDIDTable Decode(byte[] Data)
         {
@@ -3198,7 +3259,7 @@ namespace EDIDApp
             EDIDInfo.Data = Data;
             EDIDInfo.Length = (uint)EDIDInfo.Data.Length;
 
-            if (EDIDInfo.Length < 128) 
+            if (EDIDInfo.Length < 128)
             {
                 EDIDInfo.Error = DecodeError.LengthError;
                 return EDIDInfo;
@@ -3208,7 +3269,7 @@ namespace EDIDApp
             // decode Base Block 
             Array.Copy(EDIDInfo.Data, 0, BlockData, 0, 128);
             EDIDBase EDIDBase = new EDIDBase() { Data = BlockData };
-            EDIDInfo.Error = EDIDBase.DecodeBaseBlock();
+            EDIDInfo.Error = EDIDBase.Decode();
             if (EDIDInfo.Error == DecodeError.Success)
             {
                 EDIDInfo.List = new List<BlockTagType>();
@@ -3233,7 +3294,7 @@ namespace EDIDApp
                         case 0x02:
                             Array.Copy(EDIDInfo.Data, Index, BlockData, 0, 128);
                             EDIDCEA EDIDCEA = new EDIDCEA() { Data = BlockData };
-                            EDIDInfo.Error = EDIDCEA.DecodeCEABlock();
+                            EDIDInfo.Error = EDIDCEA.Decode();
                             if (EDIDInfo.Error == DecodeError.Success)
                             {
                                 EDIDInfo.List.Add(BlockTagType.CEA);
@@ -3247,7 +3308,7 @@ namespace EDIDApp
                         case 0x70:
                             Array.Copy(EDIDInfo.Data, Index, BlockData, 0, 128);
                             EDIDDisplayID EDIDDisplayID = new EDIDDisplayID() { Data = BlockData };
-                            EDIDInfo.Error = EDIDDisplayID.DecodeDisplayIDBlock();
+                            EDIDInfo.Error = EDIDDisplayID.Decode();
                             if (EDIDInfo.Error == DecodeError.Success)
                             {
                                 EDIDInfo.List.Add(BlockTagType.DisplayID);
@@ -3271,7 +3332,7 @@ namespace EDIDApp
             DecompileError Error;
             EDIDBase EDIDBase = new EDIDBase() { Table = Base };
 
-            Error = EDIDBase.DecompileBaseBlock();
+            Error = EDIDBase.Decompile();
 
             return (EDIDBase.Data, Error);
         }
@@ -3280,7 +3341,7 @@ namespace EDIDApp
             DecompileError Error;
             EDIDCEA EDIDCEA = new EDIDCEA() { Table = CEA };
 
-            Error = EDIDCEA.DecompileCEABlock();
+            Error = EDIDCEA.Decompile();
 
             return (EDIDCEA.Data, Error);
         }
@@ -3289,7 +3350,7 @@ namespace EDIDApp
             DecompileError Error;
             EDIDDisplayID EDIDDisplayID = new EDIDDisplayID() { Table = DisplayID };
 
-            Error = EDIDDisplayID.DecompileDisplayIDBlock();
+            Error = EDIDDisplayID.Decompile();
 
             return (EDIDDisplayID.Data, Error);
         }
@@ -3305,7 +3366,7 @@ namespace EDIDApp
             {
                 ResultBase.Item1.CopyTo(EDIDInfo.Data, 0);
             }
-            else if(ResultBase.Item2 != DecompileError.Success)
+            else
             {
                 EDIDInfo.R_Error = ResultBase.Item2;
                 return EDIDInfo;
@@ -3353,25 +3414,25 @@ namespace EDIDApp
                         case BlockTagType.Base:
                             Array.Copy(EDIDInfo.Data, Index, BlockData, 0, 128);
                             EDIDBase EDIDBase = new EDIDBase() { Data = BlockData, Table = EDIDInfo.Base };
-                            NoteEDID += EDIDBase.OutputNotesEDIDBase();
+                            NoteEDID += EDIDBase.OutputNotes();
                             Index += 128;
                             break;
 
                         case BlockTagType.CEA:
                             Array.Copy(EDIDInfo.Data, Index, BlockData, 0, 128);
                             EDIDCEA EDIDCEA = new EDIDCEA() { Data = BlockData, Table = EDIDInfo.CEA };
-                            NoteEDID += EDIDCEA.OutputNotesEDIDCEA();
+                            NoteEDID += EDIDCEA.OutputNotes();
                             Index += 128;
                             break;
 
                         case BlockTagType.DisplayID:
                             Array.Copy(EDIDInfo.Data, Index, BlockData, 0, 128);
                             EDIDDisplayID EDIDDisplayID = new EDIDDisplayID() { Data = BlockData, Table = EDIDInfo.DisplayID };
-                            NoteEDID += EDIDDisplayID.OutputNotesEDIDDisplay();
+                            NoteEDID += EDIDDisplayID.OutputNotes();
                             Index += 128;
                             break;
 
-                        default:break;
+                        default: break;
                     }
                 }
             }
