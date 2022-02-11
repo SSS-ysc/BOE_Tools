@@ -859,14 +859,15 @@ namespace EDIDApp
             }
             else
             {
-                Table.Basic.FeatureSupport.ContinuousFrequency = GetByteBitSupport(Data[24], 0);
                 if (Table.Basic.Video_definition == EDIDVideoStandard.Analog)
                 {
                     Table.Basic.FeatureSupport.DisplayColorType = (ColorType)((Data[24] & 0x18) >> 3);
+                    Table.Basic.FeatureSupport.GTFstandard = GetByteBitSupport(Data[24], 0);
                 }
                 else
                 {
                     Table.Basic.FeatureSupport.ColorEncodingFormat = (ColorEncoding)((Data[24] & 0x18) >> 3);
+                    Table.Basic.FeatureSupport.ContinuousFrequency = GetByteBitSupport(Data[24], 0);
                 }
             }
 
@@ -1132,10 +1133,20 @@ namespace EDIDApp
             Data[10] = (byte)Table.IDProductCode;
             Data[11] = (byte)(Table.IDProductCode >> 8);
 
-            Data[12] = Convert.ToByte(Table.IDSerialNumber.Substring(6, 2), 16);
-            Data[13] = Convert.ToByte(Table.IDSerialNumber.Substring(4, 2), 16);
-            Data[14] = Convert.ToByte(Table.IDSerialNumber.Substring(2, 2), 16);
-            Data[15] = Convert.ToByte(Table.IDSerialNumber.Substring(0, 2), 16);
+            if (Table.IDSerialNumber != null)
+            {
+                Data[12] = Convert.ToByte(Table.IDSerialNumber.Substring(6, 2), 16);
+                Data[13] = Convert.ToByte(Table.IDSerialNumber.Substring(4, 2), 16);
+                Data[14] = Convert.ToByte(Table.IDSerialNumber.Substring(2, 2), 16);
+                Data[15] = Convert.ToByte(Table.IDSerialNumber.Substring(0, 2), 16);
+            }
+            else
+            {
+                Data[12] = 0x01;
+                Data[13] = 0x01;
+                Data[14] = 0x01;
+                Data[15] = 0x01;
+            }
 
             if (Table.ModelYear == 0)
             {
@@ -1203,11 +1214,16 @@ namespace EDIDApp
             }
             else
             {
-                Data[24] = SetByteBitSupport(Data[24], 0, Table.Basic.FeatureSupport.ContinuousFrequency);
                 if (Table.Basic.Video_definition == EDIDVideoStandard.Analog)
+                {
                     Data[24] |= (byte)((byte)Table.Basic.FeatureSupport.DisplayColorType << 3);
+                    Data[24] = SetByteBitSupport(Data[24], 0, Table.Basic.FeatureSupport.GTFstandard);
+                }
                 else
+                {
                     Data[24] |= (byte)((byte)Table.Basic.FeatureSupport.ColorEncodingFormat << 3);
+                    Data[24] = SetByteBitSupport(Data[24], 0, Table.Basic.FeatureSupport.ContinuousFrequency);
+                }
             }
 
             Data[25] = (byte)(((DecompileEDIDColorxy(Table.PanelColor.RedX) & 0x03) << 6) + ((DecompileEDIDColorxy(Table.PanelColor.RedY) & 0x03) << 4) + ((DecompileEDIDColorxy(Table.PanelColor.GreenX) & 0x03) << 2) + (DecompileEDIDColorxy(Table.PanelColor.GreenY) & 0x03));
@@ -1365,7 +1381,7 @@ namespace EDIDApp
                         Table.Basic.FeatureSupport.DisplayColorType, "/ ",
                         GetSupportString("sRGB Standard/ ", Table.Basic.FeatureSupport.sRGBStandard),
                         GetSupportString("Preferred Timing Mode/ ", Table.Basic.FeatureSupport.PreferredTimingMode),
-                        GetSupportString("Continuous Frequency", Table.Basic.FeatureSupport.ContinuousFrequency));
+                        GetSupportString("GTF standard", Table.Basic.FeatureSupport.GTFstandard));
                 }
                 else
                 {
@@ -1529,8 +1545,10 @@ namespace EDIDApp
 
         Ex_Inframe = Ex_Video_Capability + 32,// 32
 
-        Ex_VS_Dolby_Version,//Extended Vendor Specific
+        Ex_VS_Dolby_Version,//Extended Vendor Specific Video block
         Ex_VS_HDR10Plus,
+
+        //Extended Vendor Specific Audio block
     }
     enum AudioFormatType
     {
@@ -1777,7 +1795,7 @@ namespace EDIDApp
         public Support Static_Metadata_Type1;
         public float Max_Luminance_Data;
         public float Max_Frame_Avg_Lum_Data;
-        public float Min_Luminance_Data;
+        public double Min_Luminance_Data;
     }
     struct CEABlocksTable
     {
@@ -1955,26 +1973,26 @@ namespace EDIDApp
                                     "4096x2160p@119.88Hz/120Hz256:135",
         };
         string[] HDMIVICcode = { "", "3840x2160p@29.97Hz/30Hz", "3840x2160p@25Hz", "3840x2160p@23.98Hz/24Hz", "4096x2160p@23.98Hz/24Hz" };
-        private BlockAudio DecodeCEAAudioBlock(byte[] Data, int index)
+        private BlockAudio DecodeCEAAudioBlock(byte[] Data)
         {
             BlockAudio Audio = new BlockAudio();
 
-            Audio.Type = (AudioFormatType)(byte)(Data[index] >> 3);
-            Audio.Channels = (byte)(Data[index] & 0x07);
-            Audio.Freq192Khz = GetByteBitSupport(Data[index + 1], 6);
-            Audio.Freq176_4Khz = GetByteBitSupport(Data[index + 1], 5);
-            Audio.Freq96Khz = GetByteBitSupport(Data[index + 1], 4);
-            Audio.Freq88_2Khz = GetByteBitSupport(Data[index + 1], 3);
-            Audio.Freq48Khz = GetByteBitSupport(Data[index + 1], 2);
-            Audio.Freq44_1Khz = GetByteBitSupport(Data[index + 1], 1);
-            Audio.Freq32Khz = GetByteBitSupport(Data[index + 1], 0);
+            Audio.Type = (AudioFormatType)(byte)(Data[0] >> 3);
+            Audio.Channels = (byte)(Data[0] & 0x07);
+            Audio.Freq192Khz = GetByteBitSupport(Data[1], 6);
+            Audio.Freq176_4Khz = GetByteBitSupport(Data[1], 5);
+            Audio.Freq96Khz = GetByteBitSupport(Data[1], 4);
+            Audio.Freq88_2Khz = GetByteBitSupport(Data[1], 3);
+            Audio.Freq48Khz = GetByteBitSupport(Data[1], 2);
+            Audio.Freq44_1Khz = GetByteBitSupport(Data[1], 1);
+            Audio.Freq32Khz = GetByteBitSupport(Data[1], 0);
 
             switch (Audio.Type)
             {
                 case AudioFormatType.L_PCM:
-                    Audio.Size24Bit = GetByteBitSupport(Data[index + 2], 2);
-                    Audio.Size20Bit = GetByteBitSupport(Data[index + 2], 1);
-                    Audio.Size16Bit = GetByteBitSupport(Data[index + 2], 0);
+                    Audio.Size24Bit = GetByteBitSupport(Data[2], 2);
+                    Audio.Size20Bit = GetByteBitSupport(Data[2], 1);
+                    Audio.Size16Bit = GetByteBitSupport(Data[2], 0);
                     break;
 
                 case AudioFormatType.AC_3:
@@ -2018,10 +2036,11 @@ namespace EDIDApp
             {
                 case CEATagType.Audio:
                     Table.BlockAudio = new List<BlockAudio>();
-
+                    byte[] AudioBlockData = new byte[3];
                     for (i = 0; i < Block.BlockPayload / 3; i++)
                     {
-                        Table.BlockAudio.Add(DecodeCEAAudioBlock(BlockData, i * 3));
+                        Array.Copy(BlockData, i * 3, AudioBlockData, 0, 3);
+                        Table.BlockAudio.Add(DecodeCEAAudioBlock(AudioBlockData));
                     }
                     break;
 
@@ -2123,14 +2142,14 @@ namespace EDIDApp
                             if ((Table.BlockAMD.Version >= 1) && (Block.BlockPayload >= 8))
                             {
                                 Table.BlockAMD.FreeSync = GetByteBitSupport(BlockData[4], 0);
-                                Table.BlockAMD.NativeColorSpaceSet = GetByteBitSupport(BlockData[4], 1);
-                                Table.BlockAMD.LocalDimmingControl = GetByteBitSupport(BlockData[4], 2);
                                 Table.BlockAMD.MinRefreshRate = BlockData[5];
                                 Table.BlockAMD.MaxRefreshRate = BlockData[6];
                                 Table.BlockAMD.MCCSVCPCode = BlockData[7];
                             }
                             if ((Table.BlockAMD.Version >= 2) && (Block.BlockPayload >= 13))
                             {
+                                Table.BlockAMD.NativeColorSpaceSet = GetByteBitSupport(BlockData[4], 1);
+                                Table.BlockAMD.LocalDimmingControl = GetByteBitSupport(BlockData[4], 2);
                                 Table.BlockAMD.Gamma22EOTF = GetByteBitSupport(BlockData[8], 2);
                                 Table.BlockAMD.MaxBrightness_MaxBL = (float)(50 * Math.Pow(2, (double)(BlockData[9]) / 32));
                                 Table.BlockAMD.MinBrightness_MaxBL = Table.BlockAMD.MaxBrightness_MaxBL * (float)(Math.Pow((double)BlockData[10] / 255, 2) / 100);
@@ -2172,11 +2191,11 @@ namespace EDIDApp
                             }
                             if (Block.BlockPayload >= 9)
                             {
-                                //?BlockData[8]
+                                Table.BlockHDMIForum.VRRMin = (uint)(BlockData[8] & 0x3F);
                             }
                             if (Block.BlockPayload >= 10)
                             {
-                                //?BlockData[9]
+                                Table.BlockHDMIForum.VRRMax = (uint)(((BlockData[8] & 0xC0) << 8) + BlockData[9]);
                             }
                             if ((Block.BlockPayload >= 11) && (Table.BlockHDMIForum.FRLRate != HDMIFRLType.Nosupport_FRL))
                             {
@@ -2189,12 +2208,12 @@ namespace EDIDApp
                                 Table.BlockHDMIForum.DSC_1p2 = GetByteBitSupport(BlockData[10], 7);
                                 if (Block.BlockPayload >= 12)
                                 {
-                                    Table.BlockHDMIForum.DSCMaxSlices = (HDMIDSCMaxSlicesType)(BlockData[10] & 0x0F);
-                                    Table.BlockHDMIForum.DSCMaxFRL = (HDMIDSCMaxFRLType)((BlockData[10] & 0xF0) >> 4);
+                                    Table.BlockHDMIForum.DSCMaxSlices = (HDMIDSCMaxSlicesType)(BlockData[11] & 0x0F);
+                                    Table.BlockHDMIForum.DSCMaxFRL = (HDMIDSCMaxFRLType)((BlockData[11] & 0xF0) >> 4);
                                 }
-                                if (Block.BlockPayload >= 12)
+                                if (Block.BlockPayload >= 13)
                                 {
-                                    Table.BlockHDMIForum.DSC_TotalChunkkBytes = (byte)(BlockData[11] & 0x3F);
+                                    Table.BlockHDMIForum.DSC_TotalChunkkBytes = (byte)(BlockData[12] & 0x3F);
                                 }
                             }
                             break;
@@ -2280,10 +2299,10 @@ namespace EDIDApp
                             Table.BlockColorimetry.xvYCC709 = GetByteBitSupport(BlockExData[0], 1);
                             Table.BlockColorimetry.xvYCC601 = GetByteBitSupport(BlockExData[0], 0);
                             Table.BlockColorimetry.DCI_P3 = GetByteBitSupport(BlockExData[1], 7);
-                            Table.BlockColorimetry.MD3 = GetByteBitSupport(BlockExData[0], 3);
-                            Table.BlockColorimetry.MD2 = GetByteBitSupport(BlockExData[0], 2);
-                            Table.BlockColorimetry.MD1 = GetByteBitSupport(BlockExData[0], 1);
-                            Table.BlockColorimetry.MD0 = GetByteBitSupport(BlockExData[0], 0);
+                            Table.BlockColorimetry.MD3 = GetByteBitSupport(BlockExData[1], 3);
+                            Table.BlockColorimetry.MD2 = GetByteBitSupport(BlockExData[1], 2);
+                            Table.BlockColorimetry.MD1 = GetByteBitSupport(BlockExData[1], 1);
+                            Table.BlockColorimetry.MD0 = GetByteBitSupport(BlockExData[1], 0);
                             break;
 
                         case CEATagType.Ex_HDR_Static_Matadata:
@@ -2297,7 +2316,7 @@ namespace EDIDApp
                             if (Block.BlockPayload >= 5)
                                 Table.BlockHDRStatic.Max_Frame_Avg_Lum_Data = (float)(50 * Math.Pow(2, (double)(BlockExData[3]) / 32));
                             if (Block.BlockPayload >= 6)
-                                Table.BlockHDRStatic.Min_Luminance_Data = Table.BlockHDRStatic.Max_Luminance_Data * (float)(Math.Pow((double)BlockExData[4] / 255, 2) / 100);
+                                Table.BlockHDRStatic.Min_Luminance_Data = Table.BlockHDRStatic.Max_Luminance_Data * (double)(Math.Pow((double)BlockExData[4] / 255, 2) / 100);
                             break;
 
                         case CEATagType.Ex_HDR_Dynamic_Matadata:
@@ -2422,33 +2441,373 @@ namespace EDIDApp
 
             return DecodeError.Success;
         }
-        private byte[] DecompileCEADataBlock(CEABlocksTable Table)
+        private byte[] DecompileCEAAudioBlock(BlockAudio Audio)
         {
-            byte[] Data = new byte[Table.BlockPayload + 1];
-            switch (Table.Block)
+            byte[] AudioData = new byte[3];
+
+            AudioData[0] = (byte)(((byte)Audio.Type << 3) + Audio.Channels);
+            AudioData[1] = SetByteBitSupport(AudioData[1], 6, Audio.Freq192Khz);
+            AudioData[1] = SetByteBitSupport(AudioData[1], 5, Audio.Freq176_4Khz);
+            AudioData[1] = SetByteBitSupport(AudioData[1], 4, Audio.Freq96Khz);
+            AudioData[1] = SetByteBitSupport(AudioData[1], 3, Audio.Freq88_2Khz);
+            AudioData[1] = SetByteBitSupport(AudioData[1], 2, Audio.Freq48Khz);
+            AudioData[1] = SetByteBitSupport(AudioData[1], 1, Audio.Freq44_1Khz);
+            AudioData[1] = SetByteBitSupport(AudioData[1], 0, Audio.Freq32Khz);
+
+            switch (Audio.Type)
+            {
+                case AudioFormatType.L_PCM:
+                    AudioData[2] = SetByteBitSupport(AudioData[2], 2, Audio.Size24Bit);
+                    AudioData[2] = SetByteBitSupport(AudioData[2], 1, Audio.Size20Bit);
+                    AudioData[2] = SetByteBitSupport(AudioData[2], 0, Audio.Size16Bit);
+                    break;
+
+                case AudioFormatType.AC_3:
+                case AudioFormatType.MPEG_1:
+                case AudioFormatType.MP3:
+                case AudioFormatType.MPEG2:
+                case AudioFormatType.AACLC:
+                case AudioFormatType.DTS:
+                case AudioFormatType.ATRAC:
+                    break;
+
+                case AudioFormatType.OneBitAudio:
+                case AudioFormatType.EnhanecdAC_3:
+                case AudioFormatType.DTS_HD:
+                case AudioFormatType.MAT:
+                case AudioFormatType.DST:
+                    break;
+
+                case AudioFormatType.WMA_Pro:
+                    break;
+
+                case AudioFormatType.Extension:
+                    break;
+
+                default: break;
+            }
+            return AudioData;
+        }
+        private byte[] DecompileCEADataBlock(CEABlocksTable Block)
+        {
+            byte[] BlockData = new byte[Block.BlockPayload + 1];
+            int i;
+
+            switch (Block.Block)
             {
                 case CEATagType.Audio:
+                    BlockData[0] = (byte)(((byte)CEATagType.Audio << 5) | Block.BlockPayload);
+                    for (i = 0; i < Table.BlockAudio.Count; i++)
+                    {
+                        Array.Copy(DecompileCEAAudioBlock(Table.BlockAudio[i]), 0, BlockData, 1 + i * 3, 3);
+                    }
                     break;
                 case CEATagType.Video:
+                    BlockData[0] = (byte)(((byte)CEATagType.Video << 5) | Block.BlockPayload);
+                    for (i = 0; i < Table.BlockVideoVIC.Count; i++)
+                    {
+                        BlockData[1 + i] = SetByteBitSupport((byte)(Table.BlockVideoVIC[i].VIC), 7, Table.BlockVideoVIC[i].NativeCode);
+                    }
                     break;
                 case CEATagType.SpeakerAllocation:
+                    BlockData[0] = (byte)(((byte)CEATagType.SpeakerAllocation << 5) | Block.BlockPayload);
+                    for (i = 0; i < Table.BlockSpeaker.Count; i++)
+                    {
+                        BlockData[1 + i * 3] = SetByteBitSupport(BlockData[1 + i * 3], 7, Table.BlockSpeaker[i].FLW_FRW);
+                        BlockData[1 + i * 3] = SetByteBitSupport(BlockData[1 + i * 3], 6, Table.BlockSpeaker[i].RLC_RRC);
+                        BlockData[1 + i * 3] = SetByteBitSupport(BlockData[1 + i * 3], 5, Table.BlockSpeaker[i].FLC_FRC);
+                        BlockData[1 + i * 3] = SetByteBitSupport(BlockData[1 + i * 3], 4, Table.BlockSpeaker[i].BC);
+                        BlockData[1 + i * 3] = SetByteBitSupport(BlockData[1 + i * 3], 3, Table.BlockSpeaker[i].BL_BR);
+                        BlockData[1 + i * 3] = SetByteBitSupport(BlockData[1 + i * 3], 2, Table.BlockSpeaker[i].FC);
+                        BlockData[1 + i * 3] = SetByteBitSupport(BlockData[1 + i * 3], 1, Table.BlockSpeaker[i].LFE);
+                        BlockData[1 + i * 3] = SetByteBitSupport(BlockData[1 + i * 3], 0, Table.BlockSpeaker[i].FL_FR);
+
+                        BlockData[1 + i * 3 + 1] = SetByteBitSupport(BlockData[1 + i * 3 + 1], 2, Table.BlockSpeaker[i].TpFC);
+                        BlockData[1 + i * 3 + 1] = SetByteBitSupport(BlockData[1 + i * 3 + 1], 1, Table.BlockSpeaker[i].TpC);
+                        BlockData[1 + i * 3 + 1] = SetByteBitSupport(BlockData[1 + i * 3 + 1], 0, Table.BlockSpeaker[i].TpFL_TpFH);
+                    }
                     break;
                 case CEATagType.VESADisplayTransferCharacteristic:
+                    BlockData[0] = (byte)(((byte)CEATagType.VESADisplayTransferCharacteristic << 5) | Block.BlockPayload);
                     break;
 
                 /* Vendor-Specific Data Block */
                 case CEATagType.VendorSpecific:
+                    BlockData[0] = (byte)(((byte)CEATagType.VendorSpecific << 5) | Block.BlockPayload);
+                    BlockData[1] = (byte)(Block.UnknowIEEEID & 0x0000FF);
+                    BlockData[2] = (byte)((Block.UnknowIEEEID & 0x00FF00) >> 8);
+                    BlockData[3] = (byte)((Block.UnknowIEEEID & 0xFF0000) >> 16);
+                    break;
+                case CEATagType.VS_HDMI_LLC:
+                    BlockData[0] = (byte)(((byte)CEATagType.VendorSpecific << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x03;
+                    BlockData[2] = 0x0C;
+                    BlockData[3] = 0x00;
+                    BlockData[4] = (byte)((Table.BlockHDMILLC.PhyAddressA << 4) + Table.BlockHDMILLC.PhyAddressB);
+                    BlockData[5] = (byte)((Table.BlockHDMILLC.PhyAddressC << 4) + Table.BlockHDMILLC.PhyAddressD);
+                    if ((Table.BlockHDMILLC.ExtensionFields == Support.supported) && (Block.BlockPayload > 5))
+                    {
+                        BlockData[6] = SetByteBitSupport(BlockData[6], 7, Table.BlockHDMILLC.AllFeature);
+                        BlockData[6] = SetByteBitSupport(BlockData[6], 6, Table.BlockHDMILLC.DC_48bit);
+                        BlockData[6] = SetByteBitSupport(BlockData[6], 5, Table.BlockHDMILLC.DC_36bit);
+                        BlockData[6] = SetByteBitSupport(BlockData[6], 4, Table.BlockHDMILLC.DC_30bit);
+                        BlockData[6] = SetByteBitSupport(BlockData[6], 3, Table.BlockHDMILLC.DC_Y444);
+                        BlockData[6] = SetByteBitSupport(BlockData[6], 0, Table.BlockHDMILLC.DVI_Dual);
+                        if (Block.BlockPayload > 6)
+                            BlockData[7] = (byte)(Table.BlockHDMILLC.MaxTMDSClk / 5);
+                        if ((Block.BlockPayload > 7) && (Table.BlockHDMILLC.EnableFlag == Support.supported))
+                        {
+
+                            BlockData[8] = SetByteBitSupport(BlockData[8], 7, Table.BlockHDMILLC.LatencyFieldsPresent);
+                            BlockData[8] = SetByteBitSupport(BlockData[8], 6, Table.BlockHDMILLC.ILatencyFieldsPresent);
+                            BlockData[8] = SetByteBitSupport(BlockData[8], 5, Table.BlockHDMILLC.HDMIVideoPresent);
+                            BlockData[8] = SetByteBitSupport(BlockData[8], 3, Table.BlockHDMILLC.CN3);
+                            BlockData[8] = SetByteBitSupport(BlockData[8], 2, Table.BlockHDMILLC.CN2);
+                            BlockData[8] = SetByteBitSupport(BlockData[8], 1, Table.BlockHDMILLC.CN1);
+                            BlockData[8] = SetByteBitSupport(BlockData[8], 0, Table.BlockHDMILLC.CN0);
+
+                            i = 9;
+                            if (Table.BlockHDMILLC.LatencyFieldsPresent == Support.supported)
+                            {
+                                BlockData[i] = Table.BlockHDMILLC.VideoLatency;
+                                BlockData[i + 1] = Table.BlockHDMILLC.AudioLatency;
+                                i += 2;
+                            }
+                            if (Table.BlockHDMILLC.ILatencyFieldsPresent == Support.supported)
+                            {
+                                BlockData[i] = Table.BlockHDMILLC.IVideoLatency;
+                                BlockData[i + 1] = Table.BlockHDMILLC.IAudioLatency;
+                                i += 2;
+                            }
+                            if (Table.BlockHDMILLC.HDMIVideoPresent == Support.supported)
+                            {
+                                BlockData[i] = SetByteBitSupport(BlockData[i], 7, Table.BlockHDMILLC.HDMI3DPresent);
+                                BlockData[i + 1] = (byte)((Table.BlockHDMILLC.HDMIVICLength << 5) + (Table.BlockHDMILLC.HDMI3DLength));
+                                i += 2;
+                            }
+                            if (Table.BlockHDMILLC.HDMIVICLength != 0)
+                            {
+                                int j = 0;
+                                foreach (byte VIC in Table.BlockHDMILLC.HDMIVIC)
+                                {
+                                    BlockData[i + j] = VIC;
+                                    j++;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case CEATagType.VS_AMD:
+                    BlockData[0] = (byte)(((byte)CEATagType.VendorSpecific << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x1A;
+                    BlockData[2] = 0x00;
+                    BlockData[3] = 0x00;
+                    BlockData[4] = Table.BlockAMD.Version;
+                    if ((Table.BlockAMD.Version >= 1) && (Block.BlockPayload >= 8))
+                    {
+                        BlockData[5] = SetByteBitSupport(BlockData[5], 0, Table.BlockAMD.FreeSync);
+                        BlockData[6] = (byte)Table.BlockAMD.MinRefreshRate;
+                        BlockData[7] = (byte)Table.BlockAMD.MaxRefreshRate;
+                        BlockData[8] = (byte)Table.BlockAMD.MCCSVCPCode;
+                    }
+                    if ((Table.BlockAMD.Version >= 2) && (Block.BlockPayload >= 13))
+                    {
+                        BlockData[5] = SetByteBitSupport(BlockData[5], 1, Table.BlockAMD.NativeColorSpaceSet);
+                        BlockData[5] = SetByteBitSupport(BlockData[5], 2, Table.BlockAMD.LocalDimmingControl);
+
+                        BlockData[9] = SetByteBitSupport(BlockData[9], 2, Table.BlockAMD.Gamma22EOTF);
+                        BlockData[10] = (byte)(Math.Log(Table.BlockAMD.MaxBrightness_MaxBL / 50, 2) * 32);
+                        BlockData[11] = (byte)(Math.Pow(Table.BlockAMD.MinBrightness_MaxBL / Table.BlockAMD.MaxBrightness_MaxBL * 100, 1.0 / 2) * 255);
+                        BlockData[12] = (byte)(Math.Log(Table.BlockAMD.MaxBrightness_MinBL / 50, 2) * 32);
+                        BlockData[13] = (byte)(Math.Pow(Table.BlockAMD.MinBrightness_MinBL / Table.BlockAMD.MaxBrightness_MinBL * 100, 1.0 / 2) * 255);
+                    }
+                    if ((Table.BlockAMD.Version >= 3) && (Block.BlockPayload >= 18))
+                    {
+                        BlockData[14] = (byte)Table.BlockAMD.MaxRefreshRate255;
+                        BlockData[15] = (byte)((Table.BlockAMD.MaxRefreshRate255 & 0x3FF) >> 8);
+                    }
+                    break;
+                case CEATagType.VS_HDMI_Forum:
+                    BlockData[0] = (byte)(((byte)CEATagType.VendorSpecific << 5) | Block.BlockPayload);
+                    BlockData[1] = 0xD8;
+                    BlockData[2] = 0x5D;
+                    BlockData[3] = 0xC4;
+                    BlockData[4] = Table.BlockHDMIForum.Version;
+                    BlockData[5] = (byte)(Table.BlockHDMIForum.MaxTMDSRate / 5);
+
+                    BlockData[6] = SetByteBitSupport(BlockData[6], 7, Table.BlockHDMIForum.SCDC_Present);
+                    BlockData[6] = SetByteBitSupport(BlockData[6], 6, Table.BlockHDMIForum.RR_Capable);
+                    BlockData[6] = SetByteBitSupport(BlockData[6], 5, Table.BlockHDMIForum.CABLE_STATUS);
+                    BlockData[6] = SetByteBitSupport(BlockData[6], 4, Table.BlockHDMIForum.CCBPCI);
+                    BlockData[6] = SetByteBitSupport(BlockData[6], 3, Table.BlockHDMIForum.LTE_340Mcsc_scramble);
+                    BlockData[6] = SetByteBitSupport(BlockData[6], 2, Table.BlockHDMIForum._3D_Independent_View);
+                    BlockData[6] = SetByteBitSupport(BlockData[6], 1, Table.BlockHDMIForum._3D_Dual_View);
+                    BlockData[6] = SetByteBitSupport(BlockData[6], 0, Table.BlockHDMIForum._3D_OSD_Disparity);
+
+                    BlockData[7] = (byte)((byte)Table.BlockHDMIForum.FRLRate << 4);
+                    BlockData[7] = SetByteBitSupport(BlockData[7], 3, Table.BlockHDMIForum.UHD_VIC);
+                    BlockData[7] = SetByteBitSupport(BlockData[7], 2, Table.BlockHDMIForum.DC_48bit_420);
+                    BlockData[7] = SetByteBitSupport(BlockData[7], 1, Table.BlockHDMIForum.DC_36bit_420);
+                    BlockData[7] = SetByteBitSupport(BlockData[7], 0, Table.BlockHDMIForum.DC_30bit_420);
+
+                    if (Block.BlockPayload >= 8)
+                    {
+                        BlockData[8] = SetByteBitSupport(BlockData[8], 5, Table.BlockHDMIForum.M_Delta);
+                        BlockData[8] = SetByteBitSupport(BlockData[8], 4, Table.BlockHDMIForum.CinemaVRR);
+                        BlockData[8] = SetByteBitSupport(BlockData[8], 3, Table.BlockHDMIForum.CNMVRR);
+                        BlockData[8] = SetByteBitSupport(BlockData[8], 2, Table.BlockHDMIForum.FVA);
+                        BlockData[8] = SetByteBitSupport(BlockData[8], 1, Table.BlockHDMIForum.ALLM);
+                        BlockData[8] = SetByteBitSupport(BlockData[8], 0, Table.BlockHDMIForum.FAPA_start_location);
+                    }
+                    if (Block.BlockPayload >= 9)
+                    {
+                        BlockData[9] = (byte)(Table.BlockHDMIForum.VRRMin + ((Table.BlockHDMIForum.VRRMax & 0x300) >> 2));
+                    }
+                    if (Block.BlockPayload >= 10)
+                    {
+                        BlockData[10] = (byte)Table.BlockHDMIForum.VRRMax;
+                    }
+                    if ((Block.BlockPayload >= 11) && (Table.BlockHDMIForum.FRLRate != HDMIFRLType.Nosupport_FRL))
+                    {
+                        BlockData[11] = SetByteBitSupport(BlockData[11], 0, Table.BlockHDMIForum.DSC_10bpc);
+                        BlockData[11] = SetByteBitSupport(BlockData[11], 1, Table.BlockHDMIForum.DSC_12bpc);
+                        BlockData[11] = SetByteBitSupport(BlockData[11], 2, Table.BlockHDMIForum.DSC_16bpc);
+                        BlockData[11] = SetByteBitSupport(BlockData[11], 3, Table.BlockHDMIForum.DSC_All_bpp);
+                        BlockData[11] = SetByteBitSupport(BlockData[11], 6, Table.BlockHDMIForum.DSC_Native_42);
+                        BlockData[11] = SetByteBitSupport(BlockData[11], 7, Table.BlockHDMIForum.DSC_1p2);
+                        if (Block.BlockPayload >= 12)
+                            BlockData[12] = (byte)(Table.BlockHDMIForum.DSCMaxSlices + ((byte)Table.BlockHDMIForum.DSCMaxFRL << 4));
+                        if (Block.BlockPayload >= 13)
+                            BlockData[13] = Table.BlockHDMIForum.DSC_TotalChunkkBytes;
+                    }
+                    break;
+                case CEATagType.VS_Mstar:
+                    BlockData[0] = (byte)(((byte)CEATagType.VendorSpecific << 5) | Block.BlockPayload);
+                    break;
+                case CEATagType.VS_Realtek:
+                    BlockData[0] = (byte)(((byte)CEATagType.VendorSpecific << 5) | Block.BlockPayload);
                     break;
 
                 /* Extended */
                 case CEATagType.Extended:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    break;
+                case CEATagType.Ex_Video_Capability:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x00;
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 7, Table.BlockVideoCapability.QY);
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 6, Table.BlockVideoCapability.QS);
+                    BlockData[2] |= (byte)((byte)Table.BlockVideoCapability.PT << 4);
+                    BlockData[2] |= (byte)((byte)Table.BlockVideoCapability.IT << 2);
+                    BlockData[2] |= (byte)(Table.BlockVideoCapability.CE);
+                    break;
+                case CEATagType.Ex_VESA_Display_Device:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x02;
+                    break;
+                case CEATagType.Ex_VESA_Video_Timing:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x03;
+                    break;
+                case CEATagType.Ex_HDMI_Video:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x04;
+                    break;
+                case CEATagType.Ex_Colorimetry:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x05;
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 7, Table.BlockColorimetry.BT2020_RGB);
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 6, Table.BlockColorimetry.BT2020_YCC);
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 5, Table.BlockColorimetry.BT2020_cYCC);
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 4, Table.BlockColorimetry.opRGB);
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 3, Table.BlockColorimetry.opYCC601);
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 2, Table.BlockColorimetry.sYCC601);
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 1, Table.BlockColorimetry.xvYCC709);
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 0, Table.BlockColorimetry.xvYCC601);
+
+                    BlockData[3] = SetByteBitSupport(BlockData[3], 7, Table.BlockColorimetry.DCI_P3);
+                    BlockData[3] = SetByteBitSupport(BlockData[3], 3, Table.BlockColorimetry.MD3);
+                    BlockData[3] = SetByteBitSupport(BlockData[3], 2, Table.BlockColorimetry.MD2);
+                    BlockData[3] = SetByteBitSupport(BlockData[3], 1, Table.BlockColorimetry.MD1);
+                    BlockData[3] = SetByteBitSupport(BlockData[3], 0, Table.BlockColorimetry.MD0);
+                    break;
+                case CEATagType.Ex_HDR_Static_Matadata:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x06;
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 0, Table.BlockHDRStatic.Gamma_SDR);
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 1, Table.BlockHDRStatic.Gamma_HDR);
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 2, Table.BlockHDRStatic.SMPTE_ST_2084);
+                    BlockData[2] = SetByteBitSupport(BlockData[2], 3, Table.BlockHDRStatic.HLG);
+                    BlockData[3] = SetByteBitSupport(BlockData[3], 0, Table.BlockHDRStatic.Static_Metadata_Type1);
+                    if (Block.BlockPayload >= 4)
+                        BlockData[4] = (byte)(Math.Log(Table.BlockHDRStatic.Max_Luminance_Data / 50, 2) * 32);
+                    if (Block.BlockPayload >= 5)
+                        BlockData[5] = (byte)(Math.Log(Table.BlockHDRStatic.Max_Frame_Avg_Lum_Data / 50, 2) * 32);
+                    if (Block.BlockPayload >= 6)
+                        BlockData[6] = (byte)(Math.Pow(Table.BlockHDRStatic.Min_Luminance_Data * 100 / Table.BlockHDRStatic.Max_Luminance_Data, 1.0 / 2) * 255);
+                    break;
+                case CEATagType.Ex_HDR_Dynamic_Matadata:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x07;
+                    break;
+                case CEATagType.Ex_Video_Format_Preference:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x0D;
+                    break;
+                case CEATagType.Ex_YCbCr420Video:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x0E;
+                    break;
+                case CEATagType.Ex_YCbCr420CapabilityMap:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x0F;
+                    i = 2;
+                    foreach (BlockVideoVIC VIC in Table.BlockYCbCr420VIC)
+                    {
+                        BlockData[i] = VIC.VIC;
+                        i++;
+                    }
+                    break;
+                case CEATagType.Ex_CEA_Miscellaneous_Audio_Fields:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x10;
+                    break;
+                case CEATagType.Ex_HDMI_Audio:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x12;
+                    break;
+                case CEATagType.Ex_Room_Configuration:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x13;
+                    break;
+                case CEATagType.Ex_Speaker_Location:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x14;
+                    break;
+                case CEATagType.Ex_Inframe:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x20;
                     break;
 
                 /* Vendor-Specific Video Data Block */
                 case CEATagType.Ex_VS_Video_Capability:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x01;
+                    BlockData[2] = (byte)(Block.UnknowIEEEID & 0x0000FF);
+                    BlockData[3] = (byte)((Block.UnknowIEEEID & 0x00FF00) >> 8);
+                    BlockData[4] = (byte)((Block.UnknowIEEEID & 0xFF0000) >> 16);
+                    break;
+
+                /* Vendor-Specific Audio Data Block */
+                case CEATagType.Ex_VS_Audio:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x11;
+                    BlockData[2] = (byte)(Block.UnknowIEEEID & 0x0000FF);
+                    BlockData[3] = (byte)((Block.UnknowIEEEID & 0x00FF00) >> 8);
+                    BlockData[4] = (byte)((Block.UnknowIEEEID & 0xFF0000) >> 16);
                     break;
             }
-            return Data;        
+            return BlockData;        
         }
         public DecompileError Decompile()
         {

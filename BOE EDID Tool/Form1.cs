@@ -23,7 +23,10 @@ namespace BOE_Tool
         }
         private void Open_File_Click(object sender, EventArgs e)
         {
-            openFileDialog1.InitialDirectory = "@" + Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            if (ConfigurationManager.AppSettings["EDIDFilePath"] == string.Empty)
+                openFileDialog1.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            else
+                openFileDialog1.InitialDirectory = "@" + Path.GetDirectoryName(ConfigurationManager.AppSettings["EDIDFilePath"]);
             openFileDialog1.RestoreDirectory = false;
             openFileDialog1.Filter = "txt files (*.txt)|*.txt;|dat files (*.dat)|*.dat;|h files (*.h)|*.h";
             openFileDialog1.FilterIndex = 1;
@@ -79,8 +82,8 @@ namespace BOE_Tool
                 MessageBox.Show("未解析", "保存错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            saveFileDialog1.InitialDirectory = "@" + Path.GetDirectoryName(ConfigurationManager.AppSettings["EDIDFilePath"]);
-            saveFileDialog1.RestoreDirectory = true;
+            saveFileDialog1.InitialDirectory = "@" + Path.GetDirectoryName(textBox1.Text);
+            saveFileDialog1.RestoreDirectory = false;
             if (checkBox1.Checked == true)
                 saveFileDialog1.Filter = "txt files (*.txt)|*.txt";
             else
@@ -96,10 +99,6 @@ namespace BOE_Tool
                     FormEDID.OutputNotesEDIDText(EDIDInfo, saveFileDialog1.FileName);
                 else
                     FormEDID.Output0xEDIDText(EDIDInfo, saveFileDialog1.FileName);
-
-                Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                config.AppSettings.Settings["EDIDFilePath"].Value = saveFileDialog1.FileName;
-                config.Save(ConfigurationSaveMode.Modified);
             }
         }
         private void Decompile_Click(object sender, EventArgs e)
@@ -112,8 +111,8 @@ namespace BOE_Tool
             int i = 0;
             foreach (byte b in Decompile)
             {
-                if(EDIDInfo.Data[i]!= Decompile[i])
-                    Console.WriteLine("{0}: {1:X2} ,{2:X2}", i, EDIDInfo.Data[i], Decompile[i]);
+                if (EDIDInfo.Data[i] != Decompile[i])
+                    Console.WriteLine("{0}>>{1}:{2:X2} Now:{3:X2}", i / 128, i % 128, EDIDInfo.Data[i], Decompile[i]);
                 i++;
             }
 #endif
