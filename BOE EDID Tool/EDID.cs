@@ -32,6 +32,7 @@ namespace EDIDApp
         DisplayIDVersionError,
         DisplayIDSizeError,
         DisplayIDTypeError,
+        DisplayIDSectionChecksumError,
         DisplayIDChecksumError,
     };
     enum DecompileError
@@ -2797,6 +2798,20 @@ namespace EDIDApp
                     BlockData[3] = (byte)((Block.UnknowIEEEID & 0x00FF00) >> 8);
                     BlockData[4] = (byte)((Block.UnknowIEEEID & 0xFF0000) >> 16);
                     break;
+                case CEATagType.Ex_VS_Dolby_Version:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x01;
+                    BlockData[2] = 0x46;
+                    BlockData[3] = 0xD0;
+                    BlockData[3] = 0x00;
+                    break;
+                case CEATagType.Ex_VS_HDR10Plus:
+                    BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
+                    BlockData[1] = 0x01;
+                    BlockData[2] = 0x8B;
+                    BlockData[3] = 0x84;
+                    BlockData[3] = 0x90;
+                    break;
 
                 /* Vendor-Specific Audio Data Block */
                 case CEATagType.Ex_VS_Audio:
@@ -3179,6 +3194,7 @@ namespace EDIDApp
 
         public List<TypeIDetailedTiming> TypeIDetailTimingList;
 
+        public byte SectionChecksum;
         public byte Checksum;
     };
     enum ProductType
@@ -3394,20 +3410,157 @@ namespace EDIDApp
             }
 
             byte checksum = 0x00;
-            for (int i = 0; i < 128; i++)
+            for (int i = 1; i < 127; i++)
             {
                 checksum += Data[i];
             }
+            if (checksum != 0x00)
+                return DecodeError.DisplayIDSectionChecksumError;
+            else
+                Table.SectionChecksum = Data[126];
+
+            checksum += Data[0];
+            checksum += Data[127];
             if (checksum != 0x00)
                 return DecodeError.DisplayIDChecksumError;
             else
                 Table.Checksum = Data[127];
             return DecodeError.Success;
         }
+        private byte[] DecompileDisplayIDDataBlock(DisplayIDBlocksTable Block)
+        {
+            byte[] BlockData = new byte[Block.BlockPayload + 3];
+            int BlockIndex = 3;
+
+            BlockData[0] = (byte)Block.Block;
+            BlockData[1] = Block.BlockRevision;
+            BlockData[2] = (byte)Block.BlockPayload;
+
+            switch (Block.Block)
+            {
+                case DisplayIDTagType.ProductIdentification:
+                    break;
+                case DisplayIDTagType.DisplayParameters:
+                    break;
+                case DisplayIDTagType.Color:
+                    break;
+                case DisplayIDTagType.TypeI:
+                    foreach (TypeIDetailedTiming Timing in Table.TypeIDetailTimingList)
+                    {
+                        BlockData[BlockIndex] = (byte)(((Timing.PixelClk / 10000) - 1) & 0x0000FF);
+                        BlockData[BlockIndex + 1] = (byte)((((Timing.PixelClk / 10000) - 1) & 0x00FF00) >> 8);
+                        BlockData[BlockIndex + 2] = (byte)((((Timing.PixelClk / 10000) - 1) & 0xFF0000) >> 16);
+                        BlockData[BlockIndex + 3] = SetByteBitSupport(BlockData[BlockIndex + 3], 7, Timing.Preferred);
+                        BlockData[BlockIndex + 3] |= (byte)((byte)Timing.Stereo << 5);
+                        BlockData[BlockIndex + 3] = SetByteBitSupport(BlockData[BlockIndex + 3], 4, (Support)Timing.Interface);
+                        BlockData[BlockIndex + 3] |= (byte)((byte)Timing.Ratio & 0x0F);
+
+                        BlockData[BlockIndex + 4] = (byte)((Timing.HAdressable - 1) & 0xFF);
+                        BlockData[BlockIndex + 5] = (byte)(((Timing.HAdressable - 1) & 0xFF00) >> 8);
+                        BlockData[BlockIndex + 6] = (byte)((Timing.HBlanking - 1) & 0xFF);
+                        BlockData[BlockIndex + 7] = (byte)(((Timing.HBlanking - 1) & 0xFF00) >> 8);
+                        BlockData[BlockIndex + 8] = (byte)((Timing.HSyncFront - 1) & 0xFF);
+                        BlockData[BlockIndex + 9] = (byte)(((Timing.HSyncFront - 1) & 0x7F00) >> 8);
+                        if(Timing.HSync != HVSyncType.Undefined)
+                            BlockData[BlockIndex + 9] = SetByteBitSupport(BlockData[BlockIndex + 9], 7, (Support)Timing.HSync);
+                        BlockData[BlockIndex + 10] = (byte)((Timing.HSyncWidth - 1) & 0xFF);
+                        BlockData[BlockIndex + 11] = (byte)(((Timing.HSyncWidth - 1) & 0xFF00) >> 8);
+
+                        BlockData[BlockIndex + 12] = (byte)((Timing.VAdressable - 1) & 0xFF);
+                        BlockData[BlockIndex + 13] = (byte)(((Timing.VAdressable - 1) & 0xFF00) >> 8);
+                        BlockData[BlockIndex + 14] = (byte)((Timing.VBlanking - 1) & 0xFF);
+                        BlockData[BlockIndex + 15] = (byte)(((Timing.VBlanking - 1) & 0xFF00) >> 8);
+                        BlockData[BlockIndex + 16] = (byte)((Timing.VSyncFront - 1) & 0xFF);
+                        BlockData[BlockIndex + 17] = (byte)(((Timing.VSyncFront - 1) & 0x7F00) >> 8);
+                        if (Timing.VSync != HVSyncType.Undefined)
+                            BlockData[BlockIndex + 17] = SetByteBitSupport(BlockData[BlockIndex + 9], 7, (Support)Timing.VSync);
+                        BlockData[BlockIndex + 18] = (byte)((Timing.VSyncWidth - 1) & 0xFF);
+                        BlockData[BlockIndex + 19] = (byte)(((Timing.VSyncWidth - 1) & 0xFF00) >> 8);
+
+                        BlockIndex += 20;
+                    }
+                    break;
+                case DisplayIDTagType.TypeII:
+                    break;
+                case DisplayIDTagType.TypeIII:
+                    break;
+                case DisplayIDTagType.TypeIV:
+                    break;
+                case DisplayIDTagType.VESATiming:
+                    break;
+                case DisplayIDTagType.CEATiming:
+                    break;
+                case DisplayIDTagType.RangeLimits:
+                    break;
+                case DisplayIDTagType.SN:
+                    break;
+                case DisplayIDTagType.ASCII:
+                    break;
+                case DisplayIDTagType.DisplayDevice:
+                    break;
+                case DisplayIDTagType.InterfacePowerSequencing:
+                    break;
+                case DisplayIDTagType.TransferCharacteristics:
+                    break;
+                case DisplayIDTagType.DisplayInterface:
+                    break;
+                case DisplayIDTagType.StereoDisplayInterface:
+                    break;
+                case DisplayIDTagType.TypeIII_11h:
+                    break;
+                case DisplayIDTagType.TypeIII_12h:
+                    break;
+                case DisplayIDTagType.TypeII_13h:
+                    break;
+                case DisplayIDTagType.VS:
+                    break;
+                case DisplayIDTagType.CEA_Reserved:
+                    break;
+
+                case DisplayIDTagType.Reserved:
+                default:
+                    break;
+            }
+
+            return BlockData;
+        }
         public DecompileError Decompile()
         {
-            Data = new byte[0];
-            return DecompileError.Success;
+            Data = new byte[128];
+
+            Data[0] = 0x70;
+            Data[1] = Table.Version;
+            if (Table.Version != 0x12)
+                return DecompileError.DisplayIDVersionError;
+            Data[2] = Table.SectionSize;
+            Data[3] = (byte)Table.Type;
+
+            if (Table.Type == ProductType.Extension)
+            {
+                Data[4] = Table.ExCount;
+
+                int blockIndex = 5;
+                foreach (DisplayIDBlocksTable Table in Table.DisplayIDBlocksList)
+                {
+                    Array.Copy(DecompileDisplayIDDataBlock(Table), 0, Data, blockIndex, Table.BlockPayload + 3);
+                    blockIndex += Table.BlockPayload + 3;
+                }
+
+                byte checksum = 0x00;
+                for (int i = 1; i < 126; i++)
+                {
+                    checksum += Data[i];
+                }
+                Data[126] = (byte)((byte)~checksum + 1);
+
+                checksum += Data[0];
+                checksum += Data[126];
+                Data[127] = (byte)((byte)~checksum + 1);
+
+                return DecompileError.Success;
+            }
+
+            return DecompileError.NoDecompile;
         }
         private string OutputNotesDisplayIDBlocks(DisplayIDBlocksTable BlocksTable)
         {

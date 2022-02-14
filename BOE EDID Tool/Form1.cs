@@ -115,6 +115,7 @@ namespace BOE_Tool
                     Console.WriteLine("{0}>>{1}:{2:X2} Now:{3:X2}", i / 128, i % 128, EDIDInfo.Data[i], Decompile[i]);
                 i++;
             }
+            Console.WriteLine("Decompile End");
 #endif
         }
         private void Help_Click(object sender, EventArgs e)
