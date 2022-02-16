@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.IO;
 
@@ -1464,7 +1462,7 @@ namespace EDIDApp
         public ExBlockVideoCapability BlockVideoCapability;
         public ExBlockColorimetry BlockColorimetry;
         public ExBlockHDRStatic BlockHDRStatic;
-        public List<BlockVideoVIC> BlockYCbCr420VIC;
+        public List<Support> BlockYCbCr420VIC;
 
         public List<EDIDDetailedTimingTable> CEATimingList;
         public byte Checksum;
@@ -2330,16 +2328,12 @@ namespace EDIDApp
                             break;
 
                         case CEATagType.Ex_YCbCr420CapabilityMap:
-                            Table.BlockYCbCr420VIC = new List<BlockVideoVIC>();
+                            Table.BlockYCbCr420VIC = new List<Support>();
                             for (i = 0; i < Block.BlockPayload - 1; i++)
                             {
                                 for (int j = 0; j < 8; j++)
                                 {
-                                    if (GetByteBit(BlockExData[i], (byte)j) == 1)
-                                    {
-                                        if ((i * 8 + j) < Table.BlockVideoVIC.Count)
-                                            Table.BlockYCbCr420VIC.Add(Table.BlockVideoVIC[i * 8 + j]);
-                                    }
+                                    Table.BlockYCbCr420VIC.Add(GetByteBitSupport(BlockExData[i], (byte)j));
                                 }
                             }
                             break;
@@ -2493,6 +2487,7 @@ namespace EDIDApp
         {
             byte[] BlockData = new byte[Block.BlockPayload + 1];
             int i;
+            int j;
 
             switch (Block.Block)
             {
@@ -2588,7 +2583,7 @@ namespace EDIDApp
                             }
                             if (Table.BlockHDMILLC.HDMIVICLength != 0)
                             {
-                                int j = 0;
+                                j = 0;
                                 foreach (byte VIC in Table.BlockHDMILLC.HDMIVIC)
                                 {
                                     BlockData[i + j] = VIC;
@@ -2763,10 +2758,16 @@ namespace EDIDApp
                     BlockData[0] = (byte)(((byte)CEATagType.Extended << 5) | Block.BlockPayload);
                     BlockData[1] = 0x0F;
                     i = 2;
-                    foreach (BlockVideoVIC VIC in Table.BlockYCbCr420VIC)
+                    j = 0;
+                    foreach (Support VIC in Table.BlockYCbCr420VIC)
                     {
-                        BlockData[i] = VIC.VIC;
-                        i++;
+                        BlockData[i] = SetByteBitSupport(BlockData[i], (byte)j, VIC);
+                        j++;
+                        if (j == 8)
+                        {
+                            j = 0;
+                            i++;
+                        }
                     }
                     break;
                 case CEATagType.Ex_CEA_Miscellaneous_Audio_Fields:
@@ -2868,6 +2869,7 @@ namespace EDIDApp
         {
             string Notes = "";
             int list_offset = 8;
+            int i = 0;
 
             switch (BlocksTable.Block)
             {
@@ -3098,9 +3100,14 @@ namespace EDIDApp
                     break;
                 case CEATagType.Ex_YCbCr420CapabilityMap:
                     Notes += OutputNotesLineString("YCBCR 4:2:0 Capability Map Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
-                    foreach (BlockVideoVIC VIC in Table.BlockYCbCr420VIC)
+                    foreach (Support VIC in Table.BlockYCbCr420VIC)
                     {
-                        Notes += OutputNotesLineString(list_offset, "{0}", 0, VICcode[VIC.VIC]);
+                        if (VIC == Support.supported)
+                        {
+                            if (i < Table.BlockVideoVIC.Count)
+                                Notes += OutputNotesLineString(list_offset, "{0}", 0, VICcode[Table.BlockVideoVIC[i].VIC]);
+                        }
+                        i++;
                     }
                     break;
                 case CEATagType.Ex_CEA_Miscellaneous_Audio_Fields:
@@ -3688,9 +3695,10 @@ namespace EDIDApp
 
             if (i != 127)
             {
-                NoteEDID += "(" + string.Format("{0:D2}", i.ToString()) + "-" + 126.ToString() + ") No data";
+                NoteEDID += "(" + string.Format("{0:D2}", i.ToString()) + "-" + 125.ToString() + ") No data";
             }
-            NoteEDID += OutputNotesLineString("\r\n(127) CheckSum: OK", 0);
+            NoteEDID += OutputNotesLineString("\r\n(126) SectionCheckSum: OK", 0);
+            NoteEDID += OutputNotesLineString("(127) CheckSum: OK", 0);
 
             return NoteEDID;
         }
