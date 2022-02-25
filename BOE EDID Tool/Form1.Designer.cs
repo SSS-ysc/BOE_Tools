@@ -46,17 +46,17 @@
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(23, 21);
+            this.textBox1.Location = new System.Drawing.Point(22, 21);
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
-            this.textBox1.Size = new System.Drawing.Size(355, 28);
+            this.textBox1.Size = new System.Drawing.Size(355, 21);
             this.textBox1.TabIndex = 0;
             this.textBox1.TabStop = false;
             this.textBox1.WordWrap = false;
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(384, 21);
+            this.button1.Location = new System.Drawing.Point(383, 16);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(96, 29);
             this.button1.TabIndex = 1;
@@ -66,7 +66,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(125, 66);
+            this.button2.Location = new System.Drawing.Point(124, 57);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(96, 29);
             this.button2.TabIndex = 3;
@@ -76,7 +76,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(335, 66);
+            this.button3.Location = new System.Drawing.Point(334, 57);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(43, 29);
             this.button3.TabIndex = 5;
@@ -90,16 +90,16 @@
             this.checkBox1.AutoSize = true;
             this.checkBox1.Checked = true;
             this.checkBox1.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox1.Location = new System.Drawing.Point(227, 70);
+            this.checkBox1.Location = new System.Drawing.Point(226, 64);
             this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(102, 22);
+            this.checkBox1.Size = new System.Drawing.Size(72, 16);
             this.checkBox1.TabIndex = 4;
             this.checkBox1.Text = "厂内格式";
             this.checkBox1.UseVisualStyleBackColor = true;
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(23, 66);
+            this.button4.Location = new System.Drawing.Point(22, 57);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(96, 29);
             this.button4.TabIndex = 2;
@@ -109,7 +109,7 @@
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(384, 66);
+            this.button5.Location = new System.Drawing.Point(383, 57);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(96, 29);
             this.button5.TabIndex = 6;
@@ -119,7 +119,7 @@
             // 
             // Form1
             // 
-            this.ClientSize = new System.Drawing.Size(498, 112);
+            this.ClientSize = new System.Drawing.Size(498, 100);
             this.Controls.Add(this.button5);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.checkBox1);

@@ -1327,7 +1327,7 @@ namespace EDIDApp
 
             NoteEDID += OutputNotesEDIDList(Data);
             NoteEDID += OutputNotesLineString("(08-09) ID Manufacturer Name:", ValueOffset, Table.IDManufacturerName);
-            NoteEDID += OutputNotesLineString("(10-11) Product ID Code:", ValueOffset, string.Format("{0:X}", Table.IDProductCode));
+            NoteEDID += OutputNotesLineString("(10-11) Product ID Code:", ValueOffset, string.Format("{0:X4}", Table.IDProductCode));
             if (Table.IDSerialNumber == null)
                 NoteEDID += OutputNotesLineString("(12-15) ID Serial Number:", ValueOffset, "not used");
             else
@@ -2249,7 +2249,6 @@ namespace EDIDApp
 
                 case CEATagType.Extended:
                     Block.Block = (CEATagType)(BlockData[0] + CEATagType.Ex_Video_Capability);
-                    //复制有效数据
                     byte[] BlockExData = new byte[Block.BlockPayload - 1];
                     Array.Copy(Data, index + 2, BlockExData, 0, Block.BlockPayload - 1);
 
@@ -3207,6 +3206,13 @@ namespace EDIDApp
     enum ProductType
     {
         Extension,
+        Test_Structure,
+        Display_panel_or_other_transducer,
+        Standalone_display_device,
+        Television_receiver,
+        Repeater_or_translator,
+        DIRECT_DRIVE_monitor,
+        RESERVED,
     }
     enum DisplayIDTagType
     {
@@ -3391,14 +3397,14 @@ namespace EDIDApp
             Table = new DisplayIDTable();
 
             Table.Version = Data[1];
-            if (Table.Version != 0x12)
+            if ((Table.Version != 0x12) && (Table.Version != 0x20))
                 return DecodeError.DisplayIDVersionError;
 
             Table.SectionSize = Data[2];
 
             Table.Type = (ProductType)Data[3];
-            if (Table.Type != ProductType.Extension)
-                return DecodeError.DisplayIDTypeError;
+            //if (Table.Type != ProductType.Extension)
+            //    return DecodeError.DisplayIDTypeError;
 
             Table.ExCount = Data[4]; // Not use in Ex type
 
@@ -3537,7 +3543,7 @@ namespace EDIDApp
 
             Data[0] = 0x70;
             Data[1] = Table.Version;
-            if (Table.Version != 0x12)
+            if ((Table.Version != 0x12) && (Table.Version != 0x20))
                 return DecompileError.DisplayIDVersionError;
             Data[2] = Table.SectionSize;
             Data[3] = (byte)Table.Type;
