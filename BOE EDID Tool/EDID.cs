@@ -3195,6 +3195,7 @@ namespace EDIDApp
         public byte Version;
         public byte SectionSize;
         public ProductType Type;
+        public ProductTypeV20 TypeV20;
         public byte ExCount;
         public List<DisplayIDBlocksTable> DisplayIDBlocksList;
 
@@ -3212,6 +3213,19 @@ namespace EDIDApp
         Television_receiver,
         Repeater_or_translator,
         DIRECT_DRIVE_monitor,
+        RESERVED,
+    }
+    enum ProductTypeV20
+    {
+        Extension,
+        Test_Structure,
+        generic_display,
+        Television_display,
+        Desktop_productivity_display,
+        Desktop_gaming_display,
+        Presentation_display,
+        VR_display,
+        AR_display,
         RESERVED,
     }
     enum DisplayIDTagType
@@ -3237,11 +3251,22 @@ namespace EDIDApp
         TypeIII_12h,
         TypeII_13h,
 
+        V20_ProductIdentification = 0x20,
+        V20_DisplayParameters,
+        V20_TypeVII,
+        V20_TypeVIII,
+        V20_TypeIX,
+        V20_RangeLimits,
+        V20_DisplayInterface,
+        V20_StereoDisplayInterface,
+        V20_TiledDisplayTopology,
+        V20_ContainerID,
+
+        V20_VS = 0x7E,
         VS = 0x7F,
 
-        Reserved = 0x80,
-
-        CEA_Reserved,
+        CTA_Reserved = 0x81, // 81h - FFh
+        Reserved,
     }
     enum _3DStereoType
     {
@@ -3380,13 +3405,14 @@ namespace EDIDApp
                     break;
                 case DisplayIDTagType.VS:
                     break;
-                case DisplayIDTagType.CEA_Reserved:
+                case DisplayIDTagType.CTA_Reserved:
                     break;
 
                 case DisplayIDTagType.Reserved:
                 default:
                     break;
             }
+
 #if debug
             Console.WriteLine("DisplayID Block: {0}", Block.Block);
 #endif
@@ -3397,14 +3423,15 @@ namespace EDIDApp
             Table = new DisplayIDTable();
 
             Table.Version = Data[1];
-            if ((Table.Version != 0x12) && (Table.Version != 0x20))
+            if ((Table.Version != 0x12) && (Table.Version != 0x20) && (Table.Version != 0x21))
                 return DecodeError.DisplayIDVersionError;
 
             Table.SectionSize = Data[2];
 
-            Table.Type = (ProductType)Data[3];
-            //if (Table.Type != ProductType.Extension)
-            //    return DecodeError.DisplayIDTypeError;
+            if (Table.Version == 0x12)
+                Table.Type = (ProductType)Data[3];
+            else if (Table.Version == 0x20)
+                Table.TypeV20 = (ProductTypeV20)Data[3];
 
             Table.ExCount = Data[4]; // Not use in Ex type
 
@@ -3527,7 +3554,7 @@ namespace EDIDApp
                     break;
                 case DisplayIDTagType.VS:
                     break;
-                case DisplayIDTagType.CEA_Reserved:
+                case DisplayIDTagType.CTA_Reserved:
                     break;
 
                 case DisplayIDTagType.Reserved:
@@ -3543,37 +3570,34 @@ namespace EDIDApp
 
             Data[0] = 0x70;
             Data[1] = Table.Version;
-            if ((Table.Version != 0x12) && (Table.Version != 0x20))
+            if ((Table.Version != 0x12) && (Table.Version != 0x20) && (Table.Version != 0x21))
                 return DecompileError.DisplayIDVersionError;
             Data[2] = Table.SectionSize;
-            Data[3] = (byte)Table.Type;
+            if (Table.Version == 0x12)
+                Data[3] = (byte)Table.Type;
+            else if (Table.Version == 0x20)
+                Data[3] = (byte)Table.TypeV20;
+            Data[4] = Table.ExCount;
 
-            if (Table.Type == ProductType.Extension)
+            int blockIndex = 5;
+            foreach (DisplayIDBlocksTable Table in Table.DisplayIDBlocksList)
             {
-                Data[4] = Table.ExCount;
-
-                int blockIndex = 5;
-                foreach (DisplayIDBlocksTable Table in Table.DisplayIDBlocksList)
-                {
-                    Array.Copy(DecompileDisplayIDDataBlock(Table), 0, Data, blockIndex, Table.BlockPayload + 3);
-                    blockIndex += Table.BlockPayload + 3;
-                }
-
-                byte checksum = 0x00;
-                for (int i = 1; i < 126; i++)
-                {
-                    checksum += Data[i];
-                }
-                Data[126] = (byte)((byte)~checksum + 1);
-
-                checksum += Data[0];
-                checksum += Data[126];
-                Data[127] = (byte)((byte)~checksum + 1);
-
-                return DecompileError.Success;
+                Array.Copy(DecompileDisplayIDDataBlock(Table), 0, Data, blockIndex, Table.BlockPayload + 3);
+                blockIndex += Table.BlockPayload + 3;
             }
 
-            return DecompileError.NoDecompile;
+            byte checksum = 0x00;
+            for (int i = 1; i < 126; i++)
+            {
+                checksum += Data[i];
+            }
+            Data[126] = (byte)((byte)~checksum + 1);
+
+            checksum += Data[0];
+            checksum += Data[126];
+            Data[127] = (byte)((byte)~checksum + 1);
+
+            return DecompileError.Success;
         }
         private string OutputNotesDisplayIDBlocks(DisplayIDBlocksTable BlocksTable)
         {
@@ -3665,13 +3689,45 @@ namespace EDIDApp
                 case DisplayIDTagType.TypeII_13h:
                     Notes += OutputNotesLineString("Type II Timing - Detailed, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
+                case DisplayIDTagType.V20_ProductIdentification:
+                    Notes += OutputNotesLineString("V20 Product Identification Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.V20_DisplayParameters:
+                    Notes += OutputNotesLineString("V20 Display Parameters Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.V20_TypeVII:
+                    Notes += OutputNotesLineString("V20 Type VII Timing - Detailed, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.V20_TypeVIII:
+                    Notes += OutputNotesLineString("V20 Type VII Timing - Enumerated, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.V20_TypeIX:
+                    Notes += OutputNotesLineString("V20 Type IX Timing – Formula-based, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.V20_RangeLimits:
+                    Notes += OutputNotesLineString("V20 Dynamic Video Timing Range Limits Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.V20_DisplayInterface:
+                    Notes += OutputNotesLineString("V20 Display Interface Features Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.V20_StereoDisplayInterface:
+                    Notes += OutputNotesLineString("V20 Stereo Display Interface Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.V20_TiledDisplayTopology:
+                    Notes += OutputNotesLineString("V20 Tiled Display Topology Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.V20_ContainerID:
+                    Notes += OutputNotesLineString("V20 ContainerID Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
+                case DisplayIDTagType.V20_VS:
+                    Notes += OutputNotesLineString("V20 Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                    break;
                 case DisplayIDTagType.VS:
                     Notes += OutputNotesLineString("Vendor-Specific Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
-                case DisplayIDTagType.CEA_Reserved:
-                    Notes += OutputNotesLineString("CEA-defined Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
+                case DisplayIDTagType.CTA_Reserved:
+                    Notes += OutputNotesLineString("CTA-defined Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     break;
-
                 case DisplayIDTagType.Reserved:
                 default:
                     Notes += OutputNotesLineString("Unknow Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
@@ -3688,7 +3744,10 @@ namespace EDIDApp
             NoteEDID += OutputNotesEDIDList(Data);
             NoteEDID += OutputNotesLineString("(01) Version:      0x{0:X2}", 0, Table.Version);
             NoteEDID += OutputNotesLineString("(02) Section Size: {0}", 0, Table.SectionSize);
-            NoteEDID += OutputNotesLineString("(03) Type:         {0}", 0, Table.Type);
+            if (Table.Version == 0x12)
+                NoteEDID += OutputNotesLineString("(03) Type:         {0}", 0, Table.Type);
+            else if (Table.Version == 0x20)
+                NoteEDID += OutputNotesLineString("(03) Type:         {0}", 0, Table.TypeV20);
             NoteEDID += OutputNotesLineString("(04) Ex Count:     {0}", 0, Table.ExCount);
 
             int i = 5;
