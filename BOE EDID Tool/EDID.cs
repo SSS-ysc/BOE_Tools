@@ -125,10 +125,10 @@ namespace EDIDApp
     #endregion
     internal class EDIDCommon
     {
-        string[] DetailTimingAnalogSyncType = { "Sync On GreenOnly,", "Sync On RGB,", "" };
-        string[] DetailTimingSerrationsType = { "Without Serrations,", "With Serrations,", "", };
-        string[] DetailTimingHSyncType = { "Horizontal Polarity (-),", "Horizontal Polarity (+),", "" };
-        string[] DetailTimingVSyncType = { "Vertical Polarity (-)", "Vertical Polarity (+)", "" };
+        readonly string[] DetailTimingAnalogSyncType = { "Sync On GreenOnly,", "Sync On RGB,", "" };
+        readonly string[] DetailTimingSerrationsType = { "Without Serrations,", "With Serrations,", "", };
+        readonly string[] DetailTimingHSyncType = { "Horizontal Polarity (-),", "Horizontal Polarity (+),", "" };
+        readonly string[] DetailTimingVSyncType = { "Vertical Polarity (-)", "Vertical Polarity (+)", "" };
 
         protected byte GetByteBit(byte a, byte X)
         {
@@ -1809,7 +1809,7 @@ namespace EDIDApp
     {
         internal CEATable Table;
         internal byte[] Data;
-        string[] VICcode = {
+        readonly string[] VICcode = {
                                     "No VIC",
                                     "640x480p@59.94Hz/60Hz 4:3",
                                     "720x480p@59.94Hz/60Hz 4:3",
@@ -1971,7 +1971,7 @@ namespace EDIDApp
                                     "4096x2160p@100Hz256:135",
                                     "4096x2160p@119.88Hz/120Hz256:135",
         };
-        string[] HDMIVICcode = { "", "3840x2160p@29.97Hz/30Hz", "3840x2160p@25Hz", "3840x2160p@23.98Hz/24Hz", "4096x2160p@23.98Hz/24Hz" };
+        readonly string[] HDMIVICcode = { "", "3840x2160p@29.97Hz/30Hz", "3840x2160p@25Hz", "3840x2160p@23.98Hz/24Hz", "4096x2160p@23.98Hz/24Hz" };
         private BlockAudio DecodeCEAAudioBlock(byte[] Data)
         {
             BlockAudio Audio = new BlockAudio();
