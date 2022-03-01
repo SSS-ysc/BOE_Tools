@@ -52,7 +52,7 @@ namespace EDIDApp
         BaseDisplayID,
         ExtensionBlockMap,
     }
-    enum InterfaceType
+    enum InterlaceType
     {
         NonInterlaced,
         Interlaced,
@@ -113,7 +113,7 @@ namespace EDIDApp
         public ushort VideoSizeH;
         public ushort VideoSizeV;
 
-        public InterfaceType Interface;
+        public InterlaceType Interlace;
 
         public StereoViewingType StereoFormat;
 
@@ -208,7 +208,7 @@ namespace EDIDApp
                 Timing.VFrequency = (float)Timing.HFrequency / (Timing.VAdressable + Timing.VBlanking);
             }
 
-            Timing.Interface = (InterfaceType)GetByteBit(Data[17], 7);
+            Timing.Interlace = (InterlaceType)GetByteBit(Data[17], 7);
 
             Timing.StereoFormat = (StereoViewingType)((uint)(Data[17] & 0x60) >> 5);
 
@@ -259,7 +259,7 @@ namespace EDIDApp
             Data[14] = (byte)(((Timing.VideoSizeH & 0xF00) >> 4) + ((Timing.VideoSizeV & 0xF00) >> 8));
             Data[15] = (byte)(Timing.HBorder);
             Data[16] = (byte)(Timing.VBorder);
-            Data[17] = SetByteBitSupport(Data[17], 7, (Support)Timing.Interface);
+            Data[17] = SetByteBitSupport(Data[17], 7, (Support)Timing.Interlace);
             Data[17] |= (byte)((byte)(Timing.StereoFormat) << 5);
             Data[17] |= (byte)((byte)(Timing.SyncType) << 3);
             if (Timing.SyncType < SyncType.Digital_Composite)
@@ -407,7 +407,7 @@ namespace EDIDApp
             Notes = OutputNotesLineString(list_offset, "{0}x{1}@{2:.00}Hz   Pixel Clock: {3:.00} MHz", 0, Timing.HAdressable, Timing.VAdressable, Timing.VFrequency, (float)Timing.PixelClk / 1000000);
             Notes += "\r\n";
             Notes += OutputNotesListsString("Horizontal Image Size: {0} mm", list_offset, Timing.VideoSizeH, "Vertical Image Size: {0} mm", list_offset2, Timing.VideoSizeV);
-            Notes += OutputNotesListsString("Refreshed Mode: {0}", list_offset, Timing.Interface, "Normal Display: {0}", list_offset2, Timing.StereoFormat);
+            Notes += OutputNotesListsString("Refreshed Mode: {0}", list_offset, Timing.Interlace, "Normal Display: {0}", list_offset2, Timing.StereoFormat);
             Notes += "\r\n";
             Notes += OutputNotesLineString(list_offset, "Horizontal:", 0);
             Notes += OutputNotesListsString("Active Time: {0} pixels", list_offset, Timing.HAdressable, "Blanking Time: {0} pixels", list_offset2, Timing.HBlanking);
@@ -1754,6 +1754,7 @@ namespace EDIDApp
         public Support xvYCC709;
         public Support xvYCC601;
         public Support DCI_P3;
+        public Support BT2100ICtCp;
         public Support MD3;
         public Support MD2;
         public Support MD1;
@@ -2271,6 +2272,7 @@ namespace EDIDApp
                             Table.BlockColorimetry.xvYCC709 = GetByteBitSupport(BlockExData[0], 1);
                             Table.BlockColorimetry.xvYCC601 = GetByteBitSupport(BlockExData[0], 0);
                             Table.BlockColorimetry.DCI_P3 = GetByteBitSupport(BlockExData[1], 7);
+                            Table.BlockColorimetry.BT2100ICtCp = GetByteBitSupport(BlockExData[1], 6);
                             Table.BlockColorimetry.MD3 = GetByteBitSupport(BlockExData[1], 3);
                             Table.BlockColorimetry.MD2 = GetByteBitSupport(BlockExData[1], 2);
                             Table.BlockColorimetry.MD1 = GetByteBitSupport(BlockExData[1], 1);
@@ -2306,6 +2308,8 @@ namespace EDIDApp
                             {
                                 for (int j = 0; j < 8; j++)
                                 {
+                                    if ((i * 8 + j + 1) > Table.BlockVideoVIC.Count)
+                                        break;
                                     Table.BlockYCbCr420VIC.Add(GetByteBitSupport(BlockExData[i], (byte)j));
                                 }
                             }
@@ -2695,6 +2699,7 @@ namespace EDIDApp
                     BlockData[2] = SetByteBitSupport(BlockData[2], 0, Table.BlockColorimetry.xvYCC601);
 
                     BlockData[3] = SetByteBitSupport(BlockData[3], 7, Table.BlockColorimetry.DCI_P3);
+                    BlockData[3] = SetByteBitSupport(BlockData[3], 6, Table.BlockColorimetry.BT2100ICtCp);
                     BlockData[3] = SetByteBitSupport(BlockData[3], 3, Table.BlockColorimetry.MD3);
                     BlockData[3] = SetByteBitSupport(BlockData[3], 2, Table.BlockColorimetry.MD2);
                     BlockData[3] = SetByteBitSupport(BlockData[3], 1, Table.BlockColorimetry.MD1);
@@ -3033,7 +3038,7 @@ namespace EDIDApp
                     break;
                 case CEATagType.Ex_Colorimetry:
                     Notes += OutputNotesLineString("Colorimetry Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
-                    Notes += OutputNotesLineString(list_offset, "{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}{11}{12}", 0,
+                    Notes += OutputNotesLineString(list_offset, "{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}{11}{12}{13}", 0,
                         GetSupportString("BT.2020 RGB,", Table.BlockColorimetry.BT2020_RGB),
                         GetSupportString("BT.2020 YCC,", Table.BlockColorimetry.BT2020_YCC),
                         GetSupportString("BT.2020 cYCC,", Table.BlockColorimetry.BT2020_cYCC),
@@ -3043,6 +3048,7 @@ namespace EDIDApp
                         GetSupportString("xvYCC-709,", Table.BlockColorimetry.xvYCC709),
                         GetSupportString("xvYCC-601,", Table.BlockColorimetry.xvYCC601),
                         GetSupportString("DCI-P3,", Table.BlockColorimetry.DCI_P3),
+                        GetSupportString("BT.2100-ICtCp",Table.BlockColorimetry.BT2100ICtCp),
                         GetSupportString("MD3,", Table.BlockColorimetry.MD3),
                         GetSupportString("MD2,", Table.BlockColorimetry.MD2),
                         GetSupportString("MD1,", Table.BlockColorimetry.MD1),
@@ -3276,7 +3282,7 @@ namespace EDIDApp
         public HVSyncType HSync;
         public HVSyncType VSync;
         public _3DStereoType Stereo;
-        public InterfaceType Interface;
+        public InterlaceType Interlace;
         public AspectRatioType Ratio;
 
         public uint HFrequency; //Hz
@@ -3322,7 +3328,7 @@ namespace EDIDApp
                         Timing.PixelClk = (uint)(BlockData[i * 0x14] + (BlockData[i * 0x14 + 1] << 8) + (BlockData[i * 0x14 + 2] << 16) + 1) * 10000;
                         Timing.Preferred = GetByteBitSupport(BlockData[i * 0x14 + 3], 7);
                         Timing.Stereo = (_3DStereoType)((BlockData[i * 0x14 + 3] & 0x60) >> 5);
-                        Timing.Interface = (InterfaceType)GetByteBit(BlockData[i * 0x14 + 3], 4);
+                        Timing.Interlace = (InterlaceType)GetByteBit(BlockData[i * 0x14 + 3], 4);
                         Timing.Ratio = (AspectRatioType)(BlockData[i * 0x14 + 3] & 0x0F);
 
                         Timing.HAdressable = (uint)(BlockData[i * 0x14 + 4] + (BlockData[i * 0x14 + 5] << 8) + 1);
@@ -3467,7 +3473,7 @@ namespace EDIDApp
                         BlockData[BlockIndex + 2] = (byte)((((Timing.PixelClk / 10000) - 1) & 0xFF0000) >> 16);
                         BlockData[BlockIndex + 3] = SetByteBitSupport(BlockData[BlockIndex + 3], 7, Timing.Preferred);
                         BlockData[BlockIndex + 3] |= (byte)((byte)Timing.Stereo << 5);
-                        BlockData[BlockIndex + 3] = SetByteBitSupport(BlockData[BlockIndex + 3], 4, (Support)Timing.Interface);
+                        BlockData[BlockIndex + 3] = SetByteBitSupport(BlockData[BlockIndex + 3], 4, (Support)Timing.Interlace);
                         BlockData[BlockIndex + 3] |= (byte)((byte)Timing.Ratio & 0x0F);
 
                         BlockData[BlockIndex + 4] = (byte)((Timing.HAdressable - 1) & 0xFF);
@@ -3602,7 +3608,7 @@ namespace EDIDApp
                         Notes += OutputNotesLineString("Timing {0}:", 0, i + 1);
                         Notes += OutputNotesLineString(list_offset, "{0}x{1}@{2:.00}Hz   Pixel Clock: {3:.00} MHz", 0, Timing.HAdressable, Timing.VAdressable, Timing.VFrequency, (float)Timing.PixelClk / 1000000);
                         Notes += OutputNotesListsString("Ratio: {0}", list_offset, DetailTimingRatioType[(int)Timing.Ratio], "{0}", list_offset2, GetSupportString("Preferred", Timing.Preferred));
-                        Notes += OutputNotesListsString("Refreshed Mode: {0}", list_offset, Timing.Interface, "Normal Display: {0}", list_offset2, Timing.Stereo);
+                        Notes += OutputNotesListsString("Refreshed Mode: {0}", list_offset, Timing.Interlace, "Normal Display: {0}", list_offset2, Timing.Stereo);
                         Notes += "\r\n";
                         Notes += OutputNotesLineString(list_offset, "Horizontal:", 0);
                         Notes += OutputNotesListsString("Active Time: {0} pixels", list_offset, Timing.HAdressable, "Blanking Time: {0} pixels", list_offset2, Timing.HBlanking);
