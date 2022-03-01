@@ -50,6 +50,7 @@ namespace EDIDApp
         CEA,
         DisplayID,
         BaseDisplayID,
+        ExtensionBlockMap,
     }
     enum InterfaceType
     {
@@ -506,9 +507,9 @@ namespace EDIDApp
     enum ColorEncoding
     {
         RGB444,
-        RGB444_YCrCr444,
-        RGB444_YCrCr422,
-        RGB444_YCrCr,
+        RGB444_YCrCb444,
+        RGB444_YCrCb422,
+        RGB444_YCrCb444_YCrCb422,
     };
     enum StandardTimingRatio
     {
@@ -851,23 +852,15 @@ namespace EDIDApp
             Table.Basic.FeatureSupport.VeryLowPowerMode = GetByteBitSupport(Data[24], 5);
             Table.Basic.FeatureSupport.sRGBStandard = GetByteBitSupport(Data[24], 2);
             Table.Basic.FeatureSupport.PreferredTimingMode = GetByteBitSupport(Data[24], 1);
-            if (Table.Version == EDIDversion.V13)
+            if ((Table.Version == EDIDversion.V13) || (Table.Basic.Video_definition == EDIDVideoStandard.Analog))
             {
                 Table.Basic.FeatureSupport.DisplayColorType = (ColorType)((Data[24] & 0x18) >> 3);
                 Table.Basic.FeatureSupport.GTFstandard = GetByteBitSupport(Data[24], 0);
             }
             else
             {
-                if (Table.Basic.Video_definition == EDIDVideoStandard.Analog)
-                {
-                    Table.Basic.FeatureSupport.DisplayColorType = (ColorType)((Data[24] & 0x18) >> 3);
-                    Table.Basic.FeatureSupport.GTFstandard = GetByteBitSupport(Data[24], 0);
-                }
-                else
-                {
-                    Table.Basic.FeatureSupport.ColorEncodingFormat = (ColorEncoding)((Data[24] & 0x18) >> 3);
-                    Table.Basic.FeatureSupport.ContinuousFrequency = GetByteBitSupport(Data[24], 0);
-                }
+                Table.Basic.FeatureSupport.ColorEncodingFormat = (ColorEncoding)((Data[24] & 0x18) >> 3);
+                Table.Basic.FeatureSupport.ContinuousFrequency = GetByteBitSupport(Data[24], 0);
             }
 
             //25-34 EDID_Color
@@ -1206,23 +1199,15 @@ namespace EDIDApp
             Data[24] = SetByteBitSupport(Data[24], 5, Table.Basic.FeatureSupport.VeryLowPowerMode);
             Data[24] = SetByteBitSupport(Data[24], 2, Table.Basic.FeatureSupport.sRGBStandard);
             Data[24] = SetByteBitSupport(Data[24], 1, Table.Basic.FeatureSupport.PreferredTimingMode);
-            if (Table.Version == EDIDversion.V13)
+            if ((Table.Version == EDIDversion.V13) || (Table.Basic.Video_definition == EDIDVideoStandard.Analog))
             {
                 Data[24] |= (byte)((byte)Table.Basic.FeatureSupport.DisplayColorType << 3);
                 Data[24] = SetByteBitSupport(Data[24], 0, Table.Basic.FeatureSupport.GTFstandard);
             }
             else
             {
-                if (Table.Basic.Video_definition == EDIDVideoStandard.Analog)
-                {
-                    Data[24] |= (byte)((byte)Table.Basic.FeatureSupport.DisplayColorType << 3);
-                    Data[24] = SetByteBitSupport(Data[24], 0, Table.Basic.FeatureSupport.GTFstandard);
-                }
-                else
-                {
-                    Data[24] |= (byte)((byte)Table.Basic.FeatureSupport.ColorEncodingFormat << 3);
-                    Data[24] = SetByteBitSupport(Data[24], 0, Table.Basic.FeatureSupport.ContinuousFrequency);
-                }
+                Data[24] |= (byte)((byte)Table.Basic.FeatureSupport.ColorEncodingFormat << 3);
+                Data[24] = SetByteBitSupport(Data[24], 0, Table.Basic.FeatureSupport.ContinuousFrequency);
             }
 
             Data[25] = (byte)(((DecompileEDIDColorxy(Table.PanelColor.RedX) & 0x03) << 6) + ((DecompileEDIDColorxy(Table.PanelColor.RedY) & 0x03) << 4) + ((DecompileEDIDColorxy(Table.PanelColor.GreenX) & 0x03) << 2) + (DecompileEDIDColorxy(Table.PanelColor.GreenY) & 0x03));
@@ -1360,40 +1345,29 @@ namespace EDIDApp
             NoteEDID += OutputNotesLineString("(22) ScreenSize Vertical:", ValueOffset, Table.Basic.ScreenSize.Vsize, " cm");
             NoteEDID += OutputNotesLineString("(23) Display Gamma:", ValueOffset, Table.Basic.Gamma);
             NoteEDID += OutputNotesLineString("(24) Power Management and Supported Feature(s):", 0);
-            if (Table.Version == EDIDversion.V13)
+            if ((Table.Version == EDIDversion.V13) || (Table.Basic.Video_definition == EDIDVideoStandard.Analog))
+            {
                 NoteEDID += OutputNotesLineString("     ", 0,
-                    GetSupportString("Standby Mode/ ", Table.Basic.FeatureSupport.StandbyMode),
-                    GetSupportString("Suspend Mode/ ", Table.Basic.FeatureSupport.SuspendMode),
-                    GetSupportString("Very Low Power/ ", Table.Basic.FeatureSupport.VeryLowPowerMode),
-                    Table.Basic.FeatureSupport.DisplayColorType, "/ ",
-                    GetSupportString("sRGB Standard/ ", Table.Basic.FeatureSupport.sRGBStandard),
-                    GetSupportString("Preferred Timing Mode/ ", Table.Basic.FeatureSupport.PreferredTimingMode),
+                    GetSupportString("Standby Mode, ", Table.Basic.FeatureSupport.StandbyMode),
+                    GetSupportString("Suspend Mode, ", Table.Basic.FeatureSupport.SuspendMode),
+                    GetSupportString("Active Off/Very Low Power, ", Table.Basic.FeatureSupport.VeryLowPowerMode),
+                    GetSupportString("sRGB Standard, ", Table.Basic.FeatureSupport.sRGBStandard),
+                    GetSupportString("Preferred Timing Mode, ", Table.Basic.FeatureSupport.PreferredTimingMode),
                     GetSupportString("GTF standard", Table.Basic.FeatureSupport.GTFstandard));
+                NoteEDID += OutputNotesLineString("     Display Color Type: {0}", 0, Table.Basic.FeatureSupport.DisplayColorType);
+            }
             else
             {
-                if (Table.Basic.Video_definition == EDIDVideoStandard.Analog)
-                {
-                    NoteEDID += OutputNotesLineString("     ", 0,
-                        GetSupportString("Standby Mode/ ", Table.Basic.FeatureSupport.StandbyMode),
-                        GetSupportString("Suspend Mode/ ", Table.Basic.FeatureSupport.SuspendMode),
-                        GetSupportString("Very Low Power/ ", Table.Basic.FeatureSupport.VeryLowPowerMode),
-                        Table.Basic.FeatureSupport.DisplayColorType, "/ ",
-                        GetSupportString("sRGB Standard/ ", Table.Basic.FeatureSupport.sRGBStandard),
-                        GetSupportString("Preferred Timing Mode/ ", Table.Basic.FeatureSupport.PreferredTimingMode),
-                        GetSupportString("GTF standard", Table.Basic.FeatureSupport.GTFstandard));
-                }
-                else
-                {
-                    NoteEDID += OutputNotesLineString("     ", 0,
-                        GetSupportString("Standby Mode/ ", Table.Basic.FeatureSupport.StandbyMode),
-                        GetSupportString("Suspend Mode/ ", Table.Basic.FeatureSupport.SuspendMode),
-                        GetSupportString("Very Low Power/ ", Table.Basic.FeatureSupport.VeryLowPowerMode),
-                        Table.Basic.FeatureSupport.ColorEncodingFormat, "/ ",
-                        GetSupportString("sRGB Standard/ ", Table.Basic.FeatureSupport.sRGBStandard),
-                        GetSupportString("Preferred Timing Mode/ ", Table.Basic.FeatureSupport.PreferredTimingMode),
-                        GetSupportString("Continuous Frequency", Table.Basic.FeatureSupport.ContinuousFrequency));
-                }
+                NoteEDID += OutputNotesLineString("     ", 0,
+                    GetSupportString("Standby Mode, ", Table.Basic.FeatureSupport.StandbyMode),
+                    GetSupportString("Suspend Mode, ", Table.Basic.FeatureSupport.SuspendMode),
+                    GetSupportString("Active Off/Very Low Power, ", Table.Basic.FeatureSupport.VeryLowPowerMode),
+                    GetSupportString("sRGB Standard, ", Table.Basic.FeatureSupport.sRGBStandard),
+                    GetSupportString("Preferred Timing Mode, ", Table.Basic.FeatureSupport.PreferredTimingMode),
+                    GetSupportString("Continuous Frequency", Table.Basic.FeatureSupport.ContinuousFrequency));
+                NoteEDID += OutputNotesLineString("     Color Encoding Format: {0}", 0, Table.Basic.FeatureSupport.ColorEncodingFormat);
             }
+
             NoteEDID += OutputNotesLineString("(25-34) Panel Color:", 0);
             NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red X - {0:0.000} Blue X - {1:0.000} Green X - {2:0.000} White X - {3:0.000}", 0, Table.PanelColor.RedX, Table.PanelColor.GreenX, Table.PanelColor.BlueX, Table.PanelColor.WhiteX);
             NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red Y - {0:0.000} Blue Y - {1:0.000} Green Y - {2:0.000} White Y - {3:0.000}", 0, Table.PanelColor.RedY, Table.PanelColor.GreenY, Table.PanelColor.BlueY, Table.PanelColor.WhiteY);
@@ -1977,7 +1951,7 @@ namespace EDIDApp
             BlockAudio Audio = new BlockAudio();
 
             Audio.Type = (AudioFormatType)(byte)(Data[0] >> 3);
-            Audio.Channels = (byte)(Data[0] & 0x07);
+            Audio.Channels = (byte)(Data[0] & 0x07) + 1;
             Audio.Freq192Khz = GetByteBitSupport(Data[1], 6);
             Audio.Freq176_4Khz = GetByteBitSupport(Data[1], 5);
             Audio.Freq96Khz = GetByteBitSupport(Data[1], 4);
@@ -2439,7 +2413,7 @@ namespace EDIDApp
         {
             byte[] AudioData = new byte[3];
 
-            AudioData[0] = (byte)(((byte)Audio.Type << 3) + Audio.Channels);
+            AudioData[0] = (byte)(((byte)Audio.Type << 3) + (Audio.Channels - 1));
             AudioData[1] = SetByteBitSupport(AudioData[1], 6, Audio.Freq192Khz);
             AudioData[1] = SetByteBitSupport(AudioData[1], 5, Audio.Freq176_4Khz);
             AudioData[1] = SetByteBitSupport(AudioData[1], 4, Audio.Freq96Khz);
@@ -2873,10 +2847,11 @@ namespace EDIDApp
             switch (BlocksTable.Block)
             {
                 case CEATagType.Audio:
+                    string[] AudioType = { "Reserved", "L-PCM", "AC-3", "MPEG-1", "MP3", "MPEG2", "AAC LC", "DTS", "ATRAC", "One Bit Audio", "Enhanced AC-3", "DTS-HD", "MAT", "DST", "WMA Pro", "Extension" };
                     Notes += OutputNotesLineString("Audio Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     foreach (BlockAudio Audio in Table.BlockAudio)
                     {
-                        Notes += OutputNotesLineString(list_offset, "Audio Format: {0}, Channel Number: {1}", 0, Audio.Type, Audio.Channels);
+                        Notes += OutputNotesLineString(list_offset, "Audio Format: {0}, Channel Number: {1}", 0, AudioType[(byte)Audio.Type], Audio.Channels);
                         Notes += OutputNotesLineString(list_offset, "Sampling: Frequency: {0}{1}{2}{3}{4}{5}{6}", 0,
                             GetSupportString("192Khz,", Audio.Freq192Khz),
                             GetSupportString("176.4Khz,", Audio.Freq176_4Khz),
@@ -3770,6 +3745,11 @@ namespace EDIDApp
     }
     /************************** EDID ***************************/
     #region
+    struct ExBlockMapTable
+    {
+        public List<byte> Map;
+        public byte Checksum;
+    }
     struct EDIDTable
     {
         public byte[] Data;
@@ -3779,6 +3759,7 @@ namespace EDIDApp
 
         public List<BlockTagType> List;
 
+        public ExBlockMapTable Ex;
         public BaseTable Base;
         public CEATable CEA;
         public DisplayIDTable DisplayID;
@@ -3904,6 +3885,32 @@ namespace EDIDApp
                                 return EDIDInfo;
                             break;
 
+                        case 0xF0:
+                            EDIDInfo.List.Add(BlockTagType.ExtensionBlockMap);
+                            EDIDInfo.Ex.Map = new List<byte>();
+                            byte ExMapIndex = 1;
+                            while (EDIDInfo.Data[Index + ExMapIndex] != 0x00)
+                            {
+                                EDIDInfo.Ex.Map.Add(EDIDInfo.Data[Index + ExMapIndex]);
+                                ExMapIndex++;
+                            }
+
+                            byte checksum = 0x00;
+                            for (int i = 0; i < 128; i++)
+                            {
+                                checksum += EDIDInfo.Data[Index + i];
+                            }
+                            if (checksum != 0x00)
+                            {
+                                EDIDInfo.Error = DecodeError.ChecksumError;
+                                return EDIDInfo;
+                            }
+                            else
+                            {
+                                EDIDInfo.Ex.Checksum = EDIDInfo.Data[Index + 127];
+                                Index += 128;
+                            }
+                            break;
                         default:
                             break;
                     }
@@ -4014,6 +4021,21 @@ namespace EDIDApp
                             Array.Copy(EDIDInfo.Data, Index, BlockData, 0, 128);
                             EDIDDisplayID EDIDDisplayID = new EDIDDisplayID() { Data = BlockData, Table = EDIDInfo.DisplayID };
                             NoteEDID += EDIDDisplayID.OutputNotes();
+                            Index += 128;
+                            break;
+
+                        case BlockTagType.ExtensionBlockMap:
+                            Array.Copy(EDIDInfo.Data, Index, BlockData, 0, 128);
+                            NoteEDID += "\r\nBlock Type: Extension Block Map\r\n";
+                            NoteEDID += OutputNotesEDIDList(BlockData);
+                            byte blocknumber = 1;
+                            foreach (byte Tag in EDIDInfo.Ex.Map)
+                            {
+                                NoteEDID += OutputNotesLineString("({0}) Block Tag Number: 0x{1:X2}", 0, blocknumber, Tag);
+                                blocknumber++;
+                            }
+
+                            NoteEDID += OutputNotesLineString("(127) CheckSum: OK", 0);
                             Index += 128;
                             break;
 

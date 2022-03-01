@@ -17,6 +17,8 @@ namespace BOE_Tool
         public Form1()
         {
             InitializeComponent();
+            checkBox1.Checked = ConfigurationManager.AppSettings["checkBox1"] == "1";
+            checkBox2.Checked = ConfigurationManager.AppSettings["checkBox2"] == "1";
 #if debug
             button3.Visible = true;
 #endif
@@ -28,29 +30,25 @@ namespace BOE_Tool
             else
                 openFileDialog1.InitialDirectory = "@" + Path.GetDirectoryName(ConfigurationManager.AppSettings["EDIDFilePath"]);
             openFileDialog1.RestoreDirectory = false;
-            openFileDialog1.Filter = "txt files (*.txt)|*.txt;|dat files (*.dat)|*.dat;|h files (*.h)|*.h";
+            openFileDialog1.Filter = "txt files (*.txt)|*.txt;|dat files (*.dat)|*.dat;|h files (*.h)|*.h;|rtd files (*.rtd)|*.rtd;|bin files (*.bin)|*.bin";
             openFileDialog1.FilterIndex = 1;
             openFileDialog1.FileName = "";
 
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                string filePath = openFileDialog1.FileName;
-                textBox1.Text = filePath;
-                button4.Text = "解析";
-                EDIDInfo.Error = DecodeError.NoDecode;
-
+                textBox1.Text = openFileDialog1.FileName;
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                config.AppSettings.Settings["EDIDFilePath"].Value = filePath;
+                config.AppSettings.Settings["EDIDFilePath"].Value = textBox1.Text;
                 config.Save(ConfigurationSaveMode.Modified);
             }
-        }
-        private void Decode_Click(object sender, EventArgs e)
-        {
+
             if (Path.GetFileName(textBox1.Text) == string.Empty)
             {
-                MessageBox.Show("路径无效", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
+            //解析
+            label1.Text = "";
+            EDIDInfo.Error = DecodeError.NoDecode;
             string UnicodeText = "";
             using (FileStream fsRead = new FileStream(textBox1.Text, FileMode.Open, FileAccess.Read))
             {
@@ -72,33 +70,16 @@ namespace BOE_Tool
             }
             else
             {
-                button4.Text = "解析成功";
-            }
-        }
-        private void Save_File_Click(object sender, EventArgs e)
-        {
-            if (EDIDInfo.Error != DecodeError.Success)
-            {
-                MessageBox.Show("未解析", "保存错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            saveFileDialog1.InitialDirectory = "@" + Path.GetDirectoryName(textBox1.Text);
-            saveFileDialog1.RestoreDirectory = false;
-            if (checkBox1.Checked == true)
-                saveFileDialog1.Filter = "txt files (*.txt)|*.txt";
-            else
-                saveFileDialog1.Filter = "txt files (*.txt)|*.txt;|h files (*.h)|*.h;|dat files (*.dat)|*.dat";
-            saveFileDialog1.FilterIndex = 1;
-            saveFileDialog1.FileName = Path.GetFileNameWithoutExtension(textBox1.Text) + "_Analysis";
-            saveFileDialog1.AddExtension = true;
-
-            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
-            {
                 EDID FormEDID = new EDID();
                 if (checkBox1.Checked == true)
-                    FormEDID.OutputNotesEDIDText(EDIDInfo, saveFileDialog1.FileName);
+                    FormEDID.OutputNotesEDIDText(EDIDInfo, Path.GetFullPath(textBox1.Text) + Path.GetFileNameWithoutExtension(textBox1.Text) + "_Analysis" + ".txt");
+                if (checkBox2.Checked == true)
+                    FormEDID.Output0xEDIDText(EDIDInfo, Path.GetFullPath(textBox1.Text) + Path.GetFileNameWithoutExtension(textBox1.Text) + "_Analysis" + ".c");
+
+                if ((checkBox1.Checked == false) && (checkBox2.Checked == false))
+                    MessageBox.Show("解析成功，请选择保存格式", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 else
-                    FormEDID.Output0xEDIDText(EDIDInfo, saveFileDialog1.FileName);
+                    label1.Text = "解析成功并保存";
             }
         }
         private void Decompile_Click(object sender, EventArgs e)
@@ -118,9 +99,19 @@ namespace BOE_Tool
             Console.WriteLine("Decompile End");
 #endif
         }
-        private void Help_Click(object sender, EventArgs e)
+
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
         {
-            MessageBox.Show("可解析任意格式的EDID数据\n选中“厂内格式”可保存为解析后的文本文档，否则保存为十六进制格式", "帮助", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            config.AppSettings.Settings["checkBox2"].Value = (checkBox2.Checked == true ? "1" : "0");
+            config.Save(ConfigurationSaveMode.Modified);
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            config.AppSettings.Settings["checkBox1"].Value = (checkBox1.Checked == true ? "1" : "0");
+            config.Save(ConfigurationSaveMode.Modified);
         }
     }
 }
