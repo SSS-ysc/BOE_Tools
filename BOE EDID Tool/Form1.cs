@@ -72,9 +72,9 @@ namespace BOE_Tool
             {
                 EDID FormEDID = new EDID();
                 if (checkBox1.Checked == true)
-                    FormEDID.OutputNotesEDIDText(EDIDInfo, Path.GetFullPath(textBox1.Text) + Path.GetFileNameWithoutExtension(textBox1.Text) + "_Analysis" + ".txt");
+                    FormEDID.OutputNotesEDIDText(EDIDInfo, Path.GetDirectoryName(textBox1.Text) + "\\" + Path.GetFileNameWithoutExtension(textBox1.Text) + "_Analysis" + ".txt");
                 if (checkBox2.Checked == true)
-                    FormEDID.Output0xEDIDText(EDIDInfo, Path.GetFullPath(textBox1.Text) + Path.GetFileNameWithoutExtension(textBox1.Text) + "_Analysis" + ".c");
+                    FormEDID.Output0xEDIDText(EDIDInfo, Path.GetDirectoryName(textBox1.Text) + "\\" + Path.GetFileNameWithoutExtension(textBox1.Text) + "_Analysis" + ".c");
 
                 if ((checkBox1.Checked == false) && (checkBox2.Checked == false))
                     MessageBox.Show("解析成功，请选择保存格式", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);

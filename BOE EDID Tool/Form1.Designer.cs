@@ -55,20 +55,22 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(271, 41);
+            this.button1.Location = new System.Drawing.Point(271, 48);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(88, 47);
+            this.button1.Size = new System.Drawing.Size(88, 40);
             this.button1.TabIndex = 1;
+            this.button1.TabStop = false;
             this.button1.Text = "浏览文件";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.Open_File_Click);
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(120, 56);
+            this.button3.Location = new System.Drawing.Point(120, 52);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(43, 29);
             this.button3.TabIndex = 5;
+            this.button3.TabStop = false;
             this.button3.Text = "反";
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Visible = false;
@@ -83,6 +85,7 @@
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(96, 16);
             this.checkBox1.TabIndex = 4;
+            this.checkBox1.TabStop = false;
             this.checkBox1.Text = "保存厂内格式";
             this.checkBox1.UseVisualStyleBackColor = true;
             this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
@@ -106,6 +109,7 @@
             this.checkBox2.Name = "checkBox2";
             this.checkBox2.Size = new System.Drawing.Size(96, 16);
             this.checkBox2.TabIndex = 8;
+            this.checkBox2.TabStop = false;
             this.checkBox2.Text = "保存代码格式";
             this.checkBox2.UseVisualStyleBackColor = true;
             this.checkBox2.CheckedChanged += new System.EventHandler(this.checkBox2_CheckedChanged);
@@ -119,10 +123,11 @@
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.textBox1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "Form1";
-            this.Text = "BOE EDID Tool V1.0";
+            this.Text = "BOE EDID Tool V1.1";
             this.ResumeLayout(false);
             this.PerformLayout();
 
