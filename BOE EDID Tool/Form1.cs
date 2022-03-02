@@ -53,11 +53,11 @@ namespace BOE_Tool
             {
                 if (Path.GetFileName(File) == string.Empty)
                 {
-                    MessageBox.Show("文件路径错误", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
                 EDIDInfo.Error = DecodeError.NoDecode;
+
                 string UnicodeText = "";
                 using (FileStream fsRead = new FileStream(File, FileMode.Open, FileAccess.Read))
                 {
@@ -67,7 +67,13 @@ namespace BOE_Tool
                         int r = fsRead.Read(b, 0, b.Length);
                         if (r == 0)
                             break;
-                        UnicodeText += Encoding.UTF8.GetString(b, 0, r);
+                        if (Path.GetExtension(File) == ".bin")//纯二进制
+                        {
+                            for (int i = 0; i < r; i++)
+                                UnicodeText += string.Format("0x{0:X2},", b[i]);
+                        }
+                        else
+                            UnicodeText += Encoding.UTF8.GetString(b, 0, r);
                     }
                 }
 
