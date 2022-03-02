@@ -1369,8 +1369,8 @@ namespace EDIDApp
             }
 
             NoteEDID += OutputNotesLineString("(25-34) Panel Color:", 0);
-            NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red X - {0:0.000} Blue X - {1:0.000} Green X - {2:0.000} White X - {3:0.000}", 0, Table.PanelColor.RedX, Table.PanelColor.GreenX, Table.PanelColor.BlueX, Table.PanelColor.WhiteX);
-            NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red Y - {0:0.000} Blue Y - {1:0.000} Green Y - {2:0.000} White Y - {3:0.000}", 0, Table.PanelColor.RedY, Table.PanelColor.GreenY, Table.PanelColor.BlueY, Table.PanelColor.WhiteY);
+            NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red X - {0:0.000} Green X - {1:0.000} Blue X - {2:0.000} White X - {3:0.000}", 0, Table.PanelColor.RedX, Table.PanelColor.GreenX, Table.PanelColor.BlueX, Table.PanelColor.WhiteX);
+            NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red Y - {0:0.000} Green Y - {1:0.000} Blue Y - {2:0.000} White Y - {3:0.000}", 0, Table.PanelColor.RedY, Table.PanelColor.GreenY, Table.PanelColor.BlueY, Table.PanelColor.WhiteY);
 
             NoteEDID += OutputNotesListString("(35-37) Established Timing:", "(35-37) ".Length,
                 GetSupportString("720x400 @ 70Hz", Table.EstablishedTiming.Es720x400_70),
