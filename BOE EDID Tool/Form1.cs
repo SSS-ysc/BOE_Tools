@@ -11,7 +11,6 @@ namespace BOE_Tool
 {
     public partial class Form1 : Form
     {
-        EDID FormEDID = new EDID();
         EDIDTable EDIDInfo = new EDIDTable();
 
         public Form1()
@@ -25,62 +24,70 @@ namespace BOE_Tool
         }
         private void Open_File_Click(object sender, EventArgs e)
         {
+            label1.Text = "";
+            if ((checkBox1.Checked == false) && (checkBox2.Checked == false))
+            {
+                MessageBox.Show("请选择保存格式", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (ConfigurationManager.AppSettings["EDIDFilePath"] == string.Empty)
                 openFileDialog1.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             else
                 openFileDialog1.InitialDirectory = "@" + Path.GetDirectoryName(ConfigurationManager.AppSettings["EDIDFilePath"]);
             openFileDialog1.RestoreDirectory = false;
-            openFileDialog1.Filter = "txt files (*.txt)|*.txt;|dat files (*.dat)|*.dat;|h files (*.h)|*.h;|rtd files (*.rtd)|*.rtd;|bin files (*.bin)|*.bin";
+            openFileDialog1.Filter = "txt files (*.txt)|*.txt;|c files (*.c)|*.c;|h files (*.h)|*.h;|rtd files (*.rtd)|*.rtd;|bin files (*.bin)|*.bin;|dat files (*.dat)|*.dat;|* files(*.*)|*.*";
             openFileDialog1.FilterIndex = 1;
             openFileDialog1.FileName = "";
 
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                textBox1.Text = openFileDialog1.FileName;
+                textBox1.Text = openFileDialog1.FileNames[0];
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 config.AppSettings.Settings["EDIDFilePath"].Value = textBox1.Text;
                 config.Save(ConfigurationSaveMode.Modified);
             }
 
-            if (Path.GetFileName(textBox1.Text) == string.Empty)
-            {
-                return;
-            }
             //解析
-            label1.Text = "";
-            EDIDInfo.Error = DecodeError.NoDecode;
-            string UnicodeText = "";
-            using (FileStream fsRead = new FileStream(textBox1.Text, FileMode.Open, FileAccess.Read))
+            foreach (string File in openFileDialog1.FileNames)
             {
-                byte[] b = new byte[50];
-                while (true)
+                if (Path.GetFileName(File) == string.Empty)
                 {
-                    int r = fsRead.Read(b, 0, b.Length);
-                    if (r == 0)
-                        break;
-                    UnicodeText += Encoding.UTF8.GetString(b, 0, r);
+                    MessageBox.Show("文件路径错误", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                EDIDInfo.Error = DecodeError.NoDecode;
+                string UnicodeText = "";
+                using (FileStream fsRead = new FileStream(File, FileMode.Open, FileAccess.Read))
+                {
+                    byte[] b = new byte[50];
+                    while (true)
+                    {
+                        int r = fsRead.Read(b, 0, b.Length);
+                        if (r == 0)
+                            break;
+                        UnicodeText += Encoding.UTF8.GetString(b, 0, r);
+                    }
+                }
+
+                EDID FormEDID = new EDID();
+                EDIDInfo = FormEDID.Decode(UnicodeText);
+
+                if (EDIDInfo.Error != DecodeError.Success)
+                {
+                    MessageBox.Show(Path.GetFileNameWithoutExtension(File) + "\r" + EDIDInfo.Error.ToString(), "解析错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                else
+                {
+                    if (checkBox1.Checked == true)
+                        FormEDID.OutputNotesEDIDText(EDIDInfo, Path.GetDirectoryName(File) + "\\" + Path.GetFileNameWithoutExtension(File) + "_Analysis" + ".txt");
+                    if (checkBox2.Checked == true)
+                        FormEDID.Output0xEDIDText(EDIDInfo, Path.GetDirectoryName(File) + "\\" + Path.GetFileNameWithoutExtension(File) + "_Analysis" + ".c");
                 }
             }
-
-            EDIDInfo = FormEDID.Decode(UnicodeText);
-
-            if (EDIDInfo.Error != DecodeError.Success)
-            {
-                MessageBox.Show(EDIDInfo.Error.ToString(), "解析错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            else
-            {
-                EDID FormEDID = new EDID();
-                if (checkBox1.Checked == true)
-                    FormEDID.OutputNotesEDIDText(EDIDInfo, Path.GetDirectoryName(textBox1.Text) + "\\" + Path.GetFileNameWithoutExtension(textBox1.Text) + "_Analysis" + ".txt");
-                if (checkBox2.Checked == true)
-                    FormEDID.Output0xEDIDText(EDIDInfo, Path.GetDirectoryName(textBox1.Text) + "\\" + Path.GetFileNameWithoutExtension(textBox1.Text) + "_Analysis" + ".c");
-
-                if ((checkBox1.Checked == false) && (checkBox2.Checked == false))
-                    MessageBox.Show("解析成功，请选择保存格式", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                else
-                    label1.Text = "解析成功并保存";
-            }
+            label1.Text = "解析成功并保存";
         }
         private void Decompile_Click(object sender, EventArgs e)
         {
