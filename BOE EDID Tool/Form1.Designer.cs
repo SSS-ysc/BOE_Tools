@@ -40,7 +40,6 @@
             // 
             // openFileDialog1
             // 
-            this.openFileDialog1.FileName = "openFileDialog1";
             this.openFileDialog1.Multiselect = true;
             // 
             // textBox1
@@ -55,9 +54,9 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(334, 43);
+            this.button1.Location = new System.Drawing.Point(333, 48);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(88, 40);
+            this.button1.Size = new System.Drawing.Size(88, 38);
             this.button1.TabIndex = 1;
             this.button1.TabStop = false;
             this.button1.Text = "浏览文件";
@@ -66,9 +65,9 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(285, 43);
+            this.button3.Location = new System.Drawing.Point(284, 48);
             this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(43, 40);
+            this.button3.Size = new System.Drawing.Size(43, 38);
             this.button3.TabIndex = 5;
             this.button3.TabStop = false;
             this.button3.Text = "反";
@@ -88,7 +87,7 @@
             this.checkBox1.TabStop = false;
             this.checkBox1.Text = "保存厂内格式";
             this.checkBox1.UseVisualStyleBackColor = true;
-            this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
+            this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox_CheckedChanged);
             // 
             // label1
             // 
@@ -112,7 +111,7 @@
             this.checkBox2.TabStop = false;
             this.checkBox2.Text = "保存代码格式";
             this.checkBox2.UseVisualStyleBackColor = true;
-            this.checkBox2.CheckedChanged += new System.EventHandler(this.checkBox2_CheckedChanged);
+            this.checkBox2.CheckedChanged += new System.EventHandler(this.checkBox_CheckedChanged);
             // 
             // Form1
             // 
@@ -127,7 +126,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "Form1";
-            this.Text = "BOE EDID Tool V1.2 Beta1";
+            this.Text = "BOE EDID Tool V1.2 Beta2";
             this.ResumeLayout(false);
             this.PerformLayout();
 

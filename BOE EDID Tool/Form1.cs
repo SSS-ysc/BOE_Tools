@@ -18,6 +18,13 @@ namespace BOE_Tool
             InitializeComponent();
             checkBox1.Checked = ConfigurationManager.AppSettings["checkBox1"] == "1";
             checkBox2.Checked = ConfigurationManager.AppSettings["checkBox2"] == "1";
+
+            openFileDialog1.Filter = "txt files (*.txt)|*.txt;|c files (*.c)|*.c;|h files (*.h)|*.h;|rtd files (*.rtd)|*.rtd;|bin files (*.bin)|*.bin;|dat files (*.dat)|*.dat;|* files(*.*)|*.*";
+            if (ConfigurationManager.AppSettings["EDIDFilePath"] == string.Empty)
+                openFileDialog1.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            else
+                openFileDialog1.InitialDirectory = "@" + ConfigurationManager.AppSettings["EDIDFilePath"];
+            openFileDialog1.FilterIndex = int.Parse(ConfigurationManager.AppSettings["FilterIndex"]);
 #if debug
             button3.Visible = true;
 #endif
@@ -25,36 +32,22 @@ namespace BOE_Tool
         private void Open_File_Click(object sender, EventArgs e)
         {
             label1.Text = "";
-            if ((checkBox1.Checked == false) && (checkBox2.Checked == false))
-            {
-                MessageBox.Show("请选择保存格式", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (ConfigurationManager.AppSettings["EDIDFilePath"] == string.Empty)
-                openFileDialog1.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            else
-                openFileDialog1.InitialDirectory = "@" + Path.GetDirectoryName(ConfigurationManager.AppSettings["EDIDFilePath"]);
-            openFileDialog1.RestoreDirectory = false;
-            openFileDialog1.Filter = "txt files (*.txt)|*.txt;|c files (*.c)|*.c;|h files (*.h)|*.h;|rtd files (*.rtd)|*.rtd;|bin files (*.bin)|*.bin;|dat files (*.dat)|*.dat;|* files(*.*)|*.*";
-            openFileDialog1.FilterIndex = 1;
             openFileDialog1.FileName = "";
-
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 textBox1.Text = openFileDialog1.FileNames[0];
+                openFileDialog1.InitialDirectory = "@" + Path.GetDirectoryName(textBox1.Text);
+
                 Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                config.AppSettings.Settings["EDIDFilePath"].Value = textBox1.Text;
+                config.AppSettings.Settings["EDIDFilePath"].Value = Path.GetDirectoryName(textBox1.Text);
+                config.AppSettings.Settings["FilterIndex"].Value = openFileDialog1.FilterIndex.ToString();
                 config.Save(ConfigurationSaveMode.Modified);
             }
 
-            //解析
             foreach (string File in openFileDialog1.FileNames)
             {
                 if (Path.GetFileName(File) == string.Empty)
-                {
                     return;
-                }
 
                 EDIDInfo.Error = DecodeError.NoDecode;
 
@@ -112,18 +105,19 @@ namespace BOE_Tool
             Console.WriteLine("Decompile End");
 #endif
         }
-
-        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        private void checkBox_CheckedChanged(object sender, EventArgs e)
         {
-            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            config.AppSettings.Settings["checkBox2"].Value = (checkBox2.Checked == true ? "1" : "0");
-            config.Save(ConfigurationSaveMode.Modified);
-        }
+            if ((checkBox1.Checked == false) && (checkBox2.Checked == false))
+            {
+                if (sender == checkBox1)
+                    checkBox2.Checked = true;
+                else
+                    checkBox1.Checked = true;
+            }
 
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
             Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
             config.AppSettings.Settings["checkBox1"].Value = (checkBox1.Checked == true ? "1" : "0");
+            config.AppSettings.Settings["checkBox2"].Value = (checkBox2.Checked == true ? "1" : "0");
             config.Save(ConfigurationSaveMode.Modified);
         }
     }
