@@ -36,6 +36,7 @@
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
             this.checkBox2 = new System.Windows.Forms.CheckBox();
+            this.checkBox3 = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // openFileDialog1
@@ -54,7 +55,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(333, 48);
+            this.button1.Location = new System.Drawing.Point(333, 52);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(88, 38);
             this.button1.TabIndex = 1;
@@ -65,7 +66,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(284, 48);
+            this.button3.Location = new System.Drawing.Point(284, 52);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(43, 38);
             this.button3.TabIndex = 5;
@@ -87,7 +88,7 @@
             this.checkBox1.TabStop = false;
             this.checkBox1.Text = "保存厂内格式";
             this.checkBox1.UseVisualStyleBackColor = true;
-            this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox_CheckedChanged);
+            this.checkBox1.CheckedChanged += new System.EventHandler(this.CheckBox_CheckedChanged);
             // 
             // label1
             // 
@@ -111,11 +112,27 @@
             this.checkBox2.TabStop = false;
             this.checkBox2.Text = "保存代码格式";
             this.checkBox2.UseVisualStyleBackColor = true;
-            this.checkBox2.CheckedChanged += new System.EventHandler(this.checkBox_CheckedChanged);
+            this.checkBox2.CheckedChanged += new System.EventHandler(this.CheckBox_CheckedChanged);
+            // 
+            // checkBox3
+            // 
+            this.checkBox3.AutoSize = true;
+            this.checkBox3.Checked = true;
+            this.checkBox3.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox3.Location = new System.Drawing.Point(22, 94);
+            this.checkBox3.Name = "checkBox3";
+            this.checkBox3.Size = new System.Drawing.Size(108, 16);
+            this.checkBox3.TabIndex = 9;
+            this.checkBox3.TabStop = false;
+            this.checkBox3.Text = "自动生成文件名";
+            this.checkBox3.UseVisualStyleBackColor = true;
+            this.checkBox3.CheckedChanged += new System.EventHandler(this.CheckBox_CheckedChanged);
             // 
             // Form1
             // 
-            this.ClientSize = new System.Drawing.Size(434, 100);
+            this.AllowDrop = true;
+            this.ClientSize = new System.Drawing.Size(434, 117);
+            this.Controls.Add(this.checkBox3);
             this.Controls.Add(this.checkBox2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.checkBox1);
@@ -126,7 +143,9 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "Form1";
-            this.Text = "BOE EDID Tool V1.2 Beta2";
+            this.Text = "BOE EDID Tool V1.2 Beta3";
+            this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Form1_DragDrop);
+            this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Form1_DragEnter);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -141,6 +160,7 @@
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.CheckBox checkBox2;
+        private System.Windows.Forms.CheckBox checkBox3;
     }
 }
 

@@ -33,7 +33,7 @@ namespace DDC
         private static byte BOEDCCCI_CheckSum(byte[] byte_buffer)
         {
             int i;
-            Byte checksum = 0;
+            byte checksum = 0;
 
             for (i = 0; i < byte_buffer.Length; i++)
             {

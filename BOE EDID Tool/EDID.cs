@@ -376,7 +376,7 @@ namespace EDIDApp
         }
         protected string OutputNotesEDIDList(byte[] Data)
         {
-            string Notes = "";
+            string Notes = "\r\n";
             Notes += "         0   1   2   3   4   5   6   7   8   9\r\n";
             Notes += "      ________________________________________\r\n";
 
@@ -712,7 +712,13 @@ namespace EDIDApp
             switch (Data[3])
             {
                 case 0xFF:
-                    Table.SN = Encoding.ASCII.GetString(Data, 5, 13);
+                    for (int i = 0; i < 13; i++)
+                    {
+                        if (Data[5 + i] != 0x0A)// Enter
+                            Table.SN += Encoding.ASCII.GetString(Data, 5 + i, 1);
+                        else
+                            break;
+                    }
                     return EDIDDescriptorsType.ProductSN;
                 case 0xFE:
                     return EDIDDescriptorsType.AlphanumericData;
@@ -728,7 +734,13 @@ namespace EDIDApp
 
                     return EDIDDescriptorsType.RangeLimits;
                 case 0xFC:
-                    Table.Name = Encoding.ASCII.GetString(Data, 5, 13);
+                    for (int i = 0; i < 13; i++)
+                    {
+                        if (Data[5 + i] != 0x0A)// Enter
+                            Table.Name += Encoding.ASCII.GetString(Data, 5 + i, 1);
+                        else
+                            break;
+                    }
                     return EDIDDescriptorsType.ProductName;
                 case 0xFB:
                     return EDIDDescriptorsType.ColorData;
@@ -1034,6 +1046,13 @@ namespace EDIDApp
                             i++;
                         }
                     }
+                    if (i < 13)
+                    {
+                        Data[i] = 0x0A;
+                        i++;
+                        for (; i < 13; i++)
+                            Data[5 + i] = 0x20;
+                    }
                     break;
                 case EDIDDescriptorsType.AlphanumericData:
                     Data[3] = 0xFE;
@@ -1069,6 +1088,13 @@ namespace EDIDApp
                             Data[5 + i] = (byte)c;
                             i++;
                         }
+                    }
+                    if (i < 13)
+                    {
+                        Data[i] = 0x0A;
+                        i++;
+                        for (; i < 13; i++)
+                            Data[5 + i] = 0x20;
                     }
                     break;
                 case EDIDDescriptorsType.ColorData:
@@ -1302,13 +1328,17 @@ namespace EDIDApp
                     Notes += OutputNotesLineString(list_offset, Type.ToString(), 0);
                     break;
             }
+            Notes += "\r\n";
             return Notes;
         }
         public string OutputNotes()
         {
             int ValueOffset = 50;
             int i;
-            string NoteEDID = "\r\nBlock Type: Externded Display Identification Data\r\n";
+            string NoteEDID = "\r\n";
+            NoteEDID += "*************************************************************************\r\n";
+            NoteEDID += "**********  Block Type: Externded Display Identification Data  **********\r\n";
+            NoteEDID += "*************************************************************************\r\n";
 
             NoteEDID += OutputNotesEDIDList(Data);
             NoteEDID += OutputNotesLineString("(08-09) ID Manufacturer Name:", ValueOffset, Table.IDManufacturerName);
@@ -1317,10 +1347,13 @@ namespace EDIDApp
                 NoteEDID += OutputNotesLineString("(12-15) ID Serial Number:", ValueOffset, "not used");
             else
                 NoteEDID += OutputNotesLineString("(12-15) ID Serial Number:", ValueOffset, Table.IDSerialNumber);
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesLineString("(16) Week of Manufacture:", ValueOffset, Table.Week);
             NoteEDID += OutputNotesLineString("(17) Yaer of Manufacture:", ValueOffset, Table.Year);
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesLineString("(18) EDID Version Number:", ValueOffset, "1");
             NoteEDID += OutputNotesLineString("(19) EDID Revision Number:", ValueOffset, (3 + Table.Version));
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesLineString("(20) Video Input Definition:", ValueOffset, Table.Basic.Video_definition);
             if (Table.Basic.Video_definition == EDIDVideoStandard.Analog)
             {
@@ -1337,13 +1370,22 @@ namespace EDIDApp
             else
             {
                 if (Table.Version == EDIDversion.V14)
-                    NoteEDID += OutputNotesLineString("     ", 0, Table.Basic.DigitalStandard.ToString(), "  ", Table.Basic.DigitalColorDepth.ToString());
+                {
+                    NoteEDID += OutputNotesLineString("", ValueOffset, Table.Basic.DigitalStandard.ToString());
+                    NoteEDID += OutputNotesLineString("", ValueOffset, Table.Basic.DigitalColorDepth.ToString());
+                }
                 else
-                    NoteEDID += OutputNotesLineString("     ", 0, GetSupportString("DFP 1.X", Table.Basic.DigitalDFP1X));
+                {
+                    if (Table.Basic.DigitalDFP1X == Support.supported)
+                        NoteEDID += OutputNotesLineString("     ", ValueOffset, "DFP 1.X");
+                }
             }
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesLineString("(21) ScreenSize Horizontal:", ValueOffset, Table.Basic.ScreenSize.Hsize, " cm");
             NoteEDID += OutputNotesLineString("(22) ScreenSize Vertical:", ValueOffset, Table.Basic.ScreenSize.Vsize, " cm");
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesLineString("(23) Display Gamma:", ValueOffset, Table.Basic.Gamma);
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesLineString("(24) Power Management and Supported Feature(s):", 0);
             if ((Table.Version == EDIDversion.V13) || (Table.Basic.Video_definition == EDIDVideoStandard.Analog))
             {
@@ -1367,11 +1409,11 @@ namespace EDIDApp
                     GetSupportString("Continuous Frequency", Table.Basic.FeatureSupport.ContinuousFrequency));
                 NoteEDID += OutputNotesLineString("     Color Encoding Format: {0}", 0, Table.Basic.FeatureSupport.ColorEncodingFormat);
             }
-
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesLineString("(25-34) Panel Color:", 0);
             NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red X - {0:0.000} Green X - {1:0.000} Blue X - {2:0.000} White X - {3:0.000}", 0, Table.PanelColor.RedX, Table.PanelColor.GreenX, Table.PanelColor.BlueX, Table.PanelColor.WhiteX);
             NoteEDID += OutputNotesLineString("(25-34) ".Length, "Red Y - {0:0.000} Green Y - {1:0.000} Blue Y - {2:0.000} White Y - {3:0.000}", 0, Table.PanelColor.RedY, Table.PanelColor.GreenY, Table.PanelColor.BlueY, Table.PanelColor.WhiteY);
-
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesListString("(35-37) Established Timing:", "(35-37) ".Length,
                 GetSupportString("720x400 @ 70Hz", Table.EstablishedTiming.Es720x400_70),
                 GetSupportString("720x400 @ 88Hz", Table.EstablishedTiming.Es720x400_88),
@@ -1390,13 +1432,14 @@ namespace EDIDApp
                 GetSupportString("1024x768 @ 75Hz", Table.EstablishedTiming.Es1024x768_75),
                 GetSupportString("1280x1024 @ 75Hz", Table.EstablishedTiming.Es1280x1024_75),
                 GetSupportString("1152x870 @ 75Hz", Table.EstablishedTiming.Es1152x870_75));
-
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesLineString("(38-53) Standard Timing:", 0);
             for (i = 0; i < 8; i++)
             {
                 if (Table.StandardTiming[i].TimingSupport == Support.supported)
                     NoteEDID += OutputNotesLineString("", "(38-53) ".Length, Table.StandardTiming[i].TimingWidth, "x", Table.StandardTiming[i].TimingHeight, " @ ", Table.StandardTiming[i].TimingRate, "Hz");
             }
+            NoteEDID += "\r\n";
             NoteEDID += "______________________________________________________________________\r\n";
             NoteEDID += "(54-71) Descriptor Block 1:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors[0]);
             NoteEDID += "______________________________________________________________________\r\n";
@@ -1406,6 +1449,7 @@ namespace EDIDApp
             NoteEDID += "______________________________________________________________________\r\n";
             NoteEDID += "(108-125) Descriptor Block 4:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors[3]);
 
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesLineString("(126) Extension EDID Block(s):", 0, Table.ExBlockCount);
             NoteEDID += OutputNotesLineString("(127) CheckSum: OK", 0);
 
@@ -3130,9 +3174,14 @@ namespace EDIDApp
         public string OutputNotes()
         {
             int i;
-            string NoteEDID = "\r\nBlock Type: CTA Extension Data(CTA-861-G)\r\n";
+            string NoteEDID = "\r\n\r\n\r\n";
+            NoteEDID += "*************************************************************************\r\n";
+            NoteEDID += "**************  Block Type: CTA Extension Data(CTA-861-G)  **************\r\n";
+            NoteEDID += "*************************************************************************\r\n";
+
             NoteEDID += OutputNotesEDIDList(Data);
             NoteEDID += OutputNotesLineString("(01) CEA Version: {0}", 0, Table.Version);
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesListString("(02) General Info:", 8,
                 GetSupportString("Support Underscran", Table.UnderscranITFormatByDefault),
                 GetSupportString("Support Audio", Table.Audio),
@@ -3140,8 +3189,9 @@ namespace EDIDApp
                 GetSupportString("Support YCbCr 4:2:2", Table.YCbCr422),
                 "Native Format: " + Table.NativeVideoFormatNumber.ToString()
                 );
+            NoteEDID += "\r\n";
             NoteEDID += OutputNotesLineString("(03) Detailed Timing Start: {0}", 0, Table.DetailedTimingStart);
-
+            NoteEDID += "\r\n";
             i = 4;
             if (Table.DetailedTimingStart != 4)
                 foreach (CEABlocksTable Table in Table.CEABlocksList)
@@ -3720,7 +3770,10 @@ namespace EDIDApp
         }
         public string OutputNotes()
         {
-            string NoteEDID = "\r\nBlock Type: Display Identification Data\r\n";
+            string NoteEDID = "\r\n\r\n\r\n";
+            NoteEDID += "*************************************************************************\r\n";
+            NoteEDID += "**************  Block Type: Display Identification Data  ****************\r\n";
+            NoteEDID += "*************************************************************************\r\n";
 
             NoteEDID += OutputNotesEDIDList(Data);
             NoteEDID += OutputNotesLineString("(01) Version:      0x{0:X2}", 0, Table.Version);
@@ -3821,14 +3874,29 @@ namespace EDIDApp
             }
             return Data;
         }
-        public EDIDTable Decode(string Text)
+        public EDIDTable Decode(string FilePath)
         {
-            return Decode(MatchOriginalText(Text));
-        }
-        public EDIDTable Decode(byte[] Data)
-        {
+            string UnicodeText = "";
+            using (FileStream fsRead = new FileStream(FilePath, FileMode.Open, FileAccess.Read))
+            {
+                byte[] b = new byte[50];
+                while (true)
+                {
+                    int r = fsRead.Read(b, 0, b.Length);
+                    if (r == 0)
+                        break;
+                    if (Path.GetExtension(FilePath) == ".bin")//纯二进制
+                    {
+                        for (int i = 0; i < r; i++)
+                            UnicodeText += string.Format("0x{0:X2},", b[i]);
+                    }
+                    else
+                        UnicodeText += Encoding.UTF8.GetString(b, 0, r);
+                }
+            }
+
             EDIDTable EDIDInfo = new EDIDTable();
-            EDIDInfo.Data = Data;
+            EDIDInfo.Data = MatchOriginalText(UnicodeText);
             EDIDInfo.Length = (uint)EDIDInfo.Data.Length;
 
             if (EDIDInfo.Length < 128)
@@ -4000,7 +4068,7 @@ namespace EDIDApp
             string NoteEDID;
             byte[] BlockData = new byte[128];
 
-            NoteEDID = "Time:" + System.DateTime.Now.ToString() + "\r\n";
+            NoteEDID = "Time:" + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\r\n";
 
             if (EDIDInfo.Error == DecodeError.Success)
             {
@@ -4032,7 +4100,10 @@ namespace EDIDApp
 
                         case BlockTagType.ExtensionBlockMap:
                             Array.Copy(EDIDInfo.Data, Index, BlockData, 0, 128);
-                            NoteEDID += "\r\nBlock Type: Extension Block Map\r\n";
+                            NoteEDID += "\r\n\r\n\r\n";
+                            NoteEDID += "*************************************************************************\r\n";
+                            NoteEDID += "******************  Block Type: Extension Block Map  ********************\r\n";
+                            NoteEDID += "*************************************************************************\r\n";
                             NoteEDID += OutputNotesEDIDList(BlockData);
                             byte blocknumber = 1;
                             foreach (byte Tag in EDIDInfo.Ex.Map)

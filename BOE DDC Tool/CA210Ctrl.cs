@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-
-
 namespace CA
 {
     struct CA210DataStruct
