@@ -47,23 +47,15 @@ namespace BOE_Tool
                     else
                     {
                         string FileName;
-                        if (checkBox3.Checked == true)// Auto Name
+                        if (checkBox3.Checked == true)
                         {
-                            FileName = Path.GetDirectoryName(File) + "\\";
-                            if (EDIDInfo.Base.Version == EDIDversion.V14)
-                                FileName += "DP";
-                            else if ((EDIDInfo.Base.Version == EDIDversion.V13) && (EDIDInfo.Base.Basic.Video_definition == EDIDVideoStandard.Digital))
-                                FileName += "HDMI";
-                            else if ((EDIDInfo.Base.Version == EDIDversion.V13) && (EDIDInfo.Base.Basic.Video_definition == EDIDVideoStandard.Analog))
-                                FileName += "VGA";
-
-                            FileName += " EDID for " + EDIDInfo.Base.IDManufacturerName + " " + EDIDInfo.Base.Name;
+                            FileName = Path.GetDirectoryName(File) + "\\" + "EDID for " + EDIDInfo.Base.IDManufacturerName + " " + EDIDInfo.Base.Name;
                         }
                         else
-                            FileName = Path.GetDirectoryName(File) + "\\" + Path.GetFileNameWithoutExtension(File) + "_Analysis";
+                            FileName = Path.GetDirectoryName(File) + "\\" + Path.GetFileNameWithoutExtension(File);
 
                         if (checkBox1.Checked == true)
-                            FormEDID.OutputNotesEDIDText(EDIDInfo, FileName + ".txt");
+                            FormEDID.OutputNotesEDIDText(EDIDInfo, FileName + "_Analysis.txt");
                         if (checkBox2.Checked == true)
                             FormEDID.Output0xEDIDText(EDIDInfo, FileName + ".c");
                     }

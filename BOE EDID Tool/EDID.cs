@@ -1321,7 +1321,13 @@ namespace EDIDApp
                     Notes += OutputNotesLineString(list_offset, "Vertical Freq: {0} - {1} Hz", 0, Table.Limits.VerticalMin, Table.Limits.VerticalMax);
                     Notes += OutputNotesLineString(list_offset, "Horizontal Freq: {0} - {1} KHz", 0, Table.Limits.HorizontalMin, Table.Limits.HorizontalMax);
                     Notes += OutputNotesLineString(list_offset, "Pixel Clock: {0} MHz", 0, Table.Limits.PixelClkMax);
-                    Notes += OutputNotesLineString(list_offset, "VideoTimingType: {0}", 0, Table.Limits.VideoTiming.ToString());
+                    if (Table.Limits.VideoTiming == VideoTimingType.Default_GTF)
+                    {
+                        if (Table.Basic.FeatureSupport.GTFstandard == Support.supported)
+                            Notes += OutputNotesLineString(list_offset, "VideoTimingType: {0}", 0, Table.Limits.VideoTiming.ToString());
+                    }
+                    else
+                        Notes += OutputNotesLineString(list_offset, "VideoTimingType: {0}", 0, Table.Limits.VideoTiming.ToString());
                     break;
 
                 default:
@@ -1336,9 +1342,11 @@ namespace EDIDApp
             int ValueOffset = 50;
             int i;
             string NoteEDID = "\r\n";
-            NoteEDID += "*************************************************************************\r\n";
-            NoteEDID += "**********  Block Type: Externded Display Identification Data  **********\r\n";
-            NoteEDID += "*************************************************************************\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "             Block Type: Externded Display Identification Data\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
 
             NoteEDID += OutputNotesEDIDList(Data);
             NoteEDID += OutputNotesLineString("(08-09) ID Manufacturer Name:", ValueOffset, Table.IDManufacturerName);
@@ -3174,10 +3182,12 @@ namespace EDIDApp
         public string OutputNotes()
         {
             int i;
-            string NoteEDID = "\r\n\r\n\r\n";
-            NoteEDID += "*************************************************************************\r\n";
-            NoteEDID += "**************  Block Type: CTA Extension Data(CTA-861-G)  **************\r\n";
-            NoteEDID += "*************************************************************************\r\n";
+            string NoteEDID = "\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "                  Block Type: CTA Extension Data(CTA-861-G)\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
 
             NoteEDID += OutputNotesEDIDList(Data);
             NoteEDID += OutputNotesLineString("(01) CEA Version: {0}", 0, Table.Version);
@@ -3770,10 +3780,12 @@ namespace EDIDApp
         }
         public string OutputNotes()
         {
-            string NoteEDID = "\r\n\r\n\r\n";
-            NoteEDID += "*************************************************************************\r\n";
-            NoteEDID += "**************  Block Type: Display Identification Data  ****************\r\n";
-            NoteEDID += "*************************************************************************\r\n";
+            string NoteEDID = "\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "                  Block Type: Display Identification Data\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
 
             NoteEDID += OutputNotesEDIDList(Data);
             NoteEDID += OutputNotesLineString("(01) Version:      0x{0:X2}", 0, Table.Version);
@@ -3822,6 +3834,16 @@ namespace EDIDApp
         public BaseTable Base;
         public CEATable CEA;
         public DisplayIDTable DisplayID;
+
+        public Support EDIDFunc(EDIDFuncType Type)
+        {
+            return Support.unsupported;
+        }
+    }
+    enum EDIDFuncType
+    { 
+        HDR,
+        Freesync,
     }
     #endregion
     internal class EDID : EDIDCommon
@@ -4068,10 +4090,13 @@ namespace EDIDApp
             string NoteEDID;
             byte[] BlockData = new byte[128];
 
-            NoteEDID = "Time:" + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\r\n";
 
             if (EDIDInfo.Error == DecodeError.Success)
             {
+                NoteEDID = OutputNotesLineString(18, "EDID For {0}", 0, EDIDInfo.Base.Name);
+                NoteEDID += "\r\n";
+                NoteEDID += OutputNotesLineString(18, "Time: {0}", 0, System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
                 uint Index = 0;
                 foreach (BlockTagType Block in EDIDInfo.List)
                 {
@@ -4100,10 +4125,13 @@ namespace EDIDApp
 
                         case BlockTagType.ExtensionBlockMap:
                             Array.Copy(EDIDInfo.Data, Index, BlockData, 0, 128);
-                            NoteEDID += "\r\n\r\n\r\n";
-                            NoteEDID += "*************************************************************************\r\n";
-                            NoteEDID += "******************  Block Type: Extension Block Map  ********************\r\n";
-                            NoteEDID += "*************************************************************************\r\n";
+                            NoteEDID += "\r\n";
+                            NoteEDID += "_____________________________________________________________________________\r\n";
+                            NoteEDID += "_____________________________________________________________________________\r\n";
+                            NoteEDID += "                     Block Type: Extension Block Map\r\n";
+                            NoteEDID += "_____________________________________________________________________________\r\n";
+                            NoteEDID += "_____________________________________________________________________________\r\n";
+
                             NoteEDID += OutputNotesEDIDList(BlockData);
                             byte blocknumber = 1;
                             foreach (byte Tag in EDIDInfo.Ex.Map)
@@ -4151,5 +4179,6 @@ namespace EDIDApp
                 fsWrite.Write(buffer, 0, buffer.Length);
             }
         }
+
     }
 }

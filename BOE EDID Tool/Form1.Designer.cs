@@ -121,10 +121,10 @@
             this.checkBox3.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBox3.Location = new System.Drawing.Point(22, 94);
             this.checkBox3.Name = "checkBox3";
-            this.checkBox3.Size = new System.Drawing.Size(108, 16);
+            this.checkBox3.Size = new System.Drawing.Size(156, 16);
             this.checkBox3.TabIndex = 9;
             this.checkBox3.TabStop = false;
-            this.checkBox3.Text = "自动生成文件名";
+            this.checkBox3.Text = "自动重命名文件（Beta）";
             this.checkBox3.UseVisualStyleBackColor = true;
             this.checkBox3.CheckedChanged += new System.EventHandler(this.CheckBox_CheckedChanged);
             // 
@@ -143,7 +143,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "Form1";
-            this.Text = "BOE EDID Tool V1.2 Beta3";
+            this.Text = "BOE EDID Tool V1.2 Beta4";
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Form1_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Form1_DragEnter);
             this.ResumeLayout(false);
