@@ -395,7 +395,7 @@ namespace EDIDApp
                 }
                 Notes += "\r\n";
             }
-            Notes += "______________________________________________________________________\r\n";
+            Notes += "_____________________________________________________________________________\r\n";
             return Notes;
         }
         protected string OutputNotesDetailedTiming(EDIDDetailedTimingTable Timing)
@@ -1343,7 +1343,7 @@ namespace EDIDApp
             int i;
             string NoteEDID = "\r\n";
             NoteEDID += "_____________________________________________________________________________\r\n";
-            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n\r\n";
             NoteEDID += "             Block Type: Externded Display Identification Data\r\n";
             NoteEDID += "_____________________________________________________________________________\r\n";
             NoteEDID += "_____________________________________________________________________________\r\n";
@@ -1448,13 +1448,13 @@ namespace EDIDApp
                     NoteEDID += OutputNotesLineString("", "(38-53) ".Length, Table.StandardTiming[i].TimingWidth, "x", Table.StandardTiming[i].TimingHeight, " @ ", Table.StandardTiming[i].TimingRate, "Hz");
             }
             NoteEDID += "\r\n";
-            NoteEDID += "______________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
             NoteEDID += "(54-71) Descriptor Block 1:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors[0]);
-            NoteEDID += "______________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
             NoteEDID += "(72-89) Descriptor Block 2:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors[1]);
-            NoteEDID += "______________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
             NoteEDID += "(90-107) Descriptor Block 3:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors[2]);
-            NoteEDID += "______________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n";
             NoteEDID += "(108-125) Descriptor Block 4:\r\n" + OutputNotesDescriptorBlock(Table.Descriptors[3]);
 
             NoteEDID += "\r\n";
@@ -1613,10 +1613,10 @@ namespace EDIDApp
     }
     enum VideoCapabilityType
     {
-        NoSupport,
-        Always_Over_scanned,
-        Always_Under_scanned,
-        Support_Both_Over_And_Under,
+        Not_Supported,
+        Always_Overscanned,
+        Always_Underscanned,
+        Supports_both_over_and_under,
     }
     enum HDMIFRLType
     {
@@ -2853,7 +2853,7 @@ namespace EDIDApp
                     BlockData[4] = (byte)((Block.UnknowIEEEID & 0xFF0000) >> 16);
                     break;
             }
-            return BlockData;        
+            return BlockData;
         }
         public DecompileError Decompile()
         {
@@ -2945,7 +2945,7 @@ namespace EDIDApp
                             GetSupportString("Rear Left/Right,", Speaker.BL_BR),
                             GetSupportString("Front Center,", Speaker.FC),
                             GetSupportString("Low Frequency Effect,", Speaker.LFE),
-                            GetSupportString("Front Left/Right High,", Speaker.FL_FR),
+                            GetSupportString("Front Left/Right,", Speaker.FL_FR),
                             GetSupportString("Front Center High,", Speaker.TpFC),
                             GetSupportString("Top Center,", Speaker.TpC),
                             GetSupportString("Front Left/Right High,", Speaker.TpFL_TpFH));
@@ -3075,7 +3075,7 @@ namespace EDIDApp
                     Notes += OutputNotesLineString("Video Capability Data Block, Number of Data Byte to Follow: {0}", 0, BlocksTable.BlockPayload);
                     Notes += OutputNotesLineString(list_offset, "CE: {0}", 0, Table.BlockVideoCapability.CE);
                     Notes += OutputNotesLineString(list_offset, "IT: {0}", 0, Table.BlockVideoCapability.IT);
-                    Notes += OutputNotesLineString(list_offset, "PT: {0}", 0, Table.BlockVideoCapability.PT);
+                    Notes += OutputNotesLineString(list_offset, "PT: {0}", 0, Table.BlockVideoCapability.PT == VideoCapabilityType.Not_Supported ? "No Data (refer to CE or IT fields)" : Table.BlockVideoCapability.PT.ToString());
                     Notes += OutputNotesLineString(list_offset, "RGB Quantization Range: {0}", 0, Table.BlockVideoCapability.QS == Support.supported ? "Selectable (via AVI Q)" : "No Data");
                     Notes += OutputNotesLineString(list_offset, "YCC Quantization Range: {0}", 0, Table.BlockVideoCapability.QY == Support.supported ? "Selectable (via AVI YQ)" : "No Data");
                     break;
@@ -3100,7 +3100,7 @@ namespace EDIDApp
                         GetSupportString("xvYCC-709,", Table.BlockColorimetry.xvYCC709),
                         GetSupportString("xvYCC-601,", Table.BlockColorimetry.xvYCC601),
                         GetSupportString("DCI-P3,", Table.BlockColorimetry.DCI_P3),
-                        GetSupportString("BT.2100-ICtCp",Table.BlockColorimetry.BT2100ICtCp),
+                        GetSupportString("BT.2100-ICtCp", Table.BlockColorimetry.BT2100ICtCp),
                         GetSupportString("MD3,", Table.BlockColorimetry.MD3),
                         GetSupportString("MD2,", Table.BlockColorimetry.MD2),
                         GetSupportString("MD1,", Table.BlockColorimetry.MD1),
@@ -3184,7 +3184,7 @@ namespace EDIDApp
             int i;
             string NoteEDID = "\r\n";
             NoteEDID += "_____________________________________________________________________________\r\n";
-            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n\r\n";
             NoteEDID += "                  Block Type: CTA Extension Data(CTA-861-G)\r\n";
             NoteEDID += "_____________________________________________________________________________\r\n";
             NoteEDID += "_____________________________________________________________________________\r\n";
@@ -3215,7 +3215,7 @@ namespace EDIDApp
                 foreach (EDIDDetailedTimingTable Timing in Table.CEATimingList)
                 {
                     TimingNumber++;
-                    NoteEDID += "______________________________________________________________________\r\n";
+                    NoteEDID += "_____________________________________________________________________________\r\n";
                     NoteEDID += "(" + string.Format("{0:D2}", i.ToString()) + "-" + string.Format("{0:D2}", i + 17) + ")" + " Detailed Timing " + TimingNumber.ToString() + ":\r\n\r\n" + OutputNotesDetailedTiming(Timing);
                     i += 18;
                 }
@@ -3542,7 +3542,7 @@ namespace EDIDApp
                         BlockData[BlockIndex + 7] = (byte)(((Timing.HBlanking - 1) & 0xFF00) >> 8);
                         BlockData[BlockIndex + 8] = (byte)((Timing.HSyncFront - 1) & 0xFF);
                         BlockData[BlockIndex + 9] = (byte)(((Timing.HSyncFront - 1) & 0x7F00) >> 8);
-                        if(Timing.HSync != HVSyncType.Undefined)
+                        if (Timing.HSync != HVSyncType.Undefined)
                             BlockData[BlockIndex + 9] = SetByteBitSupport(BlockData[BlockIndex + 9], 7, (Support)Timing.HSync);
                         BlockData[BlockIndex + 10] = (byte)((Timing.HSyncWidth - 1) & 0xFF);
                         BlockData[BlockIndex + 11] = (byte)(((Timing.HSyncWidth - 1) & 0xFF00) >> 8);
@@ -3782,7 +3782,7 @@ namespace EDIDApp
         {
             string NoteEDID = "\r\n";
             NoteEDID += "_____________________________________________________________________________\r\n";
-            NoteEDID += "_____________________________________________________________________________\r\n";
+            NoteEDID += "_____________________________________________________________________________\r\n\r\n";
             NoteEDID += "                  Block Type: Display Identification Data\r\n";
             NoteEDID += "_____________________________________________________________________________\r\n";
             NoteEDID += "_____________________________________________________________________________\r\n";
@@ -3799,7 +3799,7 @@ namespace EDIDApp
             int i = 5;
             foreach (DisplayIDBlocksTable Table in Table.DisplayIDBlocksList)
             {
-                NoteEDID += "______________________________________________________________________\r\n";
+                NoteEDID += "_____________________________________________________________________________\r\n";
                 NoteEDID += "(" + string.Format("{0:D2}", i) + "-" + string.Format("{0:D2}", i + Table.BlockPayload + 2) + ") " + OutputNotesDisplayIDBlocks(Table);
                 i += Table.BlockPayload + 3;
             }

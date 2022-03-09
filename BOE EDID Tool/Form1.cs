@@ -130,10 +130,7 @@ namespace BOE_Tool
         }
         private void Form1_DragEnter(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop) != null)
-            {
-                e.Effect = DragDropEffects.Copy;
-            }
+            e.Effect = DragDropEffects.Copy;
         }
     }
 }
