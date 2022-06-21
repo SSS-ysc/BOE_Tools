@@ -2443,7 +2443,7 @@ namespace EDIDApp
                 byte[] TimingByte = new byte[18];
                 Table.CEATimingList = new List<EDIDDetailedTimingTable>();
 
-                while (Data[DetailedTimingindex] != 0x00 && (DetailedTimingindex + 18) < 127)
+                while (Data[DetailedTimingindex] != 0x00 && (DetailedTimingindex + 18) <= 127)
                 {
                     Array.Copy(Data, DetailedTimingindex, TimingByte, 0, 18);
                     Table.CEATimingList.Add(DecodeDetailedTimingData(TimingByte));
