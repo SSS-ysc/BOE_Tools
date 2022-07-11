@@ -403,8 +403,12 @@ namespace EDIDApp
             string Notes;
             int list_offset = 8;
             int list_offset2 = 50;
+            
+            if(Timing.Interlace == InterlaceType.NonInterlaced)
+                Notes = OutputNotesLineString(list_offset, "{0}x{1}@{2:.00}Hz   Pixel Clock: {3:.00} MHz", 0, Timing.HAdressable, Timing.VAdressable, Timing.VFrequency, (float)Timing.PixelClk / 1000000);
+            else
+                Notes = OutputNotesLineString(list_offset, "{0}x{1}i@{2:.00}Hz   Pixel Clock: {3:.00} MHz", 0, Timing.HAdressable, Timing.VAdressable * 2, Timing.VFrequency, (float)Timing.PixelClk / 1000000);
 
-            Notes = OutputNotesLineString(list_offset, "{0}x{1}@{2:.00}Hz   Pixel Clock: {3:.00} MHz", 0, Timing.HAdressable, Timing.VAdressable, Timing.VFrequency, (float)Timing.PixelClk / 1000000);
             Notes += "\r\n";
             Notes += OutputNotesListsString("Horizontal Image Size: {0} mm", list_offset, Timing.VideoSizeH, "Vertical Image Size: {0} mm", list_offset2, Timing.VideoSizeV);
             Notes += OutputNotesListsString("Refreshed Mode: {0}", list_offset, Timing.Interlace, "Normal Display: {0}", list_offset2, Timing.StereoFormat);
@@ -412,7 +416,7 @@ namespace EDIDApp
             Notes += OutputNotesLineString(list_offset, "Horizontal:", 0);
             Notes += OutputNotesListsString("Active Time: {0} pixels", list_offset, Timing.HAdressable, "Blanking Time: {0} pixels", list_offset2, Timing.HBlanking);
             Notes += OutputNotesListsString("Sync Offset: {0} pixels", list_offset, Timing.HSyncFront, "Sync Pulse Width: {0} pixels", list_offset2, Timing.HSyncWidth);
-            Notes += OutputNotesListsString("Border: {0} pixels", list_offset, Timing.HBorder, "Frequency: {0:.00} Khz", list_offset2, (float)Timing.HFrequency / 1000);
+            Notes += OutputNotesListsString("Border: {0} pixels", list_offset, Timing.HBorder, "Frequency: {0:.00} KHz", list_offset2, (float)Timing.HFrequency / 1000);
             Notes += "\r\n";
             Notes += OutputNotesLineString(list_offset, "Vertical:", 0);
             Notes += OutputNotesListsString("Active Time: {0} Lines", list_offset, Timing.VAdressable, "Blanking Time: {0} Lines", list_offset2, Timing.VBlanking);
